@@ -1,0 +1,21 @@
+
+
+name: golang
+
+
+on: 
+  push:
+  workflow_dispatch:
+
+
+jobs:
+
+  unit-test:
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@main
+      - name: check default go version
+        run: go version
+      
