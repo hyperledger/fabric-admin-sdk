@@ -1,0 +1,23 @@
+name: nodejs
+
+on:
+  push:
+  workflow_dispatch:
+defaults:
+  run:
+    working-directory: node
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - name: check default node version
+        run: node --version
+      - run: npm i
+        working-directory: node/formatter
+      - run: npm test
+        working-directory: node/formatter
+      - run: npm i
+        working-directory: node/admin
+      - run: npm test
+        working-directory: node/admin
