@@ -1,0 +1,20 @@
+{
+  "name": "@hyperledger-twgc/fabric-admin-sdk",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "fabric-ca-client": "latest",
+    "fabric-common": "latest",
+    "@hyperledger-twgc/fabric-formatter": "latest",
+    "form-data": "latest",
+    "@davidkhala/crypto": "latest"
+  },
+  "devDependencies": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Hyperledger-TWGC/fabric-admin-sdk"
+  },
+  "license": "Apache-2.0",
+  "type": "module"
+}

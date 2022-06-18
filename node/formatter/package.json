@@ -1,0 +1,20 @@
+{
+  "name": "@hyperledger-twgc/fabric-formatter",
+  "version": "0.0.0",
+  "description": "formatter for Hyperledger Fabric nodejs development",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "fabric-protos": "latest"
+  },
+  "publishConfig": {
+    "tag": "latest"
+  },
+  "devDependencies": {
+    "mocha": "latest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Hyperledger-TWGC/fabric-admin-sdk"
+  },
+  "type": "module"
+}
