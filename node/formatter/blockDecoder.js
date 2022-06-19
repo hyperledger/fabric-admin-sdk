@@ -1,5 +1,5 @@
 import assert from 'assert';
-import fabprotos from 'fabric-protos';
+import fabprotos from '@hyperledger/fabric-protos';
 import {calculateTransactionId} from './helper.js';
 import {BlockMetadataIndex} from './constants.js';
 

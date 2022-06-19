@@ -1,4 +1,4 @@
-import fabprotos from 'fabric-protos';
+import fabprotos from '@hyperledger/fabric-protos';
 import {MSPRoleType} from './constants.js';
 const {ROLE, ORGANIZATION_UNIT, IDENTITY} = fabprotos.common.MSPPrincipal.Classification;
 export const decodeIdentity = (id_bytes) => {

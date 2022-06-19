@@ -4,13 +4,14 @@
   "description": "formatter for Hyperledger Fabric nodejs development",
   "license": "Apache-2.0",
   "dependencies": {
-    "fabric-protos": "latest"
+    "@hyperledger/fabric-protos": "latest"
   },
   "publishConfig": {
     "tag": "latest"
   },
   "devDependencies": {
-    "mocha": "latest"
+    "mocha": "latest",
+    "@davidkhala/logger": "latest"
   },
   "repository": {
     "type": "git",

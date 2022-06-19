@@ -1,4 +1,4 @@
-import fabricProtos from 'fabric-protos';
+import fabricProtos from '@hyperledger/fabric-protos';
 import {BufferFrom, ProtoFrom} from './protobuf.js';
 
 const {common: commonProtos} = fabricProtos;
@@ -21,7 +21,7 @@ export default class GatePolicy {
 	static buildMSPPrincipal(MSPRoleType, mspid) {
 		const newPrincipal = new commonProtos.MSPPrincipal();
 		newPrincipal.principal_classification = commonProtos.MSPPrincipal.Classification.ROLE;
-		const newRole = {role: MSPRoleType, msp_identifier: mspid};
+		const newRole = {role: MSPRoleType, mspIdentifier: mspid};
 		newPrincipal.principal = BufferFrom(newRole, commonProtos.MSPRole);
 		return newPrincipal;
 	}

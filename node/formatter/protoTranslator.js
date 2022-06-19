@@ -1,4 +1,4 @@
-import fabprotos from 'fabric-protos';
+import fabprotos from '@hyperledger/fabric-protos';
 import {BlockNumberFilterType} from './eventHub.js';
 import {BufferFrom, ProtoFrom} from './protobuf.js';
 
@@ -178,7 +178,7 @@ export const buildSeekPayload = ({Creator, Nonce, ChannelId, TxId}, startHeight,
 
 };
 export const extractLastConfigIndex = (block) => {
-	const metadata = commonProto.Metadata.decode(block.metadata.metadata[commonProto.BlockMetadataIndex.LAST_CONFIG]); // TODO it shows as deprecated in hyperledger/fabric-protos
+	const metadata = commonProto.Metadata.decode(block.metadata.metadata[commonProto.BlockMetadataIndex.LAST_CONFIG]); // TODO it shows as deprecated in @hyperledger/fabric-protos
 	const lastConfig = commonProto.LastConfig.decode(metadata.value);
 	return parseInt(lastConfig.index);
 };

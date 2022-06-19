@@ -1,5 +1,5 @@
 import {BufferFrom} from './protobuf.js';
-import fabproto6 from 'fabric-protos';
+import fabproto6 from '@hyperledger/fabric-protos';
 import assert from 'assert';
 import crypto from 'crypto';
 

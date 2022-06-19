@@ -1,5 +1,5 @@
 import {DiscoveryResultType} from './constants.js';
-import fabprotos from 'fabric-protos';
+import fabprotos from '@hyperledger/fabric-protos';
 import assert from 'assert';
 export const ParsePeerResult = ({identity, membership_info, state_info}) => {
 	const peer = {};

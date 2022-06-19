@@ -1,7 +1,8 @@
-import fabricProtos from 'fabric-protos';
+import fabricProtos from '@hyperledger/fabric-protos';
 import GatePolicy from './gatePolicy.js';
-
-const {protos: protosProtos, common: commonProtos} = fabricProtos;
+import {decode} from './protobuf.js'
+const {peer: peerProtos, common: commonProtos} = fabricProtos;
+const {CollectionConfig, CollectionPolicyConfig, StaticCollectionConfig, ApplicationPolicy} = peerProtos
 /**
  *
  * @param name
@@ -33,10 +34,10 @@ export const buildCollectionConfig = ({
 	if (member_only_write === undefined) {
 		member_only_write = true;
 	}
-	const collectionConfig = new protosProtos.CollectionConfig();
+	const collectionConfig = new CollectionConfig();
 
 	// a reference to a policy residing / managed in the config block to define which orgs have access to this collection’s private data
-	const collectionPolicyConfig = new protosProtos.CollectionPolicyConfig();
+	const collectionPolicyConfig = new CollectionPolicyConfig();
 	const signaturePolicyEnvelope = new commonProtos.SignaturePolicyEnvelope();
 
 	const identities = member_orgs.map(mspid => {
@@ -54,7 +55,7 @@ export const buildCollectionConfig = ({
 
 	collectionPolicyConfig.signature_policy = signaturePolicyEnvelope;
 
-	const staticCollectionConfig = new protosProtos.StaticCollectionConfig();
+	const staticCollectionConfig = new StaticCollectionConfig();
 	staticCollectionConfig.name = name;
 	staticCollectionConfig.required_peer_count = required_peer_count;
 	staticCollectionConfig.maximum_peer_count = maximum_peer_count;
@@ -68,7 +69,7 @@ export const buildCollectionConfig = ({
 	staticCollectionConfig.member_orgs_policy = collectionPolicyConfig;
 	if (endorsement_policy) {
 		const {channel_config_policy_reference, signature_policy} = endorsement_policy;
-		const applicationPolicy = new protosProtos.ApplicationPolicy();
+		const applicationPolicy = new ApplicationPolicy();
 
 		if (channel_config_policy_reference) {
 			applicationPolicy.channel_config_policy_reference = channel_config_policy_reference;
@@ -118,8 +119,8 @@ export const FromStandard = (json) => {
 			member_only_write: memberOnlyWrite,
 			required_peer_count: requiredPeerCount,
 			member_orgs: GatePolicy.FromString(gatePolicyEntry).identities.map(({principal}) => {
-				const {msp_identifier} = commonProtos.MSPRole.decode(principal);
-				return msp_identifier;
+				const message = decode(principal, commonProtos.MSPRole);
+				return message.mspIdentifier;
 			})
 		});
 	});

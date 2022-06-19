@@ -1,4 +1,4 @@
-import fabricProtos from 'fabric-protos';
+import fabricProtos from '@hyperledger/fabric-protos';
 import {BufferFrom} from './protobuf.js';
 
 const {common: commonProto} = fabricProtos;
