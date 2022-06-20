@@ -3,14 +3,22 @@ name: golang
 on:
   push:
   workflow_dispatch:
-
+  schedule:
+    - cron: "0 0 * * 0" # https://crontab.guru/#0_0_*_*_0
+defaults:
+  run:
+    working-directory: go
 
 jobs:
-
   unit-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
-      - name: check default go version
-        run: go version
+      - uses: actions/setup-go@main
+        with:
+          go-version: 1.18
+      #- run: make basic-checks
+      #  name: run basic checkes as lint
+      - run: make unit-test
+        name: run unit test
 
