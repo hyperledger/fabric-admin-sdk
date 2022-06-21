@@ -1,0 +1,35 @@
+name: golange2e
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 0" # https://crontab.guru/#0_0_*_*_0
+#defaults:
+#  run:
+#    working-directory: go
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/setup-go@main
+        with:
+          go-version: 1.18
+      - run: curl -vsS https://raw.githubusercontent.com/hyperledger/fabric/master/scripts/bootstrap.sh | bash
+        name: download fabric sample following official guide
+      - run: ./network.sh up
+        working-directory: fabric-samples/test-network
+        name: set up network
+      # todo remove with golang
+      - run: ./network.sh createChannel
+        working-directory: fabric-samples/test-network
+        name: create channel
+      - run: echo y |  ./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go/ -ccl go
+        working-directory: fabric-samples/test-network
+        name: install chaincode-go
+      # end of todo scope
+
+
+
