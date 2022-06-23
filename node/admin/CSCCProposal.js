@@ -1,6 +1,6 @@
 import ProposalManager from './proposal.js';
-import {SystemChaincodeID} from 'khala-fabric-formatter/constants.js';
-import {SystemChaincodeFunctions} from 'khala-fabric-formatter/systemChaincode.js';
+import {SystemChaincodeID} from '@hyperledger-twgc/fabric-formatter/constants.js';
+import {SystemChaincodeFunctions} from '@hyperledger-twgc/fabric-formatter/systemChaincode.js';
 import {emptyChannel} from './channel.js';
 import {EndorseALL} from './resultInterceptors.js';
 

@@ -4,12 +4,12 @@ import {
 	BlockEventFilterType,
 	TxEventFilterType,
 	BlockNumberFilterType
-} from 'khala-fabric-formatter/eventHub.js';
+} from '@hyperledger-twgc/fabric-formatter/eventHub.js';
 
 const {FULL_BLOCK} = BlockEventFilterType;
 const {ALL} = TxEventFilterType;
 const {NEWEST, OLDEST} = BlockNumberFilterType;
-import fabproto6 from 'fabric-protos';
+import fabproto6 from '@hyperledger/fabric-protos';
 import Long from 'long';
 
 const {BLOCK_UNTIL_READY, FAIL_IF_NOT_READY} = fabproto6.orderer.SeekInfo.SeekBehavior;

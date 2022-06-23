@@ -1,4 +1,4 @@
-import {CommonResponseStatus} from 'khala-fabric-formatter/constants.js';
+import {CommonResponseStatus} from '@hyperledger-twgc/fabric-formatter/constants.js';
 
 const {SUCCESS} = CommonResponseStatus;
 /**

@@ -4,7 +4,7 @@ import SigningIdentity from 'fabric-common/lib/SigningIdentity.js';
 import Signer from 'fabric-common/lib/Signer.js';
 import User from 'fabric-common/lib/User.js';
 import {emptySuite} from './cryptoSuite.js';
-import {calculateTransactionId} from 'khala-fabric-formatter/helper.js';
+import {calculateTransactionId} from '@hyperledger-twgc/fabric-formatter/helper.js';
 
 export default class UserBuilder {
 

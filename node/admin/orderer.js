@@ -1,8 +1,8 @@
 import fs from 'fs';
 import FormData from 'form-data';
-import {RemoteOptsTransform} from 'khala-fabric-formatter/remote.js';
+import {RemoteOptsTransform} from '@hyperledger-twgc/fabric-formatter/remote.js';
 
-import {DeliverResponseStatus, DeliverResponseType} from 'khala-fabric-formatter/eventHub.js';
+import {DeliverResponseStatus, DeliverResponseType} from '@hyperledger-twgc/fabric-formatter/eventHub.js';
 import EndPoint from 'fabric-common/lib/Endpoint.js';
 import Committer from 'fabric-common/lib/Committer.js';
 import Eventer from 'fabric-common/lib/Eventer.js';

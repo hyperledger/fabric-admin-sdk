@@ -2,9 +2,9 @@ import EndPoint from 'fabric-common/lib/Endpoint.js';
 import Endorser from 'fabric-common/lib/Endorser.js';
 import Eventer from 'fabric-common/lib/Eventer.js';
 import Discoverer from 'fabric-common/lib/Discoverer.js';
-import {RemoteOptsTransform} from 'khala-fabric-formatter/remote.js';
+import {RemoteOptsTransform} from '@hyperledger-twgc/fabric-formatter/remote.js';
 import fs from 'fs';
-import {BlockEventFilterType} from 'khala-fabric-formatter/eventHub.js';
+import {BlockEventFilterType} from '@hyperledger-twgc/fabric-formatter/eventHub.js';
 
 const {FILTERED_BLOCK, FULL_BLOCK, PRIVATE_BLOCK} = BlockEventFilterType;
 export default class Peer {

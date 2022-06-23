@@ -1,10 +1,10 @@
 import ProposalManager from './proposal.js';
-import {SystemChaincodeFunctions} from 'khala-fabric-formatter/systemChaincode.js';
-import fabprotos from 'fabric-protos';
-import {SystemChaincodeID} from 'khala-fabric-formatter/constants.js';
-import {BufferFrom} from 'khala-fabric-formatter/protobuf.js';
+import {SystemChaincodeFunctions} from '@hyperledger-twgc/fabric-formatter/systemChaincode.js';
+import fabprotos from '@hyperledger/fabric-protos';
+import {SystemChaincodeID} from '@hyperledger-twgc/fabric-formatter/constants.js';
+import {BufferFrom} from '@hyperledger-twgc/fabric-formatter/protobuf.js';
 import fs from 'fs';
-import {getResponses} from 'khala-fabric-formatter/proposalResponse.js';
+import {getResponses} from '@hyperledger-twgc/fabric-formatter/proposalResponse.js';
 import {EndorseALL, CommitSuccess, SanCheck} from './resultInterceptors.js';
 
 const {
