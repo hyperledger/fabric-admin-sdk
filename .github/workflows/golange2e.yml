@@ -3,6 +3,7 @@ name: golange2e
 on:
   push:
   workflow_dispatch:
+  pull_request:
   schedule:
     - cron: "0 0 * * 0" # https://crontab.guru/#0_0_*_*_0
 #defaults:

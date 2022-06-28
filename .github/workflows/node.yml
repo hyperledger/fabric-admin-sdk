@@ -15,9 +15,9 @@ jobs:
         run: node --version
       - run: npm i
         working-directory: node/formatter
-      - run: npm test
-        working-directory: node/formatter
+      # - run: npm test
+      #   working-directory: node/formatter
       - run: npm i
         working-directory: node/admin
-      - run: npm test
-        working-directory: node/admin
+      # - run: npm test
+      #   working-directory: node/admin
