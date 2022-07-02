@@ -1,16 +1,11 @@
 import fabricProtos from '@hyperledger/fabric-protos';
-import {BufferFrom, ProtoFrom} from './protobuf.js';
 
-const {common: commonProtos} = fabricProtos;
-const MSPRoleTypeInverse = {
-	'MEMBER': 0,
-	'ADMIN': 1,
-	'CLIENT': 2,
-	'PEER': 3,
-	'ORDERER': 4
-};
-const GateClausePattern = /^(AND|OR)\(([\w,.\s()']+)\)$/;
-const RoleClausePattern = /^'([0-9A-Za-z.-]+)(\.)(admin|member|client|peer|orderer)'$/;
+const {common: commonProtos, msp:mspProtos} = fabricProtos;
+const {SignaturePolicy, SignaturePolicyEnvelope} = commonProtos
+const {MSPPrincipal, MSPRole} = mspProtos
+
+export const GateClausePattern = /^(AND|OR)\(([\w,.\s()']+)\)$/;
+export const RoleClausePattern = /^'([0-9A-Za-z.-]+)(\.)(admin|member|client|peer|orderer)'$/;
 
 /**
  *  Reference: `common/policydsl/policyparser.go`
@@ -18,27 +13,48 @@ const RoleClausePattern = /^'([0-9A-Za-z.-]+)(\.)(admin|member|client|peer|order
  */
 export default class GatePolicy {
 
+	/**
+	 *
+	 * @param {MSPRoleTypeMap[keyof MSPRoleTypeMap]} MSPRoleType
+	 * @param {string} mspid
+	 * @return {MSPPrincipal}
+	 */
 	static buildMSPPrincipal(MSPRoleType, mspid) {
-		const newPrincipal = new commonProtos.MSPPrincipal();
-		newPrincipal.principal_classification = commonProtos.MSPPrincipal.Classification.ROLE;
-		const newRole = {role: MSPRoleType, mspIdentifier: mspid};
-		newPrincipal.principal = BufferFrom(newRole, commonProtos.MSPRole);
+		const newPrincipal = new MSPPrincipal();
+		newPrincipal.setPrincipalClassification(MSPPrincipal.Classification.ROLE);
+		const newRole = new MSPRole()
+		newRole.setRole(MSPRoleType)
+		newRole.setMspIdentifier(mspid)
+		newPrincipal.setPrincipal(newRole.serializeBinary());
 		return newPrincipal;
 	}
 
-	static buildNOutOf({n, rules: SignaturePolicyArray}) {
-		return ProtoFrom({n, rules: SignaturePolicyArray}, commonProtos.SignaturePolicy.NOutOf);
+	/**
+	 *
+	 * @param {number} n
+	 * @param {Array<SignaturePolicy>} rules
+	 * @return {SignaturePolicy.NOutOf}
+	 */
+	static buildNOutOf({n, rules}) {
+		const nOutOf= new SignaturePolicy.NOutOf()
+		nOutOf.setN(n)
+		nOutOf.setRulesList(rules)
+		return nOutOf
 	}
 
 
+	/**
+	 *
+	 * @param {SignaturePolicy.NOutOf} [n_out_of] exclusive with signed_by
+	 * @param {number} [signed_by] exclusive with n_out_of
+	 * @return {SignaturePolicy}
+	 */
 	static buildSignaturePolicy({n_out_of, signed_by}) {
-		const signaturePolicy = new commonProtos.SignaturePolicy();
+		const signaturePolicy = new SignaturePolicy();
 		if (n_out_of) {
-			signaturePolicy.Type = 'n_out_of';
-			signaturePolicy.n_out_of = n_out_of;
+			signaturePolicy.setNOutOf(n_out_of)
 		} else if (signed_by || signed_by === 0) {
-			signaturePolicy.Type = 'signed_by';
-			signaturePolicy.signed_by = signed_by;
+			signaturePolicy.setSignedBy(signed_by)
 		}
 		return signaturePolicy;
 	}
@@ -54,7 +70,7 @@ export default class GatePolicy {
 				const index = identities.length;
 
 				identitiesIndexMap[key] = index;
-				identities[index] = GatePolicy.buildMSPPrincipal(MSPRoleTypeInverse[role.toUpperCase()], mspid);
+				identities[index] = GatePolicy.buildMSPPrincipal(MSPRole.MSPRoleType[role.toUpperCase()], mspid);
 
 			}
 			return GatePolicy.buildSignaturePolicy({signed_by: identitiesIndexMap[key]});
@@ -97,15 +113,12 @@ export default class GatePolicy {
 
 		const rule = parseGateClause(policyString);
 
-		const signaturePolicyEnvelope = new commonProtos.SignaturePolicyEnvelope();
-		signaturePolicyEnvelope.rule = rule;
-		signaturePolicyEnvelope.identities = identities;
+		const signaturePolicyEnvelope = new SignaturePolicyEnvelope();
+		signaturePolicyEnvelope.setRule(rule)
+		signaturePolicyEnvelope.setIdentitiesList(identities)
 
 		return signaturePolicyEnvelope;
 	}
 }
 
-GatePolicy.MSPRoleTypeInverse = MSPRoleTypeInverse;
-GatePolicy.GateClausePattern = GateClausePattern;
-GatePolicy.RoleClausePattern = RoleClausePattern;
 
