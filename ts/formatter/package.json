@@ -1,0 +1,25 @@
+{
+    "name": "@hyperledger-twgc/fabric-formatter-type",
+    "version": "0.0.0",
+    "description": "Hyperledger Fabric formatter for TypeScript",
+    "main": "dist/index.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Hyperledger-TWGC/fabric-admin-sdk"
+    },
+    "author": {
+        "name": "hyperledger-twgc",
+        "url": "https://github.com/Hyperledger-TWGC/Hyperledger-TWGC"
+    },
+    "scripts": {
+        "compile": "tsc --project tsconfig.build.json"
+    },
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@hyperledger/fabric-protos": "latest",
+        "google-protobuf": "latest"
+    },
+    "devDependencies": {
+        "typescript": "latest"
+    }
+}

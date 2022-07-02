@@ -11,8 +11,7 @@ export const calculateTransactionId = (signature_header) => {
 	const trans_bytes = Buffer.concat([nonce, creator_bytes]);
 	return sha2_256(trans_bytes);
 };
-// utility function to create a random number of
-// the specified length.
+// utility function to create a random number of the specified length.
 export const getNonce = (length = 24) => {
 	assert.ok(Number.isInteger(length), 'Parameter must be an integer');
 	return crypto.randomBytes(length);
