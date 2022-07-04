@@ -12,7 +12,8 @@
         "url": "https://github.com/Hyperledger-TWGC/Hyperledger-TWGC"
     },
     "scripts": {
-        "compile": "tsc --project tsconfig.build.json"
+        "compile": "tsc --project tsconfig.json",
+        "test": "jest"
     },
     "license": "Apache-2.0",
     "dependencies": {
@@ -20,6 +21,9 @@
         "google-protobuf": "latest"
     },
     "devDependencies": {
-        "typescript": "latest"
+        "typescript": "latest",
+        "jest": "latest",
+        "ts-jest": "latest",
+        "@types/jest": "latest"
     }
 }

@@ -1,0 +1,72 @@
+import {common} from "@hyperledger/fabric-protos";
+import {GatePolicy} from "./gatePolicy";
+
+const {
+    CollectionConfig,
+    CollectionPolicyConfig,
+    SignaturePolicyEnvelope,
+    StaticCollectionConfig,
+    ApplicationPolicy
+} = common
+export const implicitCollection = (mspid) => `_implicit_org_${mspid}`;
+
+export const buildCollectionConfig = ({
+                                          name,
+                                          requiredPeerCount,
+                                          maxPeerCount = requiredPeerCount,
+                                          endorsement_policy,
+                                          blockToLive,
+                                          memberOnlyRead = true,
+                                          memberOnlyWrite = true,
+                                          member_orgs
+                                      }) => {
+
+
+    const collectionConfig = new CollectionConfig();
+
+    // a reference to a policy residing / managed in the config block to define which orgs have access to this collection’s private data
+    const collectionPolicyConfig = new CollectionPolicyConfig();
+    const signaturePolicyEnvelope = new SignaturePolicyEnvelope();
+
+    const identities = member_orgs.map(mspid => {
+        return GatePolicy.buildMSPPrincipal(0, mspid);
+    });
+
+
+    const rules = member_orgs.map((mspid, index) => {
+        return GatePolicy.buildSignaturePolicy({signed_by: index});
+    });
+    const nOutOf = GatePolicy.buildNOutOf({n: 1, rules});
+    const rule = GatePolicy.buildSignaturePolicy({n_out_of: nOutOf});
+    signaturePolicyEnvelope.setRule(rule);
+    signaturePolicyEnvelope.setIdentitiesList(identities);
+
+    collectionPolicyConfig.setSignaturePolicy(signaturePolicyEnvelope);
+
+    const staticCollectionConfig = new StaticCollectionConfig();
+    staticCollectionConfig.setName(name)
+    staticCollectionConfig.setRequiredPeerCount(requiredPeerCount)
+    staticCollectionConfig.setMaximumPeerCount(maxPeerCount)
+    if (blockToLive) {
+        staticCollectionConfig.setBlockToLive(blockToLive);
+    }
+
+    staticCollectionConfig.setMemberOnlyWrite(memberOnlyWrite);
+    staticCollectionConfig.setMemberOnlyRead(memberOnlyRead);
+
+    staticCollectionConfig.setMemberOrgsPolicy(collectionPolicyConfig);
+    if (endorsement_policy) {
+        const {channel_config_policy_reference, signature_policy} = endorsement_policy;
+        const applicationPolicy = new ApplicationPolicy();
+
+        if (channel_config_policy_reference) {
+            applicationPolicy.setChannelConfigPolicyReference(channel_config_policy_reference);
+        } else if (signature_policy) {
+            applicationPolicy.setSignaturePolicy(signature_policy);
+        }
+        staticCollectionConfig.setEndorsementPolicy(applicationPolicy);
+    }
+
+    collectionConfig.setStaticCollectionConfig(staticCollectionConfig);
+    return collectionConfig;
+};

@@ -16,7 +16,7 @@ export default class ConfigFactory {
 	}
 
 	/**
-	 * @param {OrgName} OrgName
+	 * @param {MSPName} OrgName
 	 * @param {ChannelGroupType} channelGroupType
 	 * @return {ConfigFactory}
 	 */
@@ -92,14 +92,14 @@ export default class ConfigFactory {
 
 	/**
 	 *
-	 * @param {OrgName} orgName
+	 * @param {MSPName} orgName
 	 */
 	getAnchorPeers(orgName) {
 		return this.newConfig.channel_group.groups.Application.groups[orgName].values.AnchorPeers;
 	}
 
 	/**
-	 * @param {OrgName} orgName
+	 * @param {MSPName} orgName
 	 * @param {[{host:string,port:number}]} anchorPeers
 	 */
 	setAnchorPeers(orgName, anchorPeers) {
@@ -121,7 +121,7 @@ export default class ConfigFactory {
 
 	/**
 	 * because we will not change the 'version' property, so it will never be totally identical
-	 * @param {OrgName} OrgName
+	 * @param {MSPName} OrgName
 	 * @param {MspId} MSPID
 	 * @param {ChannelGroupType} channelGroupType
 	 * @param {string[]} admins pem file path array

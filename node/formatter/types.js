@@ -3,15 +3,6 @@
  * @property {CommonResponseStatus} status
  * @property {string} info
  */
-/**
- * @typedef {string} OrgName organization name (MSPName), mapping to MSP ID
- */
-/**
- * @typedef {string} MspId msp_identifier, member service provider identifier
- */
-/**
- * @typedef {Object|Record<string, string | Uint8Array>} TransientMap jsObject of key<string> --> value<string>
- */
 
 /**
  * @typedef {Object} FabricCAResponse
