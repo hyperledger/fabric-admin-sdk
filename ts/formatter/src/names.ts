@@ -4,6 +4,21 @@ export class Name extends String {
         return !!this.match(expectedDatabaseNamePattern)
     }
 
+    isMspId(): boolean {
+        const namePattern = /^[a-zA-Z0-9.-]+$/;
+        return !!this.match(namePattern);
+    }
+
+    isChannel(): boolean {
+        const namePattern = /^[a-z][a-z0-9.-]*$/;
+        return this.match(namePattern) && this.length < 250;
+    }
+
+    isChannelConfigGroup(): boolean {
+        const namePattern = /^[a-zA-Z0-9.-]+$/;
+        return this.match(namePattern) && this.length < 250;
+    }
+
     /**
      * @deprecated stay in sync with those defined in core/scc/lscc/lscc.go
      */

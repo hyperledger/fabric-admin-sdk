@@ -12,17 +12,7 @@ export const ChannelGroupType = {
 	system: 'Orderer',
 	application: 'Application'
 };
-/**
- * @enum {string}
- */
-export const SystemChaincodeID = {
-	LSCC: 'lscc',
-	QSCC: 'qscc',
-	CSCC: 'cscc',
-	VSCC: 'vscc',
-	ESCC: 'escc',
-	LifeCycle: '_lifecycle',
-};
+
 /**
  * @enum {string}
  */
@@ -163,27 +153,7 @@ export const Status = {
 	NOT_IMPLEMENTED: 501,
 	SERVICE_UNAVAILABLE: 503,
 };
-/**
- *
- * @enum {string}
- */
-export const CommonResponseStatus = {
-	SUCCESS: 'SUCCESS',
-	SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
-	NOT_FOUND: 'NOT_FOUND'
-};
-/**
- *
- * @enum {string}
- */
-export const BroadcastResponseStatus = {
-	SUCCESS: CommonResponseStatus.SUCCESS,
-	BAD_REQUEST: 'BAD_REQUEST'
-};
 
-/**
- * @enum
- */
 export const BlockMetadataIndex = {
 	SIGNATURES: 0,
 	/**
