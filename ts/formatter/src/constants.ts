@@ -21,15 +21,6 @@ export enum PolicyName {
     BlockValidation = 'BlockValidation'
 }
 
-namespace MSPPrincipal {
-    export const Classification = [
-        'ROLE',  // Represents the one of the dedicated MSP roles, the one of a member of MSP network, and the one of an administrator of an MSP network
-        'ORGANIZATION_UNIT', // Denotes a finer grained (affiliation-based) grouping of entities, per MSP affiliation     // E.g., this can well be represented by an MSP's Organization unit
-        'IDENTITY',   // Denotes a principal that consists of a single identity
-        'ANONYMITY', // Denotes a principal that can be used to enforce an identity to be anonymous or nominal.
-        'COMBINED' // Denotes a combined principal
-    ]
-}
 export const MSPRoleType = [
     'MEMBER', // Represents an MSP Member
     'ADMIN', // Represents an MSP Admin
@@ -62,11 +53,6 @@ namespace ImplicitMetaPolicy {
     export const Rule = ['ANY', 'ALL', 'MAJORITY']
 }
 
-namespace SignaturePolicy {
-    // SignaturePolicyType is the 'Type' string for signature policies
-    export const type = "Signature"
-    export const TypeCase = ['TYPE_NOT_SET', 'SIGNED_BY', 'N_OUT_OF']
-}
 export const TransactionType = {
     ENDORSER_TRANSACTION: 'ENDORSER_TRANSACTION',
     CONFIG: 'CONFIG'

@@ -1,4 +1,6 @@
 import {common, msp} from '@hyperledger/fabric-protos';
+import * as SignaturePolicyNS from './signature-policy'
+import * as MSPPrincipalNS from './msp-principal'
 import SignaturePolicy = common.SignaturePolicy
 import NOutOf = SignaturePolicy.NOutOf;
 
@@ -14,51 +16,6 @@ export const RoleClausePattern = /^'([0-9A-Za-z.-]+)(\.)(admin|member|client|pee
  */
 export namespace GatePolicy {
 
-    /**
-     *
-     * @param {MSPRoleTypeMap[keyof MSPRoleTypeMap]} MSPRoleType
-     * @param {string} mspid
-     * @return {MSPPrincipal}
-     */
-    export function buildMSPPrincipal (MSPRoleType, mspid) {
-        const newPrincipal = new MSPPrincipal();
-        newPrincipal.setPrincipalClassification(MSPPrincipal.Classification.ROLE);
-        const newRole = new MSPRole()
-        newRole.setRole(MSPRoleType)
-        newRole.setMspIdentifier(mspid)
-        newPrincipal.setPrincipal(newRole.serializeBinary());
-        return newPrincipal;
-    }
-
-    /**
-     *
-     * @param {number} n
-     * @param {Array<SignaturePolicy>} rules
-     * @return {SignaturePolicy.NOutOf}
-     */
-    export function buildNOutOf({n, rules}) {
-        const nOutOf= new SignaturePolicy.NOutOf()
-        nOutOf.setN(n)
-        nOutOf.setRulesList(rules)
-        return nOutOf
-    }
-
-
-    /**
-     *
-     * @param {SignaturePolicy.NOutOf} [n_out_of] exclusive with signed_by
-     * @param {number} [signed_by] exclusive with n_out_of
-     * @return {SignaturePolicy}
-     */
-    export function buildSignaturePolicy({n_out_of, signed_by}:{ n_out_of?: NOutOf; signed_by?: number }) {
-        const signaturePolicy = new SignaturePolicy();
-        if (n_out_of) {
-            signaturePolicy.setNOutOf(n_out_of)
-        } else if (signed_by || signed_by === 0) {
-            signaturePolicy.setSignedBy(signed_by)
-        }
-        return signaturePolicy;
-    }
 
 
     export function FromString(policyString) {
@@ -71,10 +28,10 @@ export namespace GatePolicy {
                 const index = identities.length;
 
                 identitiesIndexMap[key] = index;
-                identities[index] = GatePolicy.buildMSPPrincipal(MSPRole.MSPRoleType[role.toUpperCase()], mspid);
+                identities[index] = MSPPrincipalNS.build(MSPRole.MSPRoleType[role.toUpperCase()], mspid);
 
             }
-            return GatePolicy.buildSignaturePolicy({signed_by: identitiesIndexMap[key]});
+            return SignaturePolicyNS.build({signed_by: identitiesIndexMap[key]});
         };
 
         const parseGateClause = (clause?, gate?, subClause?) => {
@@ -84,7 +41,7 @@ export namespace GatePolicy {
                 subClause = result[2];
             }
             const subClauseItems = subClause.split(',');
-            let n_out_of:NOutOf;
+            let n_out_of: NOutOf;
             const rules = [];
             for (const subClauseItem of subClauseItems) {
                 const trimmed = subClauseItem.trim();
@@ -104,12 +61,12 @@ export namespace GatePolicy {
 
             }
             if (gate === 'OR') {
-                n_out_of = GatePolicy.buildNOutOf({n: 1, rules});
+                n_out_of = SignaturePolicyNS.buildNOutOf({n: 1, rules});
             } else if (gate === 'AND') {
-                n_out_of = GatePolicy.buildNOutOf({n: rules.length, rules});
+                n_out_of = SignaturePolicyNS.buildNOutOf({n: rules.length, rules});
             }
 
-            return GatePolicy.buildSignaturePolicy({n_out_of});
+            return SignaturePolicyNS.build({n_out_of});
         };
 
         const rule = parseGateClause(policyString);

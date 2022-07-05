@@ -1,13 +1,13 @@
-name: nodejs
+name: js
 
 on:
   push:
   workflow_dispatch:
-defaults:
-  run:
-    working-directory: node
 jobs:
-  unit-test:
+  node-test:
+    defaults:
+      run:
+        working-directory: node
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
@@ -21,3 +21,13 @@ jobs:
         working-directory: node/admin
       # - run: npm test
       #   working-directory: node/admin
+  ts-test:
+    defaults:
+      run:
+        working-directory: ts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - run: npm i
+        working-directory: ts/formatter
+      - run: npm run compile

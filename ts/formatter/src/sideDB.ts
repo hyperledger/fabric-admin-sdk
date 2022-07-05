@@ -1,6 +1,9 @@
-import {common} from "@hyperledger/fabric-protos";
-import {GatePolicy} from "./gatePolicy";
-
+import {common, msp} from "@hyperledger/fabric-protos";
+import {GatePolicy} from "./gate-policy";
+import * as MSPPrincipalNS from './msp-principal'
+import * as SignaturePolicyNS from './signature-policy'
+const {MSPRole} = msp
+const {MSPRoleType} = MSPRole;
 const {
     CollectionConfig,
     CollectionPolicyConfig,
@@ -29,15 +32,15 @@ export const buildCollectionConfig = ({
     const signaturePolicyEnvelope = new SignaturePolicyEnvelope();
 
     const identities = member_orgs.map(mspid => {
-        return GatePolicy.buildMSPPrincipal(0, mspid);
+        return MSPPrincipalNS.build(MSPRoleType.MEMBER, mspid);
     });
 
 
     const rules = member_orgs.map((mspid, index) => {
-        return GatePolicy.buildSignaturePolicy({signed_by: index});
+        return SignaturePolicyNS.build({signed_by: index});
     });
-    const nOutOf = GatePolicy.buildNOutOf({n: 1, rules});
-    const rule = GatePolicy.buildSignaturePolicy({n_out_of: nOutOf});
+    const n_out_of = SignaturePolicyNS.buildNOutOf({n: 1, rules});
+    const rule = SignaturePolicyNS.build({n_out_of});
     signaturePolicyEnvelope.setRule(rule);
     signaturePolicyEnvelope.setIdentitiesList(identities);
 

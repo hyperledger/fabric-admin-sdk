@@ -1,3 +1,9 @@
+export type IndexDigit = number
+
+export function isIndexDigit(num): num is IndexDigit {
+    return Number.isInteger(num) && num >= 0
+}
+
 /**
  * MSPName maps to MSP ID, and usually to organization name
  */
