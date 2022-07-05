@@ -31,3 +31,4 @@ jobs:
       - run: npm i
         working-directory: ts/formatter
       - run: npm run compile
+        working-directory: ts/formatter
