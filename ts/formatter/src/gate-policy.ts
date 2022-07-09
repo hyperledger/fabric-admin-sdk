@@ -5,7 +5,7 @@ import SignaturePolicy = common.SignaturePolicy
 import NOutOf = SignaturePolicy.NOutOf;
 
 const {SignaturePolicyEnvelope} = common
-const {MSPPrincipal, MSPRole} = msp
+const {MSPRole} = msp
 
 export const GateClausePattern = /^(AND|OR)\(([\w,.\s()']+)\)$/;
 export const RoleClausePattern = /^'([0-9A-Za-z.-]+)(\.)(admin|member|client|peer|orderer)'$/;
@@ -15,9 +15,6 @@ export const RoleClausePattern = /^'([0-9A-Za-z.-]+)(\.)(admin|member|client|pee
  *      `func FromString(policy string) (*cb.SignaturePolicyEnvelope, error)`
  */
 export namespace GatePolicy {
-
-
-
     export function FromString(policyString) {
         const identitiesIndexMap = {};
         const identities = [];

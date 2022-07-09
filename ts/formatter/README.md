@@ -1,5 +1,6 @@
 
-
+## /fs/*.ts
+used to store code block relying on native library 'fs' 
 
 ## Configuration justification
 ### tsconfig.json

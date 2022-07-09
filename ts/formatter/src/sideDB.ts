@@ -1,5 +1,4 @@
 import {common, msp} from "@hyperledger/fabric-protos";
-import {GatePolicy} from "./gate-policy";
 import * as MSPPrincipalNS from './msp-principal'
 import * as SignaturePolicyNS from './signature-policy'
 const {MSPRole} = msp

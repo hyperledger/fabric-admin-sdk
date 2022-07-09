@@ -1,6 +1,6 @@
+import {msp} from '@hyperledger/fabric-protos'
 import * as MSPPrincipalNS from '../msp-principal'
 import {buildEnvelope, build, buildNOutOf} from '../signature-policy'
-import {msp} from '@hyperledger/fabric-protos'
 import {IndexDigit, MspId} from "../d";
 import assert from "assert";
 import MSPRoleTypeMap = msp.MSPRole.MSPRoleTypeMap;
@@ -39,7 +39,7 @@ type SignedByPolicy = {
  * }
  */
 type N_OfPolicy = {
-    [key: string]: Policy[]
+    [n in number as `${n}-of`]: Policy[]
 }
 type Policy = SignedByPolicy | N_OfPolicy
 
@@ -56,7 +56,6 @@ export function isSignedByPolicy(policy): policy is SignedByPolicy {
  */
 export function buildRule(policy: Policy) {
     const keys = Object.keys(policy)
-    assert.equal(keys.length, 1, `ambiguous policy: multiple key founds: ${keys}`)
 
     if (isSignedByPolicy(policy)) {
         return build({signed_by: policy.signedBy})
