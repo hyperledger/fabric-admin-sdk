@@ -11,7 +11,7 @@ on:
 #    working-directory: go
 
 jobs:
-  unit-test:
+  end-to-end:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
@@ -23,13 +23,17 @@ jobs:
       - run: ./network.sh up
         working-directory: fabric-samples/test-network
         name: set up network
+      - run: mkdir -p ../organizations && cp -r ../../fabric-samples/test-network/organizations/* ../organizations/ && ls ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+        working-directory: go/e2e
+        name: prepare msp for test
       # todo remove with golang
-      - run: ./network.sh createChannel
-        working-directory: fabric-samples/test-network
+      - run: go test -v ./...
+        working-directory: go/e2e
         name: create channel
-      - run: echo y |  ./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go/ -ccl go
-        working-directory: fabric-samples/test-network
-        name: install chaincode-go
+      # skip as join channel tbd
+      #- run: echo y |  ./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go/ -ccl go
+      #  working-directory: fabric-samples/test-network
+      #  name: install chaincode-go
       # end of todo scope
 
 
