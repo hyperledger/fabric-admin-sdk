@@ -50,10 +50,6 @@ export function isSignedByPolicy(policy): policy is SignedByPolicy {
     return keys[0] === 'signedBy';
 }
 
-/**
- *
- * @param {Policy} policy
- */
 export function buildRule(policy: Policy) {
     const keys = Object.keys(policy)
 

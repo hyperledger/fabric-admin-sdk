@@ -1,6 +1,6 @@
-
-## /fs/*.ts
-used to store code block relying on native library 'fs' 
+- `./compatible`: format adapter to cater backward compatibility 
+- `./proto`: manipulating protobuf serialize/deserialize 
+- `./fs`: relying on native library 'fs' 
 
 ## Configuration justification
 ### tsconfig.json
@@ -11,5 +11,5 @@ used to store code block relying on native library 'fs'
 
 ## Dependency justification
 - `google-protobuf`: used for message `Timestamp`, which is excluded from fabric-protos
-### Dev
+
  

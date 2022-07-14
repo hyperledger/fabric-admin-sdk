@@ -1,4 +1,4 @@
-import {Name} from '../src/names'
+import {Name} from '../lib/names'
 
 describe('name match tests', function () {
 

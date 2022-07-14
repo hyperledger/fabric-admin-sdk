@@ -7,6 +7,6 @@
     "moduleResolution": "NodeNext"
   },
   "include": [
-    "src/"
+    "lib/"
   ]
 }

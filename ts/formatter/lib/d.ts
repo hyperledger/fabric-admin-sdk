@@ -11,6 +11,11 @@ export function isIndexDigit(num): num is IndexDigit {
 export type MSPName = string
 
 /**
+ *
+ */
+export type ChannelName = string
+
+/**
  * MspId is short form of _Member Service Provider Identifier_
  */
 export type MspId = string

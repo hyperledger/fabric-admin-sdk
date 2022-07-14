@@ -1,31 +1,11 @@
 import {msp, common} from '@hyperledger/fabric-protos';
 import assert from 'assert';
-import {calculateTransactionId} from '../helper';
-import {BlockMetadataIndex} from '../constants';
+import {calculateTransactionId} from './helper';
+import {BlockMetadataIndex} from './constants';
 import LastConfig = common.LastConfig
 import Metadata = common.Metadata
 
 const {SIGNATURES, TRANSACTIONS_FILTER, LAST_CONFIG, ORDERER, COMMIT_HASH} = BlockMetadataIndex;
-const {SerializedIdentity} = msp
-
-export function identity(bytes) {
-    const _ = SerializedIdentity.deserializeBinary(bytes)
-    return {
-        mspid: _.getMspid(),
-        idBytes: Buffer.from(_.getIdBytes()).toString()
-    }
-}
-
-/**
- *
- * @param {Uint8Array} binary
- * @param {constructor} asType The class of protobuf.
- * @return {Object}
- */
-export function decode(binary: Uint8Array, asType) {
-    const message = asType.deserializeBinary(binary);
-    return message.toObject()
-}
 
 /**
  * TODO not completed yet
@@ -50,7 +30,7 @@ export class BlockDecoder {
         const {data: {data: data}} = this.block;
         for (const entry of data) {
             const {channel_header, signature_header} = entry.payload.header;
-            assert.strictEqual(calculateTransactionId(signature_header), channel_header.tx_id);
+            // assert.strictEqual(calculateTransactionId(signature_header), channel_header.tx_id);
 
             const {config, actions} = entry.payload.data;
             if (config) {
