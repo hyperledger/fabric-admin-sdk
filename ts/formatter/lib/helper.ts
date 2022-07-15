@@ -1,11 +1,11 @@
 import {BinaryToTextEncoding, createHash, randomBytes} from 'crypto';
 import {buildSerializedIdentity} from './proto/common-builder'
-import {IndexDigit, MspId} from "./d";
+import {IndexDigit, MspId, TxId} from "./index";
 
 export const sha2_256 = (data, encoding: BinaryToTextEncoding = 'hex') => createHash('sha256').update(data).digest(encoding);
 
-export function calculateTransactionId(mspid: MspId, id_bytes: Uint8Array, nonce: Uint8Array) {
-    const creator_bytes = buildSerializedIdentity(mspid, id_bytes).serializeBinary();
+export function calculateTransactionId(mspid: MspId, idBytes: Uint8Array, nonce: Uint8Array):TxId {
+    const creator_bytes = buildSerializedIdentity({mspid,idBytes}).serializeBinary();
     const trans_bytes = Buffer.concat([nonce, creator_bytes]);
     return sha2_256(trans_bytes);
 }

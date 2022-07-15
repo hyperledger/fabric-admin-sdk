@@ -25,8 +25,8 @@ describe('type test', () => {
     const mspid = 'org1.msp'
     const nonce = getNonce()
     it('buildSignatureHeader', () => {
-        const creator = buildSerializedIdentity(mspid, Buffer.from(certificate)).serializeBinary()
-        const signatureHeader = buildSignatureHeader(creator, nonce)
+        const creator = buildSerializedIdentity({mspid,idBytes:Buffer.from(certificate)}).serializeBinary()
+        const signatureHeader = buildSignatureHeader({creator,nonce})
 
     })
     it('buildChannelHeader', () => {

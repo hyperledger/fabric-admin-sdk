@@ -7,17 +7,19 @@ export function currentTimestamp(): Timestamp {
     return Timestamp.fromDate(new Date())
 }
 
-export function buildSignatureHeader(creator: Uint8Array, nonce: Uint8Array) {
+export function buildSignatureHeader(params: SignatureHeader.AsObject) {
+    const {creator, nonce} = params
     const header = new SignatureHeader()
     header.setCreator(creator)
     header.setNonce(nonce)
     return header
 }
 
-export function buildSerializedIdentity(mspid: string, id_bytes: Uint8Array): SerializedIdentity {
+export function buildSerializedIdentity(params:SerializedIdentity.AsObject): SerializedIdentity {
+    const {mspid, idBytes} = params
     const serializedIdentity = new SerializedIdentity()
     serializedIdentity.setMspid(mspid)
-    serializedIdentity.setIdBytes(id_bytes)
+    serializedIdentity.setIdBytes(idBytes)
     return serializedIdentity
 }
 

@@ -92,7 +92,7 @@ export const TxValidationCode = {
     255: 'INVALID_OTHER_REASON'
 };
 /**
- * selected HTTtatus codes
+ * selected HTTP status codes
  * @enum
  */
 export const Status = {

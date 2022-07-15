@@ -1,5 +1,5 @@
 import {msp} from '@hyperledger/fabric-protos';
-import {MspId} from "./d";
+import {MspId} from "./index";
 
 const {MSPPrincipal, MSPRole} = msp
 

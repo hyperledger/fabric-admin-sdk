@@ -1,7 +1,7 @@
 import {common} from '@hyperledger/fabric-protos';
 import SignaturePolicy = common.SignaturePolicy
 import NOutOf = SignaturePolicy.NOutOf;
-import {IndexDigit, isIndexDigit} from "./d";
+import {IndexDigit, isIndexDigit} from "./index";
 import assert from 'assert'
 
 const {SignaturePolicyEnvelope} = common

@@ -1,7 +1,7 @@
 import {msp} from '@hyperledger/fabric-protos'
 import * as MSPPrincipalNS from '../msp-principal'
 import {buildEnvelope, build, buildNOutOf} from '../signature-policy'
-import {IndexDigit, MspId} from "../d";
+import {IndexDigit, MspId} from "../index";
 import assert from "assert";
 import MSPRoleTypeMap = msp.MSPRole.MSPRoleTypeMap;
 

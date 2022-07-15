@@ -2,14 +2,16 @@ import {common, peer} from '@hyperledger/fabric-protos'
 import HeaderType = common.HeaderType
 import ChannelHeader = common.ChannelHeader
 import Header = common.Header;
-import {CertificatePEM, MspId, ValueOf, IndexDigit} from "../d";
+import {CertificatePEM, MspId, ValueOf, IndexDigit, ChannelName, ChaincodeLabel, TxId} from "../index";
 import {currentTimestamp, buildSignatureHeader, buildSerializedIdentity} from './common-builder'
 
 const {ChaincodeID, ChaincodeHeaderExtension} = peer
 
 export function buildChannelHeader(
     type: ValueOf<typeof HeaderType> | IndexDigit,
-    channelId: string, txId: string, version: IndexDigit = 1, chaincodeName?: string, TLSCertHash?: string,
+    channelId: ChannelName,
+    txId: TxId,
+    version: IndexDigit = 1, chaincodeName?: ChaincodeLabel, TLSCertHash?: string,
     timestamp = currentTimestamp()): ChannelHeader {
     const channelHeader = new ChannelHeader();
     channelHeader.setType(type)
@@ -37,11 +39,15 @@ export function buildChannelHeader(
 
 
 export const buildHeader = (mspid: MspId,
-                            certificate: CertificatePEM, nonce: Uint8Array,
+                            certificate: Uint8Array | CertificatePEM,
+                            nonce: Uint8Array,
                             channelHeader: ChannelHeader): Header => {
 
-    const creator = buildSerializedIdentity(mspid, Buffer.from(certificate)).serializeBinary()
-    const signatureHeader = buildSignatureHeader(creator, nonce)
+    const creator = buildSerializedIdentity({
+        mspid,
+        idBytes: typeof certificate === 'string' ? Buffer.from(certificate) : certificate
+    }).serializeBinary()
+    const signatureHeader = buildSignatureHeader({creator, nonce})
     const header = new Header();
     header.setSignatureHeader(signatureHeader.serializeBinary());
     header.setChannelHeader(channelHeader.serializeBinary());

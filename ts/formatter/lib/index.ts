@@ -1,8 +1,23 @@
 export type ValueOf<T> = T[keyof T];
 export type IndexDigit = number
+export namespace IndexDigit {
+    export function isIndex(num): num is IndexDigit {
+        return Number.isInteger(num) && num >= 0
+    }
+}
+/**
+ * Transaction Id
+ */
+export type TxId = string
 
-export function isIndexDigit(num): num is IndexDigit {
-    return Number.isInteger(num) && num >= 0
+export interface ConnectionInfo {
+    type: string;
+    url: string;
+    options: Record<string, unknown>;
+}
+
+export interface WithConnectionInfo {
+    connection: ConnectionInfo;
 }
 
 /**
@@ -10,9 +25,8 @@ export function isIndexDigit(num): num is IndexDigit {
  */
 export type MSPName = string
 
-/**
- *
- */
+
+export type ChaincodeLabel = string
 export type ChannelName = string
 
 /**

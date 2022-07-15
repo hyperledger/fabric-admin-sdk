@@ -1,4 +1,41 @@
+import {ValueOf, WithConnectionInfo} from "./index";
+import {Status} from './constants'
+
+/**
+ * A map with the key value pairs of the transient data.
+ */
 export type TransientMap = Record<string, string | Uint8Array> | object
+
+export type ProposalResultHandler = (ProposalResponse) => ProposalResponse;
+
+export type CommitResultHandler = (result: CommitResponse) => CommitResponse
+
+export interface ServiceError extends Error, WithConnectionInfo {
+}
+
+export type CommitResponse = {
+    status: ValueOf<typeof Status>
+    info: string
+}
+
+export interface EndorsementResponse extends WithConnectionInfo {
+    response: {
+        status: number;
+        message: string;
+        payload: Buffer;
+    };
+    payload: Buffer;
+    endorsement?: {
+        endorser: Buffer;
+        signature: Buffer;
+    };
+}
+
+export interface ProposalResponse {
+    errors: ServiceError[];
+    responses: EndorsementResponse[];
+}
+
 export namespace SystemChaincode {
     namespace qscc {
         export const name = 'qscc'
