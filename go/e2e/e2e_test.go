@@ -18,6 +18,7 @@ import (
 var _ = Describe("e2e", func() {
 	Context("Create channel", func() {
 		It("should create channel with test-network", func() {
+			//genesis block
 			_, err := os.Stat("../../fabric-samples/test-network")
 			if err != nil {
 				ginkgo.Skip("skip for unit test")
@@ -30,6 +31,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(block).ToNot(BeNil())
 
+			//create channel
 			var caFile, clientCert, clientKey, osnURL string
 			osnURL = "https://localhost:7053"
 			caFile = "../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
@@ -42,15 +44,38 @@ var _ = Describe("e2e", func() {
 			tlsClientCert, err := tls.LoadX509KeyPair(clientCert, clientKey)
 			Expect(err).NotTo(HaveOccurred())
 			resp, err := channel.CreateChannel(osnURL, block, caCertPool, tlsClientCert)
+			Expect(err).NotTo(HaveOccurred())
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				fmt.Println("myHttpGet error is ", err)
+				fmt.Println("my Http error is ", err)
 			}
 			fmt.Println("response statuscode is ", resp.StatusCode,
 				"\nhead[name]=", resp.Header["Name"],
 				"\nbody is ", string(body))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
+
+			//join peer1
+			peer_addr := "localhost:7051"
+			TLSCACert := "../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
+			PrivKeyPath := "../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
+			SignCert := "../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
+			MSPID := "Org1MSP"
+			err = channel.JoinChannel(
+				block, peer_addr, TLSCACert, PrivKeyPath, SignCert, MSPID,
+			)
+			Expect(err).NotTo(HaveOccurred())
+
+			//join peer2
+			peer_addr = "localhost:9051"
+			TLSCACert = "../../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt"
+			PrivKeyPath = "../../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/priv_sk"
+			SignCert = "../../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem"
+			MSPID = "Org2MSP"
+			err = channel.JoinChannel(
+				block, peer_addr, TLSCACert, PrivKeyPath, SignCert, MSPID,
+			)
+			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 })

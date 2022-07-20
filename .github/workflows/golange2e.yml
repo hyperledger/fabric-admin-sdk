@@ -31,9 +31,9 @@ jobs:
         working-directory: go/e2e
         name: create channel
       # skip as join channel tbd
-      #- run: echo y |  ./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go/ -ccl go
-      #  working-directory: fabric-samples/test-network
-      #  name: install chaincode-go
+      - run: echo y |  ./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go/ -ccl go
+        working-directory: fabric-samples/test-network
+        name: install chaincode-go
       # end of todo scope
 
 
