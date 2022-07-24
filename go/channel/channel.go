@@ -14,12 +14,10 @@ import (
 	"net/http"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/hyperledger-twgc/tape/pkg/infra/basic"
 	cb "github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/msp"
 	pb "github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/hyperledger/fabric/protoutil"
-	log "github.com/sirupsen/logrus"
 )
 
 func CreateChannel(osnURL string, block *cb.Block, caCertPool *x509.CertPool, tlsClientCert tls.Certificate) (*http.Response, error) {
@@ -27,7 +25,7 @@ func CreateChannel(osnURL string, block *cb.Block, caCertPool *x509.CertPool, tl
 	return osnadmin.Join(osnURL, block_byte, caCertPool, tlsClientCert)
 }
 
-func JoinChannel(block *cb.Block, peer_addr, TLSCACert, PrivKeyPath, SignCert, MSPID string) error {
+func JoinChannel(block *cb.Block, PrivKeyPath, SignCert, MSPID string, connection pb.EndorserClient) error {
 	spec, err := getJoinCCSpec(block)
 	if err != nil {
 		return err
@@ -58,23 +56,6 @@ func JoinChannel(block *cb.Block, peer_addr, TLSCACert, PrivKeyPath, SignCert, M
 		Creator:  name,
 		PrivKey:  priv,
 		SignCert: cert,
-	}
-	//init connection
-	peer := basic.Node{
-		Addr:      peer_addr,
-		TLSCACert: TLSCACert,
-	}
-
-	err = peer.LoadConfig()
-	if err != nil {
-		return err
-	}
-
-	logger := log.New()
-
-	connection, err := basic.CreateEndorserClient(peer, logger)
-	if err != nil {
-		return err
 	}
 
 	return executeJoin(CryptoImpl, connection, spec)

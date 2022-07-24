@@ -10,9 +10,11 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/hyperledger-twgc/tape/pkg/infra/basic"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	log "github.com/sirupsen/logrus"
 )
 
 var _ = Describe("e2e", func() {
@@ -61,8 +63,22 @@ var _ = Describe("e2e", func() {
 			PrivKeyPath := "../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
 			SignCert := "../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
 			MSPID := "Org1MSP"
+
+			logger := log.New()
+
+			peer := basic.Node{
+				Addr:      peer_addr,
+				TLSCACert: TLSCACert,
+			}
+
+			err = peer.LoadConfig()
+			Expect(err).NotTo(HaveOccurred())
+
+			connection, err := basic.CreateEndorserClient(peer, logger)
+			Expect(err).NotTo(HaveOccurred())
+
 			err = channel.JoinChannel(
-				block, peer_addr, TLSCACert, PrivKeyPath, SignCert, MSPID,
+				block, PrivKeyPath, SignCert, MSPID, connection,
 			)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -72,8 +88,20 @@ var _ = Describe("e2e", func() {
 			PrivKeyPath = "../../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/priv_sk"
 			SignCert = "../../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem"
 			MSPID = "Org2MSP"
+
+			peer = basic.Node{
+				Addr:      peer_addr,
+				TLSCACert: TLSCACert,
+			}
+
+			err = peer.LoadConfig()
+			Expect(err).NotTo(HaveOccurred())
+
+			connection, err = basic.CreateEndorserClient(peer, logger)
+			Expect(err).NotTo(HaveOccurred())
+
 			err = channel.JoinChannel(
-				block, peer_addr, TLSCACert, PrivKeyPath, SignCert, MSPID,
+				block, PrivKeyPath, SignCert, MSPID, connection,
 			)
 			Expect(err).NotTo(HaveOccurred())
 		})
