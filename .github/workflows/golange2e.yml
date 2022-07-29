@@ -35,6 +35,3 @@ jobs:
         working-directory: fabric-samples/test-network
         name: install chaincode-go
       # end of todo scope
-
-
-
