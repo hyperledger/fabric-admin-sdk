@@ -7,27 +7,21 @@
 set -e
 
 # shellcheck source=/dev/null
-source "$(cd "$(dirname "$0")" && pwd)/functions.sh"
-
-fabric_dir="$(cd "$(dirname "$0")/.." && pwd)"
-source_dirs=()
-while IFS=$'\n' read -r source_dir; do
-    source_dirs+=("$source_dir")
-done < <(go list -f '{{.Dir}}' ./... | sed s,"${fabric_dir}".,,g | cut -f 1 -d / | sort -u)
-
 echo "Checking with gofmt"
-OUTPUT="$(gofmt -l -s "${source_dirs[@]}")"
-OUTPUT="$(filterExcludedAndGeneratedFiles "$OUTPUT")"
-if [ -n "$OUTPUT" ]; then
-    echo "The following files contain gofmt errors"
-    echo "$OUTPUT"
-    echo "The gofmt command 'gofmt -l -s -w' must be run for these files"
+sources="./"
+OUTPUT=$(gofmt -e -d -s -l $sources)
+if [ ! -z "$OUTPUT" ]; then
+    # Some files are not gofmt.
+    echo >&2 "The following Go files must be formatted with gofmt:"
+    for fn in $OUTPUT; do
+        echo >&2 "  $fn"
+    done
+    echo >&2 "Please run 'make format'."
     exit 1
 fi
 
 echo "Checking with goimports"
-OUTPUT="$(goimports -l "${source_dirs[@]}")"
-OUTPUT="$(filterExcludedAndGeneratedFiles "$OUTPUT")"
+OUTPUT="$(goimports -l "$sources")"
 if [ -n "$OUTPUT" ]; then
     echo "The following files contain goimports errors"
     echo "$OUTPUT"
@@ -45,11 +39,3 @@ if [ -n "$OUTPUT" ]; then
 fi
 
 exit 0
-
-#echo "Checking with staticcheck"
-#OUTPUT="$(staticcheck ./... || true)"
-#if [ -n "$OUTPUT" ]; then
-#    echo "The following staticcheck issues were flagged"
-#    echo "$OUTPUT"
-#    exit 1
-#fi
