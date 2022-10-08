@@ -116,7 +116,8 @@ var _ = Describe("e2e", func() {
 			err = chaincode.PackageCCAAS(dummyConnection, dummyMeta, tmpDir, "basic-asset.tar.gz")
 			Expect(err).NotTo(HaveOccurred())
 			// install as CCAAS at peer1
-			err = chaincode.InstallChainCode(tmpDir+"/basic-asset.tar.gz", "basic-asset", "1.0", *org1MSP, connection1)
+			//err = chaincode.InstallChainCode(tmpDir+"/basic-asset.tar.gz", "basic-asset", "1.0", *org1MSP, connection1)
+			err = chaincode.InstallChainCode("", "./basicj.tar.gz", "basic-asset", "1.0", *org1MSP, connection1)
 			Expect(err).NotTo(HaveOccurred())
 
 			dummyConnection2 := chaincode.Connection{
@@ -131,7 +132,8 @@ var _ = Describe("e2e", func() {
 			err = chaincode.PackageCCAAS(dummyConnection2, dummyMeta2, tmpDir, "basic-asset.tar.gz")
 			Expect(err).NotTo(HaveOccurred())
 			// install as CCAAS at peer2
-			err = chaincode.InstallChainCode(tmpDir+"/basic-asset.tar.gz", "basic-asset", "1.0", *org2MSP, connection2)
+			//err = chaincode.InstallChainCode(tmpDir+"/basic-asset.tar.gz", "basic-asset", "1.0", *org2MSP, connection2)
+			err = chaincode.InstallChainCode("", "./basicj.tar.gz", "basic-asset", "1.0", *org2MSP, connection2)
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})

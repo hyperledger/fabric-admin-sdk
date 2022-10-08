@@ -33,6 +33,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/hpcloud/tail v1.0.0 // indirect
 	github.com/hyperledger/fabric-amcl v0.0.0-20220623114551-a0b635c78f99 // indirect
 	github.com/hyperledger/fabric-lib-go v1.0.0 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
@@ -43,6 +44,7 @@ require (
 	github.com/klauspost/compress v1.15.6 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/miekg/pkcs11 v1.0.3 // indirect
+	github.com/onsi/ginkgo v1.7.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pelletier/go-toml v1.8.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.14 // indirect
@@ -53,7 +55,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.1.1 // indirect
 	github.com/sykesm/zap-logfmt v0.0.4 // indirect
-	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/tedsuo/ifrit v0.0.0-20220120221754-dd274de71113 // indirect
 	github.com/uber/jaeger-client-go v2.29.1+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
@@ -67,5 +68,6 @@ require (
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
 	google.golang.org/grpc v1.44.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
+	gopkg.in/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
