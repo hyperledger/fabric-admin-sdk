@@ -10,8 +10,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	cb "github.com/hyperledger/fabric-protos-go/common"
 	pb "github.com/hyperledger/fabric-protos-go/peer"
+	lb "github.com/hyperledger/fabric-protos-go/peer/lifecycle"
 	"github.com/hyperledger/fabric/bccsp"
-	"github.com/hyperledger/fabric/bccsp/sw"
 	"github.com/hyperledger/fabric/core/common/ccpackage"
 	"github.com/hyperledger/fabric/core/common/ccprovider"
 	"github.com/hyperledger/fabric/protoutil"
@@ -23,16 +23,25 @@ const (
 )
 
 func InstallChainCode(Path, PackageFile, ChaincodeName, ChaincodeVersion string, Signer identity.CryptoImpl, endorsementClinet pb.EndorserClient) error {
-	csp, err := sw.NewWithParams(256, "SHA2", sw.NewDummyKeyStore())
+	//csp, err := sw.NewWithParams(256, "SHA2", sw.NewDummyKeyStore())
+	//if err != nil {
+	//	return err
+	//}
+	/*ccPkgMsg, err := getChaincodePackageMessage(PackageFile, Path, ChaincodeVersion, ChaincodeName, csp)
 	if err != nil {
 		return err
-	}
-	ccPkgMsg, err := getChaincodePackageMessage(PackageFile, Path, ChaincodeVersion, ChaincodeName, csp)
+	}*/
+	pkgBytes, err := ioutil.ReadFile(PackageFile)
 	if err != nil {
-		return err
+		return errors.WithMessagef(err, "failed to read chaincode package at '%s'", PackageFile)
 	}
 
-	proposal, err := createInstallProposal(Signer, ccPkgMsg)
+	serializedSigner, err := Signer.Serialize()
+	if err != nil {
+		return errors.Wrap(err, "failed to serialize signer")
+	}
+
+	proposal, err := createInstallProposal(pkgBytes, serializedSigner)
 	if err != nil {
 		return err
 	}
@@ -84,7 +93,7 @@ func getChaincodePackageMessage(PackageFile, Path, Version, Name string, CryptoP
 	return ccPkgMsg, nil
 }
 
-func createInstallProposal(Signer identity.CryptoImpl, msg proto.Message) (*pb.Proposal, error) {
+/*func createInstallProposal(Signer identity.CryptoImpl, msg proto.Message) (*pb.Proposal, error) {
 	creator, err := Signer.Serialize()
 	if err != nil {
 		return nil, errors.WithMessage(err, "error serializing identity")
@@ -96,7 +105,7 @@ func createInstallProposal(Signer identity.CryptoImpl, msg proto.Message) (*pb.P
 	}
 
 	return prop, nil
-}
+}*/
 
 func submitInstallProposal(endorsementClinet pb.EndorserClient, signedProposal *pb.SignedProposal) error {
 	// install is currently only supported for one peer
@@ -290,4 +299,31 @@ func GetCCPackage(buf []byte, bccsp bccsp.BCCSP) (ccprovider.CCPackage, error) {
 	}
 
 	return nil, errors.New("could not unmarshal chaincode package to CDS [" + cds_err.Error() + "]or SignedCDS [" + scds_err.Error() + "]")
+}
+
+func createInstallProposal(pkgBytes []byte, creatorBytes []byte) (*pb.Proposal, error) {
+	installChaincodeArgs := &lb.InstallChaincodeArgs{
+		ChaincodeInstallPackage: pkgBytes,
+	}
+
+	installChaincodeArgsBytes, err := proto.Marshal(installChaincodeArgs)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal InstallChaincodeArgs")
+	}
+
+	ccInput := &pb.ChaincodeInput{Args: [][]byte{[]byte("InstallChaincode"), installChaincodeArgsBytes}}
+
+	cis := &pb.ChaincodeInvocationSpec{
+		ChaincodeSpec: &pb.ChaincodeSpec{
+			ChaincodeId: &pb.ChaincodeID{Name: "_lifecycle"},
+			Input:       ccInput,
+		},
+	}
+
+	proposal, _, err := protoutil.CreateProposalFromCIS(cb.HeaderType_ENDORSER_TRANSACTION, "", cis, creatorBytes)
+	if err != nil {
+		return nil, errors.WithMessage(err, "failed to create proposal for ChaincodeInvocationSpec")
+	}
+
+	return proposal, nil
 }
