@@ -1,8 +1,6 @@
 package chaincode_test
 
 import (
-	"io/ioutil"
-	"os"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -17,9 +15,10 @@ func TestChaincode(t *testing.T) {
 var tmpDir string
 
 var _ = BeforeSuite(func() {
-	tmpDir, _ = ioutil.TempDir("", "chaincode")
+	//tmpDir, _ = ioutil.TempDir("", "chaincode")
+	tmpDir = "/tmp/chiancode"
 })
 
 var _ = AfterSuite(func() {
-	os.RemoveAll(tmpDir)
+	//os.RemoveAll(tmpDir)
 })

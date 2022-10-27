@@ -3,6 +3,7 @@ package e2e_test
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"fabric-admin-sdk/chaincode"
 	"fabric-admin-sdk/channel"
 	"fabric-admin-sdk/tools"
 	"fmt"
@@ -18,8 +19,8 @@ import (
 )
 
 var _ = Describe("e2e", func() {
-	Context("Create channel", func() {
-		It("should create channel with test-network", func() {
+	Context("the e2e test with test network", func() {
+		It("should work", func() {
 			//genesis block
 			_, err := os.Stat("../../fabric-samples/test-network")
 			if err != nil {
@@ -65,20 +66,18 @@ var _ = Describe("e2e", func() {
 			MSPID := "Org1MSP"
 
 			logger := log.New()
-
-			peer := basic.Node{
+			peer1 := basic.Node{
 				Addr:      peer_addr,
 				TLSCACert: TLSCACert,
 			}
-
-			err = peer.LoadConfig()
+			err = peer1.LoadConfig()
 			Expect(err).NotTo(HaveOccurred())
-
-			connection, err := basic.CreateEndorserClient(peer, logger)
+			connection1, err := basic.CreateEndorserClient(peer1, logger)
 			Expect(err).NotTo(HaveOccurred())
-
+			org1MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
+			Expect(err).NotTo(HaveOccurred())
 			err = channel.JoinChannel(
-				block, PrivKeyPath, SignCert, MSPID, connection,
+				block, *org1MSP, connection1,
 			)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -89,20 +88,52 @@ var _ = Describe("e2e", func() {
 			SignCert = "../../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem"
 			MSPID = "Org2MSP"
 
-			peer = basic.Node{
+			peer2 := basic.Node{
 				Addr:      peer_addr,
 				TLSCACert: TLSCACert,
 			}
-
-			err = peer.LoadConfig()
+			err = peer2.LoadConfig()
 			Expect(err).NotTo(HaveOccurred())
-
-			connection, err = basic.CreateEndorserClient(peer, logger)
+			connection2, err := basic.CreateEndorserClient(peer2, logger)
 			Expect(err).NotTo(HaveOccurred())
-
+			org2MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
+			Expect(err).NotTo(HaveOccurred())
 			err = channel.JoinChannel(
-				block, PrivKeyPath, SignCert, MSPID, connection,
+				block, *org2MSP, connection2,
 			)
+			Expect(err).NotTo(HaveOccurred())
+
+			// package chaincode as CCAAS
+			dummyConnection := chaincode.Connection{
+				Address:      "org1peer1_basic:9999",
+				Dial_timeout: "10s",
+				Tls_required: false,
+			}
+			dummyMeta := chaincode.Metadata{
+				Type:  "ccaas",
+				Label: "basic_1.0",
+			}
+			err = chaincode.PackageCCAAS(dummyConnection, dummyMeta, tmpDir, "basic-asset.tar.gz")
+			Expect(err).NotTo(HaveOccurred())
+			// install as CCAAS at peer1
+			//err = chaincode.InstallChainCode(tmpDir+"/basic-asset.tar.gz", "basic-asset", "1.0", *org1MSP, connection1)
+			err = chaincode.InstallChainCode("", "./basicj.tar.gz", "basic-asset", "1.0", *org1MSP, connection1)
+			Expect(err).NotTo(HaveOccurred())
+
+			dummyConnection2 := chaincode.Connection{
+				Address:      "org2peer1_basic:9999",
+				Dial_timeout: "10s",
+				Tls_required: false,
+			}
+			dummyMeta2 := chaincode.Metadata{
+				Type:  "ccaas",
+				Label: "basic_1.0",
+			}
+			err = chaincode.PackageCCAAS(dummyConnection2, dummyMeta2, tmpDir, "basic-asset.tar.gz")
+			Expect(err).NotTo(HaveOccurred())
+			// install as CCAAS at peer2
+			//err = chaincode.InstallChainCode(tmpDir+"/basic-asset.tar.gz", "basic-asset", "1.0", *org2MSP, connection2)
+			err = chaincode.InstallChainCode("", "./basicj.tar.gz", "basic-asset", "1.0", *org2MSP, connection2)
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})

@@ -2,20 +2,15 @@ package channel
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/pem"
 	"errors"
 	"fabric-admin-sdk/internal/osnadmin"
 	"fabric-admin-sdk/internal/pkg/identity"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
-	"github.com/gogo/protobuf/proto"
 	cb "github.com/hyperledger/fabric-protos-go/common"
-	"github.com/hyperledger/fabric-protos-go/msp"
 	pb "github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/hyperledger/fabric/protoutil"
 )
@@ -25,40 +20,12 @@ func CreateChannel(osnURL string, block *cb.Block, caCertPool *x509.CertPool, tl
 	return osnadmin.Join(osnURL, block_byte, caCertPool, tlsClientCert)
 }
 
-func JoinChannel(block *cb.Block, PrivKeyPath, SignCert, MSPID string, connection pb.EndorserClient) error {
+func JoinChannel(block *cb.Block, Signer identity.CryptoImpl, connection pb.EndorserClient) error {
 	spec, err := getJoinCCSpec(block)
 	if err != nil {
 		return err
 	}
-
-	priv, err := GetPrivateKey(PrivKeyPath)
-	if err != nil {
-		return err
-	}
-
-	cert, certBytes, err := GetCertificate(SignCert)
-	if err != nil {
-		return err
-	}
-
-	id := &msp.SerializedIdentity{
-		Mspid:   MSPID,
-		IdBytes: certBytes,
-	}
-
-	name, err := proto.Marshal(id)
-	if err != nil {
-		return err
-	}
-
-	//get signer
-	CryptoImpl := identity.CryptoImpl{
-		Creator:  name,
-		PrivKey:  priv,
-		SignCert: cert,
-	}
-
-	return executeJoin(CryptoImpl, connection, spec)
+	return executeJoin(Signer, connection, spec)
 }
 
 const (
@@ -115,93 +82,4 @@ func executeJoin(Signer identity.CryptoImpl, endorsementClinet pb.EndorserClient
 		return errors.New(fmt.Sprintf("bad proposal response %d: %s", proposalResp.Response.Status, proposalResp.Response.Message))
 	}
 	return nil
-}
-func GetPrivateKey(f string) (*ecdsa.PrivateKey, error) {
-	in, err := ioutil.ReadFile(f)
-	if err != nil {
-		return nil, err
-	}
-
-	k, err := PEMtoPrivateKey(in, []byte{})
-	if err != nil {
-		return nil, err
-	}
-
-	key, ok := k.(*ecdsa.PrivateKey)
-	if !ok {
-		return nil, errors.New("expecting ecdsa key")
-	}
-
-	return key, nil
-}
-
-func GetCertificate(f string) (*x509.Certificate, []byte, error) {
-	in, err := ioutil.ReadFile(f)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	block, _ := pem.Decode(in)
-
-	c, err := x509.ParseCertificate(block.Bytes)
-	return c, in, err
-}
-
-// PEMtoPrivateKey unmarshals a pem to private key
-func PEMtoPrivateKey(raw []byte, pwd []byte) (interface{}, error) {
-	if len(raw) == 0 {
-		return nil, errors.New("Invalid PEM. It must be different from nil.")
-	}
-	block, _ := pem.Decode(raw)
-	if block == nil {
-		return nil, fmt.Errorf("Failed decoding PEM. Block must be different from nil. [% x]", raw)
-	}
-
-	// TODO: derive from header the type of the key
-
-	if x509.IsEncryptedPEMBlock(block) {
-		if len(pwd) == 0 {
-			return nil, errors.New("Encrypted Key. Need a password")
-		}
-
-		decrypted, err := x509.DecryptPEMBlock(block, pwd)
-		if err != nil {
-			return nil, fmt.Errorf("Failed PEM decryption [%s]", err)
-		}
-
-		key, err := DERToPrivateKey(decrypted)
-		if err != nil {
-			return nil, err
-		}
-		return key, err
-	}
-
-	cert, err := DERToPrivateKey(block.Bytes)
-	if err != nil {
-		return nil, err
-	}
-	return cert, err
-}
-
-// DERToPrivateKey unmarshals a der to private key
-func DERToPrivateKey(der []byte) (key interface{}, err error) {
-
-	if key, err = x509.ParsePKCS1PrivateKey(der); err == nil {
-		return key, nil
-	}
-
-	if key, err = x509.ParsePKCS8PrivateKey(der); err == nil {
-		switch key.(type) {
-		case *ecdsa.PrivateKey:
-			return
-		default:
-			return nil, errors.New("Found unknown private key type in PKCS#8 wrapping")
-		}
-	}
-
-	if key, err = x509.ParseECPrivateKey(der); err == nil {
-		return
-	}
-
-	return nil, errors.New("Invalid key type. The DER must contain an ecdsa.PrivateKey")
 }
