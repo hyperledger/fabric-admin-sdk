@@ -1,6 +1,7 @@
 package e2e_test
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fabric-admin-sdk/chaincode"
@@ -12,6 +13,7 @@ import (
 	"os"
 
 	"github.com/hyperledger-twgc/tape/pkg/infra/basic"
+	pb "github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -116,8 +118,8 @@ var _ = Describe("e2e", func() {
 			err = chaincode.PackageCCAAS(dummyConnection, dummyMeta, tmpDir, "basic-asset.tar.gz")
 			Expect(err).NotTo(HaveOccurred())
 			// install as CCAAS at peer1
-			//err = chaincode.InstallChainCode(tmpDir+"/basic-asset.tar.gz", "basic-asset", "1.0", *org1MSP, connection1)
-			err = chaincode.InstallChainCode("", "./basicj.tar.gz", "basic-asset", "1.0", *org1MSP, connection1)
+			err = chaincode.InstallChainCode("", tmpDir+"/basic-asset.tar.gz", "basic-asset", "1.0", *org1MSP, connection1)
+			//err = chaincode.InstallChainCode("", "./basicj.tar.gz", "basic-asset", "1.0", *org1MSP, connection1)
 			Expect(err).NotTo(HaveOccurred())
 
 			dummyConnection2 := chaincode.Connection{
@@ -132,9 +134,27 @@ var _ = Describe("e2e", func() {
 			err = chaincode.PackageCCAAS(dummyConnection2, dummyMeta2, tmpDir, "basic-asset.tar.gz")
 			Expect(err).NotTo(HaveOccurred())
 			// install as CCAAS at peer2
-			//err = chaincode.InstallChainCode(tmpDir+"/basic-asset.tar.gz", "basic-asset", "1.0", *org2MSP, connection2)
-			err = chaincode.InstallChainCode("", "./basicj.tar.gz", "basic-asset", "1.0", *org2MSP, connection2)
+			err = chaincode.InstallChainCode("", tmpDir+"/basic-asset.tar.gz", "basic-asset", "1.0", *org2MSP, connection2)
+			//err = chaincode.InstallChainCode("", "./basicj.tar.gz", "basic-asset", "1.0", *org2MSP, connection2)
 			Expect(err).NotTo(HaveOccurred())
+
+			// approve from org1
+			// orderer
+			orderer_addr := "localhost:7050"
+			orderer_TLSCACert := "../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pems"
+			orderer_node := basic.Node{
+				Addr:      orderer_addr,
+				TLSCACert: orderer_TLSCACert,
+			}
+			err = orderer_node.LoadConfig()
+			Expect(err).NotTo(HaveOccurred())
+			connection3, err := basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
+			Expect(err).NotTo(HaveOccurred())
+			endorsement_group := make([]pb.EndorserClient, 1)
+			endorsement_group[0] = connection1
+			err = chaincode.Approve(*org1MSP, "mychannel", "", "", "basic-asset", "1.0", "", "", 0, nil, false, nil, endorsement_group, connection3)
+			Expect(err).NotTo(HaveOccurred())
+			// approve from org2
 		})
 	})
 })
