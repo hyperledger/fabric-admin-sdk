@@ -25,29 +25,7 @@ func Approve(Signer identity.CryptoImpl, ChannelID, inputTxID, PackageID, Name, 
 	if err != nil {
 		return err
 	}
-	signedProposal, err := signProposal(proposal, Signer)
-	if err != nil {
-		return err
-	}
-	//ProcessProposal
-	var responses []*pb.ProposalResponse
-	for _, endorser := range EndorserClients {
-		proposalResponse, err := endorser.ProcessProposal(context.Background(), signedProposal)
-		if err != nil {
-			return errors.WithMessage(err, "failed to endorse proposal")
-		}
-		responses = append(responses, proposalResponse)
-	}
-	//CreateSignedTx
-	env, err := protoutil.CreateSignedTx(proposal, Signer, responses...)
-	if err != nil {
-		return errors.WithMessage(err, "failed to create signed transaction")
-	}
-	//Send Broadcast
-	if err = BroadcastClient.Send(env); err != nil {
-		return errors.WithMessage(err, "failed to send transaction")
-	}
-	return nil
+	return processProposal(proposal, Signer, EndorserClients, BroadcastClient)
 }
 
 func createProposal(Signer identity.CryptoImpl, ChannelID, inputTxID, PackageID, Name, Version, EndorsementPlugin, ValidationPlugin string,
@@ -127,4 +105,31 @@ func signProposal(proposal *pb.Proposal, signer identity.CryptoImpl) (*pb.Signed
 		ProposalBytes: proposalBytes,
 		Signature:     signature,
 	}, nil
+}
+
+func processProposal(proposal *pb.Proposal, Signer identity.CryptoImpl, EndorserClients []pb.EndorserClient, BroadcastClient ab.AtomicBroadcast_BroadcastClient) error {
+	//sign
+	signedProposal, err := signProposal(proposal, Signer)
+	if err != nil {
+		return err
+	}
+	//ProcessProposal
+	var responses []*pb.ProposalResponse
+	for _, endorser := range EndorserClients {
+		proposalResponse, err := endorser.ProcessProposal(context.Background(), signedProposal)
+		if err != nil {
+			return errors.WithMessage(err, "failed to endorse proposal")
+		}
+		responses = append(responses, proposalResponse)
+	}
+	//CreateSignedTx
+	env, err := protoutil.CreateSignedTx(proposal, Signer, responses...)
+	if err != nil {
+		return errors.WithMessage(err, "failed to create signed transaction")
+	}
+	//Send Broadcast
+	if err = BroadcastClient.Send(env); err != nil {
+		return errors.WithMessage(err, "failed to send transaction")
+	}
+	return nil
 }
