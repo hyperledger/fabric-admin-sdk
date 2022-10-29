@@ -141,7 +141,7 @@ var _ = Describe("e2e", func() {
 			// approve from org1
 			// orderer
 			orderer_addr := "localhost:7050"
-			orderer_TLSCACert := "../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pems"
+			orderer_TLSCACert := "../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
 			orderer_node := basic.Node{
 				Addr:      orderer_addr,
 				TLSCACert: orderer_TLSCACert,
