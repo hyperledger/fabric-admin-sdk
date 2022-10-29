@@ -4,10 +4,13 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"errors"
 	"fabric-admin-sdk/internal/osnadmin"
 	"fabric-admin-sdk/internal/pkg/identity"
+	"fabric-admin-sdk/resource"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	cb "github.com/hyperledger/fabric-protos-go/common"
@@ -31,6 +34,25 @@ func JoinChannel(block *cb.Block, Signer identity.CryptoImpl, connection pb.Endo
 const (
 	UndefinedParamValue = ""
 )
+
+func ListChannel(osnURL string, caCertPool *x509.CertPool, tlsClientCert tls.Certificate) (resource.ChannelList, error) {
+
+	var channels resource.ChannelList
+	resp, err := osnadmin.ListAllChannels(osnURL, caCertPool, tlsClientCert)
+	if err != nil {
+		return channels, err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return channels, err
+	}
+
+	if err := json.Unmarshal(body, &channels); err != nil {
+		return channels, err
+	}
+
+	return channels, nil
+}
 
 func getJoinCCSpec(block *cb.Block) (*pb.ChaincodeSpec, error) {
 	block_byte := protoutil.MarshalOrPanic(block)
