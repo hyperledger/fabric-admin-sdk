@@ -152,7 +152,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			endorsement_group := make([]pb.EndorserClient, 1)
 			endorsement_group[0] = connection1
-			err = chaincode.Approve(*org1MSP, "mychannel", "", "", "basic-asset", "1.0", "", "", 0, nil, false, nil, endorsement_group, connection3)
+			err = chaincode.Approve(*org1MSP, "mychannel", "", "", "basic-asset", "1.0", "", "", 1, nil, false, nil, endorsement_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 			// approve from org2
 		})
