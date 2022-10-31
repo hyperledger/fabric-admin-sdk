@@ -23,7 +23,7 @@ func Commit(ChannelID, inputTxID, PackageID, Name, Version, EndorsementPlugin, V
 	if err != nil {
 		return err
 	}
-	return processProposal(proposal, Signer, EndorserClients, BroadcastClient)
+	return processProposalWithBroadcast(proposal, Signer, EndorserClients, BroadcastClient)
 }
 
 func createCommitProposal(ChannelID, inputTxID, PackageID, Name, Version, EndorsementPlugin, ValidationPlugin string,

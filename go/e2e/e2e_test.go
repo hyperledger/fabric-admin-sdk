@@ -152,6 +152,14 @@ var _ = Describe("e2e", func() {
 			//endorsement_org1_group[1] = connection1
 			err = chaincode.Approve(*org2MSP, "mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, endorsement_org2_group, connection4)
 			Expect(err).NotTo(HaveOccurred())
+			// ReadinessCheck from org1
+			time.Sleep(time.Duration(15) * time.Second)
+			err = chaincode.ReadinessCheck("mychannel", "", "basic", "1.0", "", "", 1, nil, false, nil, "", *org1MSP, connection1)
+			Expect(err).NotTo(HaveOccurred())
+			// ReadinessCheck from org2
+			time.Sleep(time.Duration(15) * time.Second)
+			err = chaincode.ReadinessCheck("mychannel", "", "basic", "1.0", "", "", 1, nil, false, nil, "", *org2MSP, connection2)
+			Expect(err).NotTo(HaveOccurred())
 			// commit from org1
 			time.Sleep(time.Duration(15) * time.Second)
 			connection5, err := basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
