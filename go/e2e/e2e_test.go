@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/hyperledger-twgc/tape/pkg/infra/basic"
 	pb "github.com/hyperledger/fabric-protos-go/peer"
@@ -107,7 +108,7 @@ var _ = Describe("e2e", func() {
 
 			// package chaincode as CCAAS
 			dummyConnection := chaincode.Connection{
-				Address:      "org1peer1_basic:9999",
+				Address:      "{{.peername}}_basic:9999",
 				Dial_timeout: "10s",
 				Tls_required: false,
 			}
@@ -118,27 +119,14 @@ var _ = Describe("e2e", func() {
 			err = chaincode.PackageCCAAS(dummyConnection, dummyMeta, tmpDir, "basic-asset.tar.gz")
 			Expect(err).NotTo(HaveOccurred())
 			// install as CCAAS at peer1
-			err = chaincode.InstallChainCode("", tmpDir+"/basic-asset.tar.gz", "basic-asset", "1.0", *org1MSP, connection1)
+			err = chaincode.InstallChainCode("", tmpDir+"/basic-asset.tar.gz", "basic", "1.0", *org1MSP, connection1)
 			//err = chaincode.InstallChainCode("", "./basicj.tar.gz", "basic-asset", "1.0", *org1MSP, connection1)
 			Expect(err).NotTo(HaveOccurred())
-
-			dummyConnection2 := chaincode.Connection{
-				Address:      "org2peer1_basic:9999",
-				Dial_timeout: "10s",
-				Tls_required: false,
-			}
-			dummyMeta2 := chaincode.Metadata{
-				Type:  "ccaas",
-				Label: "basic_1.0",
-			}
-			err = chaincode.PackageCCAAS(dummyConnection2, dummyMeta2, tmpDir, "basic-asset.tar.gz")
-			Expect(err).NotTo(HaveOccurred())
 			// install as CCAAS at peer2
-			err = chaincode.InstallChainCode("", tmpDir+"/basic-asset.tar.gz", "basic-asset", "1.0", *org2MSP, connection2)
+			err = chaincode.InstallChainCode("", tmpDir+"/basic-asset.tar.gz", "basic", "1.0", *org2MSP, connection2)
 			//err = chaincode.InstallChainCode("", "./basicj.tar.gz", "basic-asset", "1.0", *org2MSP, connection2)
 			Expect(err).NotTo(HaveOccurred())
 
-			// approve from org1
 			// orderer
 			orderer_addr := "localhost:7050"
 			orderer_TLSCACert := "../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
@@ -150,11 +138,42 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			connection3, err := basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
 			Expect(err).NotTo(HaveOccurred())
-			endorsement_group := make([]pb.EndorserClient, 1)
-			endorsement_group[0] = connection1
-			err = chaincode.Approve(*org1MSP, "mychannel", "", "", "basic-asset", "1.0", "", "", 1, nil, false, nil, endorsement_group, connection3)
-			Expect(err).NotTo(HaveOccurred())
 			// approve from org2
+			time.Sleep(time.Duration(15) * time.Second)
+			endorsement_org2_group := make([]pb.EndorserClient, 1)
+			endorsement_org2_group[0] = connection2
+			connection3, err = basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
+			Expect(err).NotTo(HaveOccurred())
+			err = chaincode.Approve(*org2MSP, "mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, endorsement_org2_group, connection3)
+			Expect(err).NotTo(HaveOccurred())
+			// ReadinessCheck from org2
+			time.Sleep(time.Duration(15) * time.Second)
+			err = chaincode.ReadinessCheck("mychannel", "", "basic", "1.0", "", "", 1, nil, false, nil, "", *org2MSP, connection2)
+			Expect(err).NotTo(HaveOccurred())
+
+			// approve from org1
+			endorsement_org1_group := make([]pb.EndorserClient, 1)
+			endorsement_org1_group[0] = connection1
+			err = chaincode.Approve(*org1MSP, "mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, endorsement_org1_group, connection3)
+			Expect(err).NotTo(HaveOccurred())
+			// ReadinessCheck from org1
+			time.Sleep(time.Duration(15) * time.Second)
+			err = chaincode.ReadinessCheck("mychannel", "", "basic", "1.0", "", "", 1, nil, false, nil, "", *org1MSP, connection1)
+			Expect(err).NotTo(HaveOccurred())
+
+			// commit from org1
+			time.Sleep(time.Duration(15) * time.Second)
+			connection3, err = basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
+			Expect(err).NotTo(HaveOccurred())
+			err = chaincode.Commit("mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, *org1MSP, endorsement_org1_group, connection3)
+			Expect(err).NotTo(HaveOccurred())
+
+			// commit from org2
+			time.Sleep(time.Duration(15) * time.Second)
+			connection3, err = basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
+			Expect(err).NotTo(HaveOccurred())
+			err = chaincode.Commit("mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, *org2MSP, endorsement_org2_group, connection3)
+			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 })
