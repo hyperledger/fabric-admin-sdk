@@ -127,7 +127,6 @@ var _ = Describe("e2e", func() {
 			//err = chaincode.InstallChainCode("", "./basicj.tar.gz", "basic-asset", "1.0", *org2MSP, connection2)
 			Expect(err).NotTo(HaveOccurred())
 
-			// approve from org1
 			// orderer
 			orderer_addr := "localhost:7050"
 			orderer_TLSCACert := "../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
@@ -139,15 +138,6 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			connection3, err := basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
 			Expect(err).NotTo(HaveOccurred())
-			endorsement_org1_group := make([]pb.EndorserClient, 1)
-			endorsement_org1_group[0] = connection1
-			err = chaincode.Approve(*org1MSP, "mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, endorsement_org1_group, connection3)
-			Expect(err).NotTo(HaveOccurred())
-			// ReadinessCheck from org1
-			time.Sleep(time.Duration(15) * time.Second)
-			err = chaincode.ReadinessCheck("mychannel", "", "basic", "1.0", "", "", 1, nil, false, nil, "", *org1MSP, connection1)
-			Expect(err).NotTo(HaveOccurred())
-
 			// approve from org2
 			time.Sleep(time.Duration(15) * time.Second)
 			endorsement_org2_group := make([]pb.EndorserClient, 1)
@@ -159,6 +149,16 @@ var _ = Describe("e2e", func() {
 			// ReadinessCheck from org2
 			time.Sleep(time.Duration(15) * time.Second)
 			err = chaincode.ReadinessCheck("mychannel", "", "basic", "1.0", "", "", 1, nil, false, nil, "", *org2MSP, connection2)
+			Expect(err).NotTo(HaveOccurred())
+
+			// approve from org1
+			endorsement_org1_group := make([]pb.EndorserClient, 1)
+			endorsement_org1_group[0] = connection1
+			err = chaincode.Approve(*org1MSP, "mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, endorsement_org1_group, connection3)
+			Expect(err).NotTo(HaveOccurred())
+			// ReadinessCheck from org1
+			time.Sleep(time.Duration(15) * time.Second)
+			err = chaincode.ReadinessCheck("mychannel", "", "basic", "1.0", "", "", 1, nil, false, nil, "", *org1MSP, connection1)
 			Expect(err).NotTo(HaveOccurred())
 
 			// commit from org1
