@@ -15,29 +15,38 @@ import (
 
 const commitFuncName = "CommitChaincodeDefinition"
 
-func Commit(ChannelID, inputTxID, PackageID, Name, Version, EndorsementPlugin, ValidationPlugin string,
-	Sequence int64, ValidationParameterBytes []byte, InitRequired bool, CollectionConfigPackage *peer.CollectionConfigPackage,
-	Signer identity.CryptoImpl, EndorserClients []pb.EndorserClient, BroadcastClient ab.AtomicBroadcast_BroadcastClient) error {
-	proposal, _, err := createCommitProposal(ChannelID, inputTxID, PackageID, Name, Version, EndorsementPlugin, ValidationPlugin,
-		Sequence, ValidationParameterBytes, InitRequired, CollectionConfigPackage, Signer)
+type CCDefine struct {
+	ChannelID                string
+	InputTxID                string
+	PackageID                string
+	Name                     string
+	Version                  string
+	EndorsementPlugin        string
+	ValidationPlugin         string
+	Sequence                 int64
+	ValidationParameterBytes []byte
+	InitRequired             bool
+	CollectionConfigPackage  *peer.CollectionConfigPackage
+}
+
+func Commit(CCDefine CCDefine, Signer identity.CryptoImpl, EndorserClients []pb.EndorserClient, BroadcastClient ab.AtomicBroadcast_BroadcastClient) error {
+	proposal, _, err := createCommitProposal(CCDefine, Signer)
 	if err != nil {
 		return err
 	}
 	return processProposalWithBroadcast(proposal, Signer, EndorserClients, BroadcastClient)
 }
 
-func createCommitProposal(ChannelID, inputTxID, PackageID, Name, Version, EndorsementPlugin, ValidationPlugin string,
-	Sequence int64, ValidationParameterBytes []byte, InitRequired bool, CollectionConfigPackage *peer.CollectionConfigPackage,
-	Signer identity.CryptoImpl) (proposal *pb.Proposal, txID string, err error) {
+func createCommitProposal(CCDefine CCDefine, Signer identity.CryptoImpl) (proposal *pb.Proposal, txID string, err error) {
 	args := &lb.CommitChaincodeDefinitionArgs{
-		Name:                Name,
-		Version:             Version,
-		Sequence:            Sequence,
-		EndorsementPlugin:   EndorsementPlugin,
-		ValidationPlugin:    ValidationPlugin,
-		ValidationParameter: ValidationParameterBytes,
-		InitRequired:        InitRequired,
-		Collections:         CollectionConfigPackage,
+		Name:                CCDefine.Name,
+		Version:             CCDefine.Version,
+		Sequence:            CCDefine.Sequence,
+		EndorsementPlugin:   CCDefine.EndorsementPlugin,
+		ValidationPlugin:    CCDefine.ValidationPlugin,
+		ValidationParameter: CCDefine.ValidationParameterBytes,
+		InitRequired:        CCDefine.InitRequired,
+		Collections:         CCDefine.CollectionConfigPackage,
 	}
 
 	argsBytes, err := proto.Marshal(args)
@@ -58,7 +67,7 @@ func createCommitProposal(ChannelID, inputTxID, PackageID, Name, Version, Endors
 		return nil, "", errors.WithMessage(err, "failed to serialize identity")
 	}
 
-	proposal, txID, err = protoutil.CreateChaincodeProposalWithTxIDAndTransient(cb.HeaderType_ENDORSER_TRANSACTION, ChannelID, cis, creatorBytes, inputTxID, nil)
+	proposal, txID, err = protoutil.CreateChaincodeProposalWithTxIDAndTransient(cb.HeaderType_ENDORSER_TRANSACTION, CCDefine.ChannelID, cis, creatorBytes, CCDefine.InputTxID, nil)
 	if err != nil {
 		return nil, "", errors.WithMessage(err, "failed to create ChaincodeInvocationSpec proposal")
 	}

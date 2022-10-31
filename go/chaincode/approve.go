@@ -9,7 +9,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	cb "github.com/hyperledger/fabric-protos-go/common"
 	ab "github.com/hyperledger/fabric-protos-go/orderer"
-	"github.com/hyperledger/fabric-protos-go/peer"
 	pb "github.com/hyperledger/fabric-protos-go/peer"
 	lb "github.com/hyperledger/fabric-protos-go/peer/lifecycle"
 	"github.com/hyperledger/fabric/protoutil"
@@ -20,25 +19,21 @@ const approveFuncName = "ApproveChaincodeDefinitionForMyOrg"
 const lifecycleName = "_lifecycle"
 const checkCommitReadinessFuncName = "CheckCommitReadiness"
 
-func Approve(Signer identity.CryptoImpl, ChannelID, inputTxID, PackageID, Name, Version, EndorsementPlugin, ValidationPlugin string,
-	Sequence int64, ValidationParameterBytes []byte, InitRequired bool, CollectionConfigPackage *peer.CollectionConfigPackage,
-	EndorserClients []pb.EndorserClient, BroadcastClient ab.AtomicBroadcast_BroadcastClient) error {
-	proposal, _, err := createProposal(Signer, ChannelID, inputTxID, PackageID, Name, Version, EndorsementPlugin, ValidationPlugin,
-		Sequence, ValidationParameterBytes, InitRequired, CollectionConfigPackage)
+func Approve(CCDefine CCDefine, Signer identity.CryptoImpl, EndorserClients []pb.EndorserClient, BroadcastClient ab.AtomicBroadcast_BroadcastClient) error {
+	proposal, _, err := createProposal(CCDefine, Signer)
 	if err != nil {
 		return err
 	}
 	return processProposalWithBroadcast(proposal, Signer, EndorserClients, BroadcastClient)
 }
 
-func createProposal(Signer identity.CryptoImpl, ChannelID, inputTxID, PackageID, Name, Version, EndorsementPlugin, ValidationPlugin string,
-	Sequence int64, ValidationParameterBytes []byte, InitRequired bool, CollectionConfigPackage *peer.CollectionConfigPackage) (proposal *pb.Proposal, txID string, err error) {
+func createProposal(CCDefine CCDefine, Signer identity.CryptoImpl) (proposal *pb.Proposal, txID string, err error) {
 	var ccsrc *lb.ChaincodeSource
-	if PackageID != "" {
+	if CCDefine.PackageID != "" {
 		ccsrc = &lb.ChaincodeSource{
 			Type: &lb.ChaincodeSource_LocalPackage{
 				LocalPackage: &lb.ChaincodeSource_Local{
-					PackageId: PackageID,
+					PackageId: CCDefine.PackageID,
 				},
 			},
 		}
@@ -51,14 +46,14 @@ func createProposal(Signer identity.CryptoImpl, ChannelID, inputTxID, PackageID,
 	}
 
 	args := &lb.ApproveChaincodeDefinitionForMyOrgArgs{
-		Name:                Name,
-		Version:             Version,
-		Sequence:            Sequence,
-		EndorsementPlugin:   EndorsementPlugin,
-		ValidationPlugin:    ValidationPlugin,
-		ValidationParameter: ValidationParameterBytes,
-		InitRequired:        InitRequired,
-		Collections:         CollectionConfigPackage,
+		Name:                CCDefine.Name,
+		Version:             CCDefine.Version,
+		Sequence:            CCDefine.Sequence,
+		EndorsementPlugin:   CCDefine.EndorsementPlugin,
+		ValidationPlugin:    CCDefine.ValidationPlugin,
+		ValidationParameter: CCDefine.ValidationParameterBytes,
+		InitRequired:        CCDefine.InitRequired,
+		Collections:         CCDefine.CollectionConfigPackage,
 		Source:              ccsrc,
 	}
 
@@ -80,7 +75,7 @@ func createProposal(Signer identity.CryptoImpl, ChannelID, inputTxID, PackageID,
 		return nil, "", errors.WithMessage(err, "failed to serialize identity")
 	}
 
-	proposal, txID, err = protoutil.CreateChaincodeProposalWithTxIDAndTransient(cb.HeaderType_ENDORSER_TRANSACTION, ChannelID, cis, creatorBytes, inputTxID, nil)
+	proposal, txID, err = protoutil.CreateChaincodeProposalWithTxIDAndTransient(cb.HeaderType_ENDORSER_TRANSACTION, CCDefine.ChannelID, cis, creatorBytes, CCDefine.InputTxID, nil)
 	if err != nil {
 		return nil, "", errors.WithMessage(err, "failed to create ChaincodeInvocationSpec proposal")
 	}
@@ -137,11 +132,8 @@ func processProposalWithBroadcast(proposal *pb.Proposal, Signer identity.CryptoI
 	return nil
 }
 
-func ReadinessCheck(ChannelID, PackageID, Name, Version, EndorsementPlugin, ValidationPlugin string,
-	Sequence int64, ValidationParameterBytes []byte, InitRequired bool, CollectionConfigPackage *peer.CollectionConfigPackage, inputTxID string,
-	Signer identity.CryptoImpl, EndorserClient pb.EndorserClient) error {
-	proposal, err := createReadinessCheckProposal(ChannelID, PackageID, Name, Version, EndorsementPlugin, ValidationPlugin,
-		Sequence, ValidationParameterBytes, InitRequired, CollectionConfigPackage, inputTxID, Signer)
+func ReadinessCheck(CCDefine CCDefine, Signer identity.CryptoImpl, EndorserClient pb.EndorserClient) error {
+	proposal, err := createReadinessCheckProposal(CCDefine, Signer)
 	if err != nil {
 		return err
 	}
@@ -190,17 +182,16 @@ func printResponseAsJSON(proposalResponse *pb.ProposalResponse, msg proto.Messag
 	return nil
 }
 
-func createReadinessCheckProposal(ChannelID, PackageID, Name, Version, EndorsementPlugin, ValidationPlugin string,
-	Sequence int64, ValidationParameterBytes []byte, InitRequired bool, CollectionConfigPackage *peer.CollectionConfigPackage, inputTxID string, Signer identity.CryptoImpl) (*pb.Proposal, error) {
+func createReadinessCheckProposal(CCDefine CCDefine, Signer identity.CryptoImpl) (*pb.Proposal, error) {
 	args := &lb.CheckCommitReadinessArgs{
-		Name:                Name,
-		Version:             Version,
-		Sequence:            Sequence,
-		EndorsementPlugin:   EndorsementPlugin,
-		ValidationPlugin:    ValidationPlugin,
-		ValidationParameter: ValidationParameterBytes,
-		InitRequired:        InitRequired,
-		Collections:         CollectionConfigPackage,
+		Name:                CCDefine.Name,
+		Version:             CCDefine.Version,
+		Sequence:            CCDefine.Sequence,
+		EndorsementPlugin:   CCDefine.EndorsementPlugin,
+		ValidationPlugin:    CCDefine.ValidationPlugin,
+		ValidationParameter: CCDefine.ValidationParameterBytes,
+		InitRequired:        CCDefine.InitRequired,
+		Collections:         CCDefine.CollectionConfigPackage,
 	}
 
 	argsBytes, err := proto.Marshal(args)
@@ -221,7 +212,7 @@ func createReadinessCheckProposal(ChannelID, PackageID, Name, Version, Endorseme
 		return nil, errors.WithMessage(err, "failed to serialize identity")
 	}
 
-	proposal, _, err := protoutil.CreateChaincodeProposalWithTxIDAndTransient(cb.HeaderType_ENDORSER_TRANSACTION, ChannelID, cis, creatorBytes, inputTxID, nil)
+	proposal, _, err := protoutil.CreateChaincodeProposalWithTxIDAndTransient(cb.HeaderType_ENDORSER_TRANSACTION, CCDefine.ChannelID, cis, creatorBytes, CCDefine.InputTxID, nil)
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to create ChaincodeInvocationSpec proposal")
 	}
