@@ -143,8 +143,6 @@ var _ = Describe("e2e", func() {
 			endorsement_org1_group[0] = connection1
 			err = chaincode.Approve(*org1MSP, "mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, endorsement_org1_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
-			err = chaincode.Approve(*org1MSP, "mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, endorsement_org1_group, connection3)
-			Expect(err).NotTo(HaveOccurred())
 			// ReadinessCheck from org1
 			time.Sleep(time.Duration(15) * time.Second)
 			err = chaincode.ReadinessCheck("mychannel", "", "basic", "1.0", "", "", 1, nil, false, nil, "", *org1MSP, connection1)
