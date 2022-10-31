@@ -141,16 +141,15 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			endorsement_org1_group := make([]pb.EndorserClient, 1)
 			endorsement_org1_group[0] = connection1
-			//endorsement_org1_group[1] = connection2
+			connection3.Recv()
 			err = chaincode.Approve(*org1MSP, "mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, endorsement_org1_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 			// approve from org2
 			time.Sleep(time.Duration(15) * time.Second)
-			connection4, err := basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
 			endorsement_org2_group := make([]pb.EndorserClient, 1)
 			endorsement_org2_group[0] = connection2
-			//endorsement_org1_group[1] = connection1
-			err = chaincode.Approve(*org2MSP, "mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, endorsement_org2_group, connection4)
+			connection3.Recv()
+			err = chaincode.Approve(*org2MSP, "mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, endorsement_org2_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 			// ReadinessCheck from org1
 			time.Sleep(time.Duration(15) * time.Second)
@@ -162,13 +161,13 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			// commit from org1
 			time.Sleep(time.Duration(15) * time.Second)
-			connection5, err := basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
-			err = chaincode.Commit("mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, *org1MSP, endorsement_org1_group, connection5)
+			connection3.Recv()
+			err = chaincode.Commit("mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, *org1MSP, endorsement_org1_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 			// commit from org2
 			time.Sleep(time.Duration(15) * time.Second)
-			connection6, err := basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
-			err = chaincode.Commit("mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, *org2MSP, endorsement_org2_group, connection6)
+			connection3.Recv()
+			err = chaincode.Commit("mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, *org2MSP, endorsement_org2_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
