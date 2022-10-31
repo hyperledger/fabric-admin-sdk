@@ -8,6 +8,7 @@ import (
 	"fabric-admin-sdk/channel"
 	"fabric-admin-sdk/tools"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -127,6 +128,9 @@ var _ = Describe("e2e", func() {
 			//err = chaincode.InstallChainCode("", "./basicj.tar.gz", "basic-asset", "1.0", *org2MSP, connection2)
 			Expect(err).NotTo(HaveOccurred())
 
+			PackageID, err := chaincode.PackageID(tmpDir + "/basic-asset.tar.gz")
+			Expect(err).NotTo(HaveOccurred())
+			fmt.Println(PackageID)
 			//cc define
 			CCDefine := chaincode.CCDefine{
 				ChannelID:                "mychannel",
@@ -188,6 +192,9 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			err = chaincode.Commit(CCDefine, *org2MSP, endorsement_org2_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
+
+			f, _ := os.Create("PackageID")
+			io.WriteString(f, PackageID)
 		})
 	})
 })
