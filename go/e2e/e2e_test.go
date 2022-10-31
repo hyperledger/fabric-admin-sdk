@@ -8,6 +8,7 @@ import (
 	"fabric-admin-sdk/channel"
 	"fabric-admin-sdk/tools"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -141,14 +142,25 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			endorsement_org1_group := make([]pb.EndorserClient, 1)
 			endorsement_org1_group[0] = connection1
-			connection3.Recv()
+			go func() {
+				for {
+					_, err := connection3.Recv()
+					if err != nil {
+						if err == io.EOF {
+							return
+						} else {
+							fmt.Println(err)
+						}
+					}
+				}
+			}()
 			err = chaincode.Approve(*org1MSP, "mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, endorsement_org1_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 			// approve from org2
 			time.Sleep(time.Duration(15) * time.Second)
 			endorsement_org2_group := make([]pb.EndorserClient, 1)
 			endorsement_org2_group[0] = connection2
-			connection3.Recv()
+
 			err = chaincode.Approve(*org2MSP, "mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, endorsement_org2_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 			// ReadinessCheck from org1
@@ -161,12 +173,12 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			// commit from org1
 			time.Sleep(time.Duration(15) * time.Second)
-			connection3.Recv()
+
 			err = chaincode.Commit("mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, *org1MSP, endorsement_org1_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 			// commit from org2
 			time.Sleep(time.Duration(15) * time.Second)
-			connection3.Recv()
+
 			err = chaincode.Commit("mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, *org2MSP, endorsement_org2_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 		})
