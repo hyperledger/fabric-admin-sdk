@@ -8,7 +8,6 @@ import (
 	"fabric-admin-sdk/channel"
 	"fabric-admin-sdk/tools"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -142,7 +141,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			endorsement_org1_group := make([]pb.EndorserClient, 1)
 			endorsement_org1_group[0] = connection1
-			go func() {
+			/*go func() {
 				for {
 					_, err := connection3.Recv()
 					if err != nil {
@@ -153,7 +152,9 @@ var _ = Describe("e2e", func() {
 						}
 					}
 				}
-			}()
+			}()*/
+			err = chaincode.Approve(*org1MSP, "mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, endorsement_org1_group, connection3)
+			Expect(err).NotTo(HaveOccurred())
 			err = chaincode.Approve(*org1MSP, "mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, endorsement_org1_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 			// approve from org2
