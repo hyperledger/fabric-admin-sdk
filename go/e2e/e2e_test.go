@@ -8,6 +8,7 @@ import (
 	"fabric-admin-sdk/channel"
 	"fabric-admin-sdk/tools"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -127,6 +128,23 @@ var _ = Describe("e2e", func() {
 			//err = chaincode.InstallChainCode("", "./basicj.tar.gz", "basic-asset", "1.0", *org2MSP, connection2)
 			Expect(err).NotTo(HaveOccurred())
 
+			PackageID, err := chaincode.PackageID(tmpDir + "/basic-asset.tar.gz")
+			Expect(err).NotTo(HaveOccurred())
+			fmt.Println(PackageID)
+			//cc define
+			CCDefine := chaincode.CCDefine{
+				ChannelID:                "mychannel",
+				InputTxID:                "",
+				PackageID:                "",
+				Name:                     "basic",
+				Version:                  "1.0",
+				EndorsementPlugin:        "",
+				ValidationPlugin:         "",
+				Sequence:                 1,
+				ValidationParameterBytes: nil,
+				InitRequired:             false,
+				CollectionConfigPackage:  nil,
+			}
 			// orderer
 			orderer_addr := "localhost:7050"
 			orderer_TLSCACert := "../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
@@ -144,36 +162,39 @@ var _ = Describe("e2e", func() {
 			endorsement_org2_group[0] = connection2
 			connection3, err = basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
 			Expect(err).NotTo(HaveOccurred())
-			err = chaincode.Approve(*org2MSP, "mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, endorsement_org2_group, connection3)
+			err = chaincode.Approve(CCDefine, *org2MSP, endorsement_org2_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 			// ReadinessCheck from org2
 			time.Sleep(time.Duration(15) * time.Second)
-			err = chaincode.ReadinessCheck("mychannel", "", "basic", "1.0", "", "", 1, nil, false, nil, "", *org2MSP, connection2)
+			err = chaincode.ReadinessCheck(CCDefine, *org2MSP, connection2)
 			Expect(err).NotTo(HaveOccurred())
 
 			// approve from org1
 			endorsement_org1_group := make([]pb.EndorserClient, 1)
 			endorsement_org1_group[0] = connection1
-			err = chaincode.Approve(*org1MSP, "mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, endorsement_org1_group, connection3)
+			err = chaincode.Approve(CCDefine, *org1MSP, endorsement_org1_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 			// ReadinessCheck from org1
 			time.Sleep(time.Duration(15) * time.Second)
-			err = chaincode.ReadinessCheck("mychannel", "", "basic", "1.0", "", "", 1, nil, false, nil, "", *org1MSP, connection1)
+			err = chaincode.ReadinessCheck(CCDefine, *org1MSP, connection1)
 			Expect(err).NotTo(HaveOccurred())
 
 			// commit from org1
 			time.Sleep(time.Duration(15) * time.Second)
 			connection3, err = basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
 			Expect(err).NotTo(HaveOccurred())
-			err = chaincode.Commit("mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, *org1MSP, endorsement_org1_group, connection3)
+			err = chaincode.Commit(CCDefine, *org1MSP, endorsement_org1_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 
 			// commit from org2
 			time.Sleep(time.Duration(15) * time.Second)
 			connection3, err = basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
 			Expect(err).NotTo(HaveOccurred())
-			err = chaincode.Commit("mychannel", "", "", "basic", "1.0", "", "", 1, nil, false, nil, *org2MSP, endorsement_org2_group, connection3)
+			err = chaincode.Commit(CCDefine, *org2MSP, endorsement_org2_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
+
+			f, _ := os.Create("PackageID")
+			io.WriteString(f, PackageID)
 		})
 	})
 })
