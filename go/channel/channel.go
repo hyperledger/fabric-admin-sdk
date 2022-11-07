@@ -4,10 +4,13 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"errors"
 	"fabric-admin-sdk/internal/osnadmin"
 	"fabric-admin-sdk/internal/pkg/identity"
+	"fabric-admin-sdk/resource"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	cb "github.com/hyperledger/fabric-protos-go/common"
@@ -82,4 +85,23 @@ func executeJoin(Signer identity.CryptoImpl, endorsementClinet pb.EndorserClient
 		return errors.New(fmt.Sprintf("bad proposal response %d: %s", proposalResp.Response.Status, proposalResp.Response.Message))
 	}
 	return nil
+}
+
+func ListChannel(osnURL string, caCertPool *x509.CertPool, tlsClientCert tls.Certificate) (resource.ChannelList, error) {
+
+	var channels resource.ChannelList
+	resp, err := osnadmin.ListAllChannels(osnURL, caCertPool, tlsClientCert)
+	if err != nil {
+		return channels, err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return channels, err
+	}
+
+	if err := json.Unmarshal(body, &channels); err != nil {
+		return channels, err
+	}
+
+	return channels, nil
 }
