@@ -8,9 +8,11 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/hyperledger-twgc/tape/pkg/infra/basic"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	log "github.com/sirupsen/logrus"
 )
 
 var _ = Describe("channel", func() {
@@ -36,6 +38,62 @@ var _ = Describe("channel", func() {
 			for _, v := range channels.Channels {
 				fmt.Println("channel name: ", v.Name)
 			}
+		})
+	})
+
+	Context("get config block", func() {
+		It("should work", func() {
+			_, err := os.Stat("../../../fabric-samples/test-network")
+			if err != nil {
+				ginkgo.Skip("skip for unit test")
+			}
+			var peerAddr = "peer0.org1.example.com:7051"
+			var TLSCACert = "../../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
+			var PrivKeyPath = "../../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
+			var SignCert = "../../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
+			var MSPID = "Org1MSP"
+			var channelID = "mychannel"
+
+			logger := log.New()
+			peer1 := basic.Node{
+				Addr:      peerAddr,
+				TLSCACert: TLSCACert,
+			}
+			err = peer1.LoadConfig()
+			Expect(err).NotTo(HaveOccurred())
+			connection, err := basic.CreateEndorserClient(peer1, logger)
+			Expect(err).NotTo(HaveOccurred())
+			configBlock, err := channel.GetConfigBlock(SignCert, PrivKeyPath, MSPID, channelID, connection)
+			Expect(err).NotTo(HaveOccurred())
+			fmt.Println("config block", configBlock)
+		})
+	})
+
+	Context("get block chain info", func() {
+		It("should work", func() {
+			_, err := os.Stat("../../../fabric-samples/test-network")
+			if err != nil {
+				ginkgo.Skip("skip for unit test")
+			}
+			var peerAddr = "peer0.org1.example.com:7051"
+			var TLSCACert = "../../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
+			var PrivKeyPath = "../../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
+			var SignCert = "../../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
+			var MSPID = "Org1MSP"
+			var channelID = "mychannel"
+
+			logger := log.New()
+			peer1 := basic.Node{
+				Addr:      peerAddr,
+				TLSCACert: TLSCACert,
+			}
+			err = peer1.LoadConfig()
+			Expect(err).NotTo(HaveOccurred())
+			connection, err := basic.CreateEndorserClient(peer1, logger)
+			Expect(err).NotTo(HaveOccurred())
+			blockChainInfo, err := channel.GetBlockChainInfo(SignCert, PrivKeyPath, MSPID, channelID, connection)
+			Expect(err).NotTo(HaveOccurred())
+			fmt.Println("blockchain info", blockChainInfo)
 		})
 	})
 })
