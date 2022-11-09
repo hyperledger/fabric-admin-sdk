@@ -1,7 +1,7 @@
 .PHONY: unit-test
 unit-test:
 	@echo "Run unit test......"
-	go test -v ./... --bench=. -cover --count=1
+	go test -v -coverprofile=coverage.out ./chaincode/... ./channel/... ./tools/...
 
 include gotools.mk
 

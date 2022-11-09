@@ -11,17 +11,16 @@ import (
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
-	cb "github.com/hyperledger/fabric-protos-go/common"
-	"github.com/hyperledger/fabric/protoutil"
+	"github.com/hyperledger/fabric-protos-go/common"
 )
 
-func computePoliciesMapUpdate(original, updated map[string]*cb.ConfigPolicy) (readSet, writeSet, sameSet map[string]*cb.ConfigPolicy, updatedMembers bool) {
-	readSet = make(map[string]*cb.ConfigPolicy)
-	writeSet = make(map[string]*cb.ConfigPolicy)
+func computePoliciesMapUpdate(original, updated map[string]*common.ConfigPolicy) (readSet, writeSet, sameSet map[string]*common.ConfigPolicy, updatedMembers bool) {
+	readSet = make(map[string]*common.ConfigPolicy)
+	writeSet = make(map[string]*common.ConfigPolicy)
 
 	// All modified config goes into the read/write sets, but in case the map membership changes, we retain the
 	// config which was the same to add to the read/write sets
-	sameSet = make(map[string]*cb.ConfigPolicy)
+	sameSet = make(map[string]*common.ConfigPolicy)
 
 	for policyName, originalPolicy := range original {
 		updatedPolicy, ok := updated[policyName]
@@ -31,13 +30,13 @@ func computePoliciesMapUpdate(original, updated map[string]*cb.ConfigPolicy) (re
 		}
 
 		if originalPolicy.ModPolicy == updatedPolicy.ModPolicy && proto.Equal(originalPolicy.Policy, updatedPolicy.Policy) {
-			sameSet[policyName] = &cb.ConfigPolicy{
+			sameSet[policyName] = &common.ConfigPolicy{
 				Version: originalPolicy.Version,
 			}
 			continue
 		}
 
-		writeSet[policyName] = &cb.ConfigPolicy{
+		writeSet[policyName] = &common.ConfigPolicy{
 			Version:   originalPolicy.Version + 1,
 			ModPolicy: updatedPolicy.ModPolicy,
 			Policy:    updatedPolicy.Policy,
@@ -50,7 +49,7 @@ func computePoliciesMapUpdate(original, updated map[string]*cb.ConfigPolicy) (re
 			continue
 		}
 		updatedMembers = true
-		writeSet[policyName] = &cb.ConfigPolicy{
+		writeSet[policyName] = &common.ConfigPolicy{
 			Version:   0,
 			ModPolicy: updatedPolicy.ModPolicy,
 			Policy:    updatedPolicy.Policy,
@@ -60,13 +59,13 @@ func computePoliciesMapUpdate(original, updated map[string]*cb.ConfigPolicy) (re
 	return
 }
 
-func computeValuesMapUpdate(original, updated map[string]*cb.ConfigValue) (readSet, writeSet, sameSet map[string]*cb.ConfigValue, updatedMembers bool) {
-	readSet = make(map[string]*cb.ConfigValue)
-	writeSet = make(map[string]*cb.ConfigValue)
+func computeValuesMapUpdate(original, updated map[string]*common.ConfigValue) (readSet, writeSet, sameSet map[string]*common.ConfigValue, updatedMembers bool) {
+	readSet = make(map[string]*common.ConfigValue)
+	writeSet = make(map[string]*common.ConfigValue)
 
 	// All modified config goes into the read/write sets, but in case the map membership changes, we retain the
 	// config which was the same to add to the read/write sets
-	sameSet = make(map[string]*cb.ConfigValue)
+	sameSet = make(map[string]*common.ConfigValue)
 
 	for valueName, originalValue := range original {
 		updatedValue, ok := updated[valueName]
@@ -76,13 +75,13 @@ func computeValuesMapUpdate(original, updated map[string]*cb.ConfigValue) (readS
 		}
 
 		if originalValue.ModPolicy == updatedValue.ModPolicy && bytes.Equal(originalValue.Value, updatedValue.Value) {
-			sameSet[valueName] = &cb.ConfigValue{
+			sameSet[valueName] = &common.ConfigValue{
 				Version: originalValue.Version,
 			}
 			continue
 		}
 
-		writeSet[valueName] = &cb.ConfigValue{
+		writeSet[valueName] = &common.ConfigValue{
 			Version:   originalValue.Version + 1,
 			ModPolicy: updatedValue.ModPolicy,
 			Value:     updatedValue.Value,
@@ -95,7 +94,7 @@ func computeValuesMapUpdate(original, updated map[string]*cb.ConfigValue) (readS
 			continue
 		}
 		updatedMembers = true
-		writeSet[valueName] = &cb.ConfigValue{
+		writeSet[valueName] = &common.ConfigValue{
 			Version:   0,
 			ModPolicy: updatedValue.ModPolicy,
 			Value:     updatedValue.Value,
@@ -105,13 +104,13 @@ func computeValuesMapUpdate(original, updated map[string]*cb.ConfigValue) (readS
 	return
 }
 
-func computeGroupsMapUpdate(original, updated map[string]*cb.ConfigGroup) (readSet, writeSet, sameSet map[string]*cb.ConfigGroup, updatedMembers bool) {
-	readSet = make(map[string]*cb.ConfigGroup)
-	writeSet = make(map[string]*cb.ConfigGroup)
+func computeGroupsMapUpdate(original, updated map[string]*common.ConfigGroup) (readSet, writeSet, sameSet map[string]*common.ConfigGroup, updatedMembers bool) {
+	readSet = make(map[string]*common.ConfigGroup)
+	writeSet = make(map[string]*common.ConfigGroup)
 
 	// All modified config goes into the read/write sets, but in case the map membership changes, we retain the
 	// config which was the same to add to the read/write sets
-	sameSet = make(map[string]*cb.ConfigGroup)
+	sameSet = make(map[string]*common.ConfigGroup)
 
 	for groupName, originalGroup := range original {
 		updatedGroup, ok := updated[groupName]
@@ -137,8 +136,13 @@ func computeGroupsMapUpdate(original, updated map[string]*cb.ConfigGroup) (readS
 			continue
 		}
 		updatedMembers = true
-		_, groupWriteSet, _ := computeGroupUpdate(protoutil.NewConfigGroup(), updatedGroup)
-		writeSet[groupName] = &cb.ConfigGroup{
+		configGroup := &common.ConfigGroup{
+			Groups:   make(map[string]*common.ConfigGroup),
+			Values:   make(map[string]*common.ConfigValue),
+			Policies: make(map[string]*common.ConfigPolicy),
+		}
+		_, groupWriteSet, _ := computeGroupUpdate(configGroup, updatedGroup)
+		writeSet[groupName] = &common.ConfigGroup{
 			Version:   0,
 			ModPolicy: updatedGroup.ModPolicy,
 			Policies:  groupWriteSet.Policies,
@@ -150,7 +154,7 @@ func computeGroupsMapUpdate(original, updated map[string]*cb.ConfigGroup) (readS
 	return
 }
 
-func computeGroupUpdate(original, updated *cb.ConfigGroup) (readSet, writeSet *cb.ConfigGroup, updatedGroup bool) {
+func computeGroupUpdate(original, updated *common.ConfigGroup) (readSet, writeSet *common.ConfigGroup, updatedGroup bool) {
 	readSetPolicies, writeSetPolicies, sameSetPolicies, policiesMembersUpdated := computePoliciesMapUpdate(original.Policies, updated.Policies)
 	readSetValues, writeSetValues, sameSetValues, valuesMembersUpdated := computeValuesMapUpdate(original.Values, updated.Values)
 	readSetGroups, writeSetGroups, sameSetGroups, groupsMembersUpdated := computeGroupsMapUpdate(original.Groups, updated.Groups)
@@ -165,19 +169,19 @@ func computeGroupUpdate(original, updated *cb.ConfigGroup) (readSet, writeSet *c
 			len(writeSetValues) == 0 &&
 			len(readSetGroups) == 0 &&
 			len(writeSetGroups) == 0 {
-			return &cb.ConfigGroup{
+			return &common.ConfigGroup{
 					Version: original.Version,
-				}, &cb.ConfigGroup{
+				}, &common.ConfigGroup{
 					Version: original.Version,
 				}, false
 		}
 
-		return &cb.ConfigGroup{
+		return &common.ConfigGroup{
 				Version:  original.Version,
 				Policies: readSetPolicies,
 				Values:   readSetValues,
 				Groups:   readSetGroups,
-			}, &cb.ConfigGroup{
+			}, &common.ConfigGroup{
 				Version:  original.Version,
 				Policies: writeSetPolicies,
 				Values:   writeSetValues,
@@ -200,12 +204,12 @@ func computeGroupUpdate(original, updated *cb.ConfigGroup) (readSet, writeSet *c
 		writeSetGroups[k] = sameGroup
 	}
 
-	return &cb.ConfigGroup{
+	return &common.ConfigGroup{
 			Version:  original.Version,
 			Policies: readSetPolicies,
 			Values:   readSetValues,
 			Groups:   readSetGroups,
-		}, &cb.ConfigGroup{
+		}, &common.ConfigGroup{
 			Version:   original.Version + 1,
 			Policies:  writeSetPolicies,
 			Values:    writeSetValues,
@@ -214,7 +218,7 @@ func computeGroupUpdate(original, updated *cb.ConfigGroup) (readSet, writeSet *c
 		}, true
 }
 
-func Compute(original, updated *cb.Config) (*cb.ConfigUpdate, error) {
+func Compute(original, updated *common.Config) (*common.ConfigUpdate, error) {
 	if original.ChannelGroup == nil {
 		return nil, fmt.Errorf("no channel group included for original config")
 	}
@@ -227,7 +231,7 @@ func Compute(original, updated *cb.Config) (*cb.ConfigUpdate, error) {
 	if !groupUpdated {
 		return nil, fmt.Errorf("no differences detected between original and updated config")
 	}
-	return &cb.ConfigUpdate{
+	return &common.ConfigUpdate{
 		ReadSet:  readSet,
 		WriteSet: writeSet,
 	}, nil
