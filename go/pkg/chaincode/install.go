@@ -3,7 +3,7 @@ package chaincode
 import (
 	"context"
 	"fabric-admin-sdk/internal/pkg/identity"
-	"fabric-admin-sdk/internal/proposal"
+	"fabric-admin-sdk/pkg/internal/proposal"
 	"fmt"
 	"io"
 
@@ -26,12 +26,12 @@ func Install(ctx context.Context, endorser peer.EndorserClient, signer identity.
 	installArgs := &lifecycle.InstallChaincodeArgs{
 		ChaincodeInstallPackage: packageBytes,
 	}
-	installArgBytes, err := proto.Marshal(installArgs)
+	installArgsBytes, err := proto.Marshal(installArgs)
 	if err != nil {
 		return err
 	}
 
-	proposalProto, err := proposal.NewProposal(signer, lifecycleChaincodeName, installTransactionName, proposal.WithArguments(installArgBytes))
+	proposalProto, err := proposal.NewProposal(signer, lifecycleChaincodeName, installTransactionName, proposal.WithArguments(installArgsBytes))
 	if err != nil {
 		return err
 	}

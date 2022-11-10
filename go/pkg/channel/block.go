@@ -3,7 +3,7 @@ package channel
 import (
 	"context"
 	"fabric-admin-sdk/internal/pkg/identity"
-	"fabric-admin-sdk/tools"
+	"fabric-admin-sdk/pkg/tools"
 
 	"github.com/golang/protobuf/proto"
 	cb "github.com/hyperledger/fabric-protos-go/common"

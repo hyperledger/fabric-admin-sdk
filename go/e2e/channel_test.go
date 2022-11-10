@@ -3,7 +3,7 @@ package e2e_test
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"fabric-admin-sdk/channel"
+	"fabric-admin-sdk/pkg/channel"
 	"fmt"
 	"io/ioutil"
 	"os"

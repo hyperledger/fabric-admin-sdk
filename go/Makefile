@@ -1,12 +1,12 @@
 .PHONY: unit-test
 unit-test:
 	@echo "Run unit test......"
-	go test -v -coverprofile=coverage.out ./chaincode/... ./channel/... ./tools/...
+	go test -v -coverpkg=./pkg/... -coverprofile=coverage.out ./pkg/...
 
 include gotools.mk
 
 .PHONY: basic-checks
-basic-checks: gotools-install linter
+basic-checks: gotools-install generate linter
 
 .PHONY: linter
 linter:
@@ -23,4 +23,9 @@ govulncheck: set_govulncheck
 	@govulncheck -v ./... || true
 
 escapes_detect:
-	@go build -gcflags="-m -l" ./... | grep "escapes to heap" || true
+	@go build -gcflags="-m -l" ./... 2>&1 | grep "escapes to heap" || true
+
+.PHONEY: generate
+generate:
+	go install github.com/golang/mock/mockgen@v1.6
+	go generate ./pkg/...
