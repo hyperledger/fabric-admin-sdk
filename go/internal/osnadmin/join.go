@@ -33,7 +33,10 @@ func createJoinRequest(url string, blockBytes []byte) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	part.Write(blockBytes)
+	_, err = part.Write(blockBytes)
+	if err != nil {
+		return nil, err
+	}
 	err = writer.Close()
 	if err != nil {
 		return nil, err

@@ -21,16 +21,16 @@ jobs:
         working-directory: node/admin
       # - run: npm test
       #   working-directory: node/admin
-  ts-test:
-    defaults:
-      run:
-        working-directory: ts
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@main
-      - run: npm i
-        working-directory: ts/formatter
-      - run: npm test
-        working-directory: ts/formatter
-      - run: npm run compile
-        working-directory: ts/formatter
+  #ts-test:
+  #  defaults:
+  #    run:
+  #      working-directory: ts
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    - uses: actions/checkout@main
+  #    - run: npm i
+  #      working-directory: ts/formatter
+  #    - run: npm test
+  #      working-directory: ts/formatter
+  #    - run: npm run compile
+  #      working-directory: ts/formatter

@@ -44,7 +44,7 @@ var _ = Describe("Tools", func() {
 			oc, exists := bundle.OrdererConfig()
 			Expect(exists).To(BeTrue())
 			configMetadata := &etcdraft.ConfigMetadata{}
-			proto.Unmarshal(oc.ConsensusMetadata(), configMetadata)
+			err = proto.Unmarshal(oc.ConsensusMetadata(), configMetadata)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(configMetadata.Options).NotTo(BeNil())
 		})

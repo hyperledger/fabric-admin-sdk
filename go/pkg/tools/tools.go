@@ -15,15 +15,12 @@ import (
 	"fabric-admin-sdk/internal/configtxgen/genesisconfig"
 	"fabric-admin-sdk/internal/pkg/identity"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/golang/protobuf/proto"
 	cb "github.com/hyperledger/fabric-protos-go/common"
 	"github.com/hyperledger/fabric-protos-go/msp"
-	"github.com/hyperledger/fabric/common/flogging"
 )
-
-var logger = flogging.MustGetLogger("common.tools.configtxgen")
 
 // configtxGen
 // base on Profile return block
@@ -75,7 +72,7 @@ func CreateSigner(PrivKeyPath, SignCert, MSPID string) (*identity.CryptoImpl, er
 }
 
 func GetPrivateKey(f string) (*ecdsa.PrivateKey, error) {
-	in, err := ioutil.ReadFile(f)
+	in, err := os.ReadFile(f)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +91,7 @@ func GetPrivateKey(f string) (*ecdsa.PrivateKey, error) {
 }
 
 func GetCertificate(f string) (*x509.Certificate, []byte, error) {
-	in, err := ioutil.ReadFile(f)
+	in, err := os.ReadFile(f)
 	if err != nil {
 		return nil, nil, err
 	}

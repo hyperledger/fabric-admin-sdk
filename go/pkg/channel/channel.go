@@ -10,7 +10,7 @@ import (
 	"fabric-admin-sdk/internal/pkg/identity"
 	"fabric-admin-sdk/resource"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	cb "github.com/hyperledger/fabric-protos-go/common"
@@ -82,7 +82,7 @@ func executeJoin(Signer identity.CryptoImpl, endorsementClinet pb.EndorserClient
 	}
 
 	if proposalResp.Response.Status != 0 && proposalResp.Response.Status != 200 {
-		return errors.New(fmt.Sprintf("bad proposal response %d: %s", proposalResp.Response.Status, proposalResp.Response.Message))
+		return fmt.Errorf("bad proposal response %d: %s", proposalResp.Response.Status, proposalResp.Response.Message)
 	}
 	return nil
 }
@@ -94,7 +94,7 @@ func ListChannel(osnURL string, caCertPool *x509.CertPool, tlsClientCert tls.Cer
 	if err != nil {
 		return channels, err
 	}
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return channels, err
 	}

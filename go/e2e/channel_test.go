@@ -5,11 +5,9 @@ import (
 	"crypto/x509"
 	"fabric-admin-sdk/pkg/channel"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/hyperledger-twgc/tape/pkg/infra/basic"
-	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	log "github.com/sirupsen/logrus"
@@ -20,7 +18,7 @@ var _ = Describe("channel", func() {
 		It("should work", func() {
 			_, err := os.Stat("../../../fabric-samples/test-network")
 			if err != nil {
-				ginkgo.Skip("skip for unit test")
+				Skip("skip for unit test")
 			}
 			var caFile, clientCert, clientKey, osnURL string
 			osnURL = "https://orderer.example.com:7053"
@@ -28,7 +26,7 @@ var _ = Describe("channel", func() {
 			clientCert = "../../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt"
 			clientKey = "../../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key"
 			caCertPool := x509.NewCertPool()
-			caFilePEM, err := ioutil.ReadFile(caFile)
+			caFilePEM, err := os.ReadFile(caFile)
 			caCertPool.AppendCertsFromPEM(caFilePEM)
 			Expect(err).NotTo(HaveOccurred())
 			tlsClientCert, err := tls.LoadX509KeyPair(clientCert, clientKey)
@@ -45,7 +43,7 @@ var _ = Describe("channel", func() {
 		It("should work", func() {
 			_, err := os.Stat("../../../fabric-samples/test-network")
 			if err != nil {
-				ginkgo.Skip("skip for unit test")
+				Skip("skip for unit test")
 			}
 			var peerAddr = "peer0.org1.example.com:7051"
 			var TLSCACert = "../../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
@@ -73,7 +71,7 @@ var _ = Describe("channel", func() {
 		It("should work", func() {
 			_, err := os.Stat("../../../fabric-samples/test-network")
 			if err != nil {
-				ginkgo.Skip("skip for unit test")
+				Skip("skip for unit test")
 			}
 			var peerAddr = "peer0.org1.example.com:7051"
 			var TLSCACert = "../../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
