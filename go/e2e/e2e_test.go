@@ -4,27 +4,45 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"fabric-admin-sdk/chaincode"
-	"fabric-admin-sdk/channel"
-	"fabric-admin-sdk/tools"
+	"encoding/pem"
+	"errors"
+	"fabric-admin-sdk/internal/pkg/identity"
+	"fabric-admin-sdk/pkg/chaincode"
+	"fabric-admin-sdk/pkg/channel"
+	"fabric-admin-sdk/pkg/tools"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
+	"sync"
 	"time"
 
 	"github.com/hyperledger-twgc/tape/pkg/infra/basic"
+	"github.com/hyperledger/fabric-protos-go/peer"
 	pb "github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
+
+const (
+	org1PeerAddress = "localhost:7051"
+	org2PeerAddress = "localhost:9051"
+)
+
+type ConnectionDetails struct {
+	signer     identity.SignerSerializer
+	connection peer.EndorserClient
+}
 
 var _ = Describe("e2e", func() {
 	Context("the e2e test with test network", func() {
-		It("should work", func() {
+		It("should work", func(specCtx SpecContext) {
 			//genesis block
 			_, err := os.Stat("../../fabric-samples/test-network")
 			if err != nil {
@@ -63,7 +81,6 @@ var _ = Describe("e2e", func() {
 			Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
 
 			//join peer1
-			peer_addr := "localhost:7051"
 			TLSCACert := "../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
 			PrivKeyPath := "../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
 			SignCert := "../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
@@ -71,7 +88,7 @@ var _ = Describe("e2e", func() {
 
 			logger := log.New()
 			peer1 := basic.Node{
-				Addr:      peer_addr,
+				Addr:      org1PeerAddress,
 				TLSCACert: TLSCACert,
 			}
 			err = peer1.LoadConfig()
@@ -86,14 +103,13 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			//join peer2
-			peer_addr = "localhost:9051"
 			TLSCACert = "../../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt"
 			PrivKeyPath = "../../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/priv_sk"
 			SignCert = "../../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem"
 			MSPID = "Org2MSP"
 
 			peer2 := basic.Node{
-				Addr:      peer_addr,
+				Addr:      org2PeerAddress,
 				TLSCACert: TLSCACert,
 			}
 			err = peer2.LoadConfig()
@@ -117,20 +133,68 @@ var _ = Describe("e2e", func() {
 				Type:  "ccaas",
 				Label: "basic_1.0",
 			}
-			err = chaincode.PackageCCAAS(dummyConnection, dummyMeta, tmpDir, "basic-asset.tar.gz")
-			Expect(err).NotTo(HaveOccurred())
-			// install as CCAAS at peer1
-			err = chaincode.InstallChainCode("", tmpDir+"/basic-asset.tar.gz", "basic", "1.0", *org1MSP, connection1)
-			//err = chaincode.InstallChainCode("", "./basicj.tar.gz", "basic-asset", "1.0", *org1MSP, connection1)
-			Expect(err).NotTo(HaveOccurred())
-			// install as CCAAS at peer2
-			err = chaincode.InstallChainCode("", tmpDir+"/basic-asset.tar.gz", "basic", "1.0", *org2MSP, connection2)
-			//err = chaincode.InstallChainCode("", "./basicj.tar.gz", "basic-asset", "1.0", *org2MSP, connection2)
+			packageFileName := "basic-asset.tar.gz"
+			err = chaincode.PackageCCAAS(dummyConnection, dummyMeta, tmpDir, packageFileName)
 			Expect(err).NotTo(HaveOccurred())
 
-			PackageID, err := chaincode.PackageID(tmpDir + "/basic-asset.tar.gz")
-			Expect(err).NotTo(HaveOccurred())
-			fmt.Println(PackageID)
+			packageFilePath := path.Join(tmpDir, packageFileName)
+			packageID, err := chaincode.PackageID(packageFilePath)
+			Expect(err).NotTo(HaveOccurred(), "get chaincode package ID")
+			fmt.Println(packageID)
+
+			peerConnections := []*ConnectionDetails{
+				{
+					connection: connection1,
+					signer:     org1MSP,
+				},
+				{
+					connection: connection2,
+					signer:     org2MSP,
+				},
+			}
+
+			var installWaitGroup sync.WaitGroup
+			for _, installTarget := range peerConnections {
+				installWaitGroup.Add(1)
+
+				go func(target *ConnectionDetails) {
+					defer installWaitGroup.Done()
+
+					packageFile, err := os.Open(packageFilePath)
+					Expect(err).NotTo(HaveOccurred(), "open chaincode package file")
+
+					ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
+					defer cancel()
+
+					err = chaincode.Install(ctx, target.connection, target.signer, packageFile)
+					Expect(err).NotTo(HaveOccurred(), "chaincode install")
+				}(installTarget)
+			}
+
+			installWaitGroup.Wait()
+
+			var queryInstalledWaitGroup sync.WaitGroup
+			for _, queryInstalledTarget := range peerConnections {
+				queryInstalledWaitGroup.Add(1)
+
+				go func(target *ConnectionDetails) {
+					defer queryInstalledWaitGroup.Done()
+
+					ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
+					defer cancel()
+
+					result, err := chaincode.QueryInstalled(ctx, target.connection, target.signer)
+					Expect(err).NotTo(HaveOccurred(), "query installed chaincode")
+
+					installedChaincodes := result.GetInstalledChaincodes()
+					Expect(installedChaincodes).To(HaveLen(1), "number of installed chaincodes")
+					Expect(installedChaincodes[0].GetPackageId()).To(Equal(packageID), "installed chaincode package ID")
+					Expect(installedChaincodes[0].GetLabel()).To(Equal(dummyMeta.Label), "installed chaincode label")
+				}(queryInstalledTarget)
+			}
+
+			queryInstalledWaitGroup.Wait()
+
 			//cc define
 			CCDefine := chaincode.CCDefine{
 				ChannelID:                "mychannel",
@@ -194,7 +258,38 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			f, _ := os.Create("PackageID")
-			io.WriteString(f, PackageID)
+			io.WriteString(f, packageID)
 		})
 	})
 })
+
+func newGrpcConnection(address string, tlsCACert *x509.Certificate) (*grpc.ClientConn, error) {
+	certPool := x509.NewCertPool()
+	certPool.AddCert(tlsCACert)
+	transportCredentials := credentials.NewClientTLSFromCert(certPool, "")
+
+	connection, err := grpc.Dial(address, grpc.WithTransportCredentials(transportCredentials))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create gRPC connection: %w", err)
+	}
+
+	return connection, nil
+}
+
+func loadCertificate(filename string) (*x509.Certificate, error) {
+	certificatePEM, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read certificate file: %w", err)
+	}
+
+	return certificateFromPEM(certificatePEM)
+}
+
+func certificateFromPEM(certificatePEM []byte) (*x509.Certificate, error) {
+	block, _ := pem.Decode(certificatePEM)
+	if block == nil {
+		return nil, errors.New("failed to parse certificate PEM")
+	}
+
+	return x509.ParseCertificate(block.Bytes)
+}

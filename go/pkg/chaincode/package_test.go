@@ -3,7 +3,7 @@ package chaincode_test
 import (
 	"archive/tar"
 	"compress/gzip"
-	"fabric-admin-sdk/chaincode"
+	"fabric-admin-sdk/pkg/chaincode"
 	"io"
 	"os"
 	"path/filepath"
@@ -14,9 +14,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ = Describe("Chaincode", func() {
-
-	It("Chaincode package ccaas", func() {
+var _ = Describe("Package", func() {
+	It("CCaaS", func() {
 		dummyConnection := chaincode.Connection{
 			Address:      "127.0.0.1:8080",
 			Dial_timeout: "10s",
@@ -35,19 +34,6 @@ var _ = Describe("Chaincode", func() {
 		err = Untar(file, tmpDir)
 		Expect(err).NotTo(HaveOccurred())
 	})
-
-	PIt("Chaincode package java", func() {})
-	PIt("Chaincode package golang", func() {})
-	PIt("Chaincode package nodejs", func() {})
-	PIt("Chaincode install", func() {})
-	PIt("Chaincode queryinstalled", func() {})
-	PIt("Chaincode getinstalledpackage", func() {})
-	PIt("Chaincode calculatepackageid", func() {})
-	PIt("Chaincode approveformyorg", func() {})
-	PIt("Chaincode queryapproved", func() {})
-	PIt("Chaincode checkcommitreadiness", func() {})
-	PIt("Chaincode commit", func() {})
-	PIt("Chaincode querycommitted", func() {})
 })
 
 // Untar takes a gzip-ed tar archive, and extracts it to dst.
