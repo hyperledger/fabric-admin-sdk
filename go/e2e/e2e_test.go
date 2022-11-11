@@ -42,7 +42,7 @@ type ConnectionDetails struct {
 
 var _ = Describe("e2e", func() {
 	Context("the e2e test with test network", func() {
-		It("should work", func() {
+		It("should work", func(specCtx SpecContext) {
 			//genesis block
 			_, err := os.Stat("../../fabric-samples/test-network")
 			if err != nil {
@@ -138,9 +138,11 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			packageFilePath := path.Join(tmpDir, packageFileName)
+			packageID, err := chaincode.PackageID(packageFilePath)
+			Expect(err).NotTo(HaveOccurred(), "get chaincode package ID")
+			fmt.Println(packageID)
 
-			var installWaitGroup sync.WaitGroup
-			installJobs := []*ConnectionDetails{
+			peerConnections := []*ConnectionDetails{
 				{
 					connection: connection1,
 					signer:     org1MSP,
@@ -150,28 +152,49 @@ var _ = Describe("e2e", func() {
 					signer:     org2MSP,
 				},
 			}
-			for _, installJob := range installJobs {
+
+			var installWaitGroup sync.WaitGroup
+			for _, installTarget := range peerConnections {
 				installWaitGroup.Add(1)
 
-				go func(job *ConnectionDetails) {
+				go func(target *ConnectionDetails) {
 					defer installWaitGroup.Done()
 
 					packageFile, err := os.Open(packageFilePath)
-					Expect(err).NotTo(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred(), "open chaincode package file")
 
-					ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+					ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
 					defer cancel()
 
-					err = chaincode.Install(ctx, job.connection, job.signer, packageFile)
-					Expect(err).NotTo(HaveOccurred())
-				}(installJob)
+					err = chaincode.Install(ctx, target.connection, target.signer, packageFile)
+					Expect(err).NotTo(HaveOccurred(), "chaincode install")
+				}(installTarget)
 			}
 
 			installWaitGroup.Wait()
 
-			PackageID, err := chaincode.PackageID(tmpDir + "/basic-asset.tar.gz")
-			Expect(err).NotTo(HaveOccurred())
-			fmt.Println(PackageID)
+			var queryInstalledWaitGroup sync.WaitGroup
+			for _, queryInstalledTarget := range peerConnections {
+				queryInstalledWaitGroup.Add(1)
+
+				go func(target *ConnectionDetails) {
+					defer queryInstalledWaitGroup.Done()
+
+					ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
+					defer cancel()
+
+					result, err := chaincode.QueryInstalled(ctx, target.connection, target.signer)
+					Expect(err).NotTo(HaveOccurred(), "query installed chaincode")
+
+					installedChaincodes := result.GetInstalledChaincodes()
+					Expect(installedChaincodes).To(HaveLen(1), "number of installed chaincodes")
+					Expect(installedChaincodes[0].GetPackageId()).To(Equal(packageID), "installed chaincode package ID")
+					Expect(installedChaincodes[0].GetLabel()).To(Equal(dummyMeta.Label), "installed chaincode label")
+				}(queryInstalledTarget)
+			}
+
+			queryInstalledWaitGroup.Wait()
+
 			//cc define
 			CCDefine := chaincode.CCDefine{
 				ChannelID:                "mychannel",
@@ -235,7 +258,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			f, _ := os.Create("PackageID")
-			io.WriteString(f, PackageID)
+			io.WriteString(f, packageID)
 		})
 	})
 })
