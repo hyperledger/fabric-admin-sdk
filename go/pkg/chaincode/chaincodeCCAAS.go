@@ -43,7 +43,11 @@ func PackageCCAAS(connection Connection, metadata Metadata, tmpPath, filename st
 		return err
 	}
 	connfile, err := os.Create(tmpPath + "/src/connection.json")
+	if err != nil {
+		return err
+	}
 	defer connfile.Close()
+
 	_, err = connfile.Write(connjson)
 	if err != nil {
 		return err
@@ -59,7 +63,11 @@ func PackageCCAAS(connection Connection, metadata Metadata, tmpPath, filename st
 		return err
 	}
 	metadatafile, err := os.Create(tmpPath + "/pkg/metadata.json")
+	if err != nil {
+		return err
+	}
 	defer metadatafile.Close()
+
 	_, err = metadatafile.Write(metajsonStr)
 	if err != nil {
 		return err

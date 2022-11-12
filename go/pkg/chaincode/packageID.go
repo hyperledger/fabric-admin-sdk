@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os"
 	"regexp"
 
 	"github.com/hyperledger/fabric/common/util"
@@ -27,7 +27,7 @@ const (
 var LabelRegexp = regexp.MustCompile(`^[[:alnum:]][[:alnum:]_.+-]*$`)
 
 func PackageID(PackageFile string) (string, error) {
-	pkgBytes, err := ioutil.ReadFile(PackageFile)
+	pkgBytes, err := os.ReadFile(PackageFile)
 	if err != nil {
 		return "", errors.WithMessagef(err, "failed to read chaincode package at '%s'", PackageFile)
 	}
@@ -79,7 +79,7 @@ func ParseChaincodePackage(source []byte) (*ChaincodePackageMetadata, []byte, er
 			return ccPackageMetadata, nil, errors.Errorf("tar entry %s is not a regular file, type %v", header.Name, header.Typeflag)
 		}
 
-		fileBytes, err := ioutil.ReadAll(tarReader)
+		fileBytes, err := io.ReadAll(tarReader)
 		if err != nil {
 			return ccPackageMetadata, nil, errors.Wrapf(err, "could not read %s from tar", header.Name)
 		}

@@ -4,15 +4,12 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/pem"
-	"errors"
 	"fabric-admin-sdk/internal/pkg/identity"
 	"fabric-admin-sdk/pkg/chaincode"
 	"fabric-admin-sdk/pkg/channel"
 	"fabric-admin-sdk/pkg/tools"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -22,12 +19,9 @@ import (
 	"github.com/hyperledger-twgc/tape/pkg/infra/basic"
 	"github.com/hyperledger/fabric-protos-go/peer"
 	pb "github.com/hyperledger/fabric-protos-go/peer"
-	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 const (
@@ -46,7 +40,7 @@ var _ = Describe("e2e", func() {
 			//genesis block
 			_, err := os.Stat("../../fabric-samples/test-network")
 			if err != nil {
-				ginkgo.Skip("skip for unit test")
+				Skip("skip for unit test")
 			}
 			profile, err := tools.LoadProfile("TwoOrgsApplicationGenesis", "./")
 			Expect(err).NotTo(HaveOccurred())
@@ -63,14 +57,14 @@ var _ = Describe("e2e", func() {
 			clientCert = "../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt"
 			clientKey = "../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key"
 			caCertPool := x509.NewCertPool()
-			caFilePEM, err := ioutil.ReadFile(caFile)
+			caFilePEM, err := os.ReadFile(caFile)
 			caCertPool.AppendCertsFromPEM(caFilePEM)
 			Expect(err).NotTo(HaveOccurred())
 			tlsClientCert, err := tls.LoadX509KeyPair(clientCert, clientKey)
 			Expect(err).NotTo(HaveOccurred())
 			resp, err := channel.CreateChannel(osnURL, block, caCertPool, tlsClientCert)
 			Expect(err).NotTo(HaveOccurred())
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				fmt.Println("my Http error is ", err)
 			}
@@ -218,13 +212,11 @@ var _ = Describe("e2e", func() {
 			}
 			err = orderer_node.LoadConfig()
 			Expect(err).NotTo(HaveOccurred())
-			connection3, err := basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
-			Expect(err).NotTo(HaveOccurred())
 			// approve from org2
 			time.Sleep(time.Duration(15) * time.Second)
 			endorsement_org2_group := make([]pb.EndorserClient, 1)
 			endorsement_org2_group[0] = connection2
-			connection3, err = basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
+			connection3, err := basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
 			Expect(err).NotTo(HaveOccurred())
 			err = chaincode.Approve(CCDefine, *org2MSP, endorsement_org2_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
@@ -258,38 +250,8 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			f, _ := os.Create("PackageID")
-			io.WriteString(f, packageID)
+			_, err = io.WriteString(f, packageID)
+			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 })
-
-func newGrpcConnection(address string, tlsCACert *x509.Certificate) (*grpc.ClientConn, error) {
-	certPool := x509.NewCertPool()
-	certPool.AddCert(tlsCACert)
-	transportCredentials := credentials.NewClientTLSFromCert(certPool, "")
-
-	connection, err := grpc.Dial(address, grpc.WithTransportCredentials(transportCredentials))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create gRPC connection: %w", err)
-	}
-
-	return connection, nil
-}
-
-func loadCertificate(filename string) (*x509.Certificate, error) {
-	certificatePEM, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read certificate file: %w", err)
-	}
-
-	return certificateFromPEM(certificatePEM)
-}
-
-func certificateFromPEM(certificatePEM []byte) (*x509.Certificate, error) {
-	block, _ := pem.Decode(certificatePEM)
-	if block == nil {
-		return nil, errors.New("failed to parse certificate PEM")
-	}
-
-	return x509.ParseCertificate(block.Bytes)
-}

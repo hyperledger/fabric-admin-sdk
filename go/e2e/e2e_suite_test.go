@@ -1,7 +1,6 @@
 package e2e_test
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -17,7 +16,7 @@ func TestE2e(t *testing.T) {
 var tmpDir string
 
 var _ = BeforeSuite(func() {
-	tmpDir, _ = ioutil.TempDir("", "e2e")
+	tmpDir = os.TempDir()
 })
 
 var _ = AfterSuite(func() {
