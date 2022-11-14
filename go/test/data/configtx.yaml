@@ -25,7 +25,7 @@ Organizations:
         ID: OrdererMSP
 
         # MSPDir is the filesystem path which contains the MSP configuration
-        MSPDir: ../testdata/ordererOrganizations/example.com/msp
+        MSPDir: ../test/data/ordererOrganizations/example.com/msp
         MSPType: bccsp
         # Policies defines the set of policies at this level of the config tree
         # For organization policies, their canonical path is usually
@@ -52,7 +52,7 @@ Organizations:
         # ID to load the MSP definition as
         ID: Org1MSP
 
-        MSPDir: ../testdata/peerOrganizations/org1.example.com/msp
+        MSPDir: ../test/data/peerOrganizations/org1.example.com/msp
         MSPType: bccsp
         # Policies defines the set of policies at this level of the config tree
         # For organization policies, their canonical path is usually
@@ -79,7 +79,7 @@ Organizations:
         # ID to load the MSP definition as
         ID: Org2MSP
 
-        MSPDir: ../testdata/peerOrganizations/org2.example.com/msp
+        MSPDir: ../test/data/peerOrganizations/org2.example.com/msp
         MSPType: bccsp
         # Policies defines the set of policies at this level of the config tree
         # For organization policies, their canonical path is usually
@@ -214,8 +214,8 @@ Orderer: &OrdererDefaults
         Consenters:
         - Host: orderer.example.com
           Port: 7050
-          ClientTLSCert: ../testdata/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
-          ServerTLSCert: ../testdata/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+          ClientTLSCert: ../test/data/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
+          ServerTLSCert: ../test/data/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
 
     # Batch Timeout: The amount of time to wait before creating a batch
     BatchTimeout: 2s

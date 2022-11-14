@@ -16,20 +16,20 @@ var _ = Describe("Tools", func() {
 
 	Context("Config tx gen", func() {
 		It("Load Profile for config TX", func() {
-			profile, err := tools.LoadProfile("TwoOrgsApplicationGenesis", "../../testdata")
+			profile, err := tools.LoadProfile("TwoOrgsApplicationGenesis", "../../test/data")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(profile).ToNot(BeNil())
 			Expect(profile.Orderer.BatchSize.MaxMessageCount).To(Equal(uint32(10)))
 		})
 
 		It("Load Profile for config TX in error case", func() {
-			profile, err := tools.LoadProfile("", "testdata/errorfile.yaml")
+			profile, err := tools.LoadProfile("", "test/data/errorfile.yaml")
 			Expect(err).To(HaveOccurred())
 			Expect(profile).To(BeNil())
 		})
 
 		PIt("ConfigTxGen", func() {
-			profile, err := tools.LoadProfile("TwoOrgsApplicationGenesis", "../testdata")
+			profile, err := tools.LoadProfile("TwoOrgsApplicationGenesis", "../test/data")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(profile).ToNot(BeNil())
 			block, err := tools.ConfigTxGen(profile, "mychannel")

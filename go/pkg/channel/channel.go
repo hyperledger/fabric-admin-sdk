@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fabric-admin-sdk/internal/osnadmin"
 	"fabric-admin-sdk/internal/pkg/identity"
-	"fabric-admin-sdk/resource"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,6 +16,14 @@ import (
 	pb "github.com/hyperledger/fabric-protos-go/peer"
 	"github.com/hyperledger/fabric/protoutil"
 )
+
+type ChannelList struct {
+	SystemChannel interface{} `json:"systemChannel"`
+	Channels      []struct {
+		Name string `json:"name"`
+		Url  string `json:"url"`
+	} `json:"channels"`
+}
 
 func CreateChannel(osnURL string, block *cb.Block, caCertPool *x509.CertPool, tlsClientCert tls.Certificate) (*http.Response, error) {
 	block_byte := protoutil.MarshalOrPanic(block)
@@ -87,9 +94,9 @@ func executeJoin(Signer identity.CryptoImpl, endorsementClinet pb.EndorserClient
 	return nil
 }
 
-func ListChannel(osnURL string, caCertPool *x509.CertPool, tlsClientCert tls.Certificate) (resource.ChannelList, error) {
+func ListChannel(osnURL string, caCertPool *x509.CertPool, tlsClientCert tls.Certificate) (ChannelList, error) {
 
-	var channels resource.ChannelList
+	var channels ChannelList
 	resp, err := osnadmin.ListAllChannels(osnURL, caCertPool, tlsClientCert)
 	if err != nil {
 		return channels, err
