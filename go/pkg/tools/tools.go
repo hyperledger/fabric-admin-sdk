@@ -77,7 +77,7 @@ func GetPrivateKey(f string) (*ecdsa.PrivateKey, error) {
 		return nil, err
 	}
 
-	k, err := PEMtoPrivateKey(in, []byte{})
+	k, err := PEMtoPrivateKey(in)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func GetCertificate(f string) (*x509.Certificate, []byte, error) {
 }
 
 // PEMtoPrivateKey unmarshals a pem to private key
-func PEMtoPrivateKey(raw []byte, pwd []byte) (interface{}, error) {
+func PEMtoPrivateKey(raw []byte) (interface{}, error) {
 	if len(raw) == 0 {
 		return nil, errors.New("Invalid PEM. It must be different from nil.")
 	}
@@ -111,26 +111,6 @@ func PEMtoPrivateKey(raw []byte, pwd []byte) (interface{}, error) {
 	if block == nil {
 		return nil, fmt.Errorf("Failed decoding PEM. Block must be different from nil. [% x]", raw)
 	}
-
-	// TODO: derive from header the type of the key
-
-	if x509.IsEncryptedPEMBlock(block) {
-		if len(pwd) == 0 {
-			return nil, errors.New("Encrypted Key. Need a password")
-		}
-
-		decrypted, err := x509.DecryptPEMBlock(block, pwd)
-		if err != nil {
-			return nil, fmt.Errorf("Failed PEM decryption [%s]", err)
-		}
-
-		key, err := DERToPrivateKey(decrypted)
-		if err != nil {
-			return nil, err
-		}
-		return key, err
-	}
-
 	cert, err := DERToPrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
