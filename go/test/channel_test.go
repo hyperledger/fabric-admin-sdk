@@ -3,14 +3,14 @@ package test
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"fabric-admin-sdk/internal/network"
 	"fabric-admin-sdk/pkg/channel"
 	"fmt"
 	"os"
 
-	"github.com/hyperledger-twgc/tape/pkg/infra/basic"
+	npb "github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	log "github.com/sirupsen/logrus"
 )
 
 var _ = Describe("channel", func() {
@@ -52,14 +52,16 @@ var _ = Describe("channel", func() {
 			var MSPID = "Org1MSP"
 			var channelID = "mychannel"
 
-			logger := log.New()
-			peer1 := basic.Node{
+			peer1 := network.Node{
 				Addr:      peerAddr,
 				TLSCACert: TLSCACert,
 			}
 			err = peer1.LoadConfig()
 			Expect(err).NotTo(HaveOccurred())
-			connection, err := basic.CreateEndorserClient(peer1, logger)
+			n_conn1, err := network.DialConnection(peer1)
+			Expect(err).NotTo(HaveOccurred())
+
+			connection := npb.NewEndorserClient(n_conn1)
 			Expect(err).NotTo(HaveOccurred())
 			configBlock, err := channel.GetConfigBlock(SignCert, PrivKeyPath, MSPID, channelID, connection)
 			Expect(err).NotTo(HaveOccurred())
@@ -80,15 +82,15 @@ var _ = Describe("channel", func() {
 			var MSPID = "Org1MSP"
 			var channelID = "mychannel"
 
-			logger := log.New()
-			peer1 := basic.Node{
+			peer1 := network.Node{
 				Addr:      peerAddr,
 				TLSCACert: TLSCACert,
 			}
 			err = peer1.LoadConfig()
 			Expect(err).NotTo(HaveOccurred())
-			connection, err := basic.CreateEndorserClient(peer1, logger)
+			n_conn1, err := network.DialConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
+			connection := npb.NewEndorserClient(n_conn1)
 			blockChainInfo, err := channel.GetBlockChainInfo(SignCert, PrivKeyPath, MSPID, channelID, connection)
 			Expect(err).NotTo(HaveOccurred())
 			fmt.Println("blockchain info", blockChainInfo)

@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"os"
 	"path/filepath"
@@ -21,13 +22,9 @@ import (
 	"github.com/Shopify/sarama"
 	version "github.com/hashicorp/go-version"
 	"github.com/hyperledger/fabric/bccsp/factory"
-	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
-
-var logger = flogging.MustGetLogger("viperutil")
 
 // ConfigPaths returns the paths from environment and
 // defaults which are CWD and /etc/hyperledger/fabric.
@@ -120,10 +117,10 @@ func (c *ConfigParser) getConfigFile() string {
 // ReadInConfig reads and unmarshals the config file.
 func (c *ConfigParser) ReadInConfig() error {
 	cf := c.getConfigFile()
-	logger.Debugf("Attempting to open the config file: %s", cf)
+	log.Printf("Attempting to open the config file: %s", cf)
 	file, err := os.Open(cf)
 	if err != nil {
-		logger.Errorf("Unable to open the config file: %s", cf)
+		log.Printf("Unable to open the config file: %s", cf)
 		return err
 	}
 	defer file.Close()
@@ -182,11 +179,11 @@ func getKeysRecursively(base string, getenv envGetter, nodeKeys map[string]inter
 
 		switch val := val.(type) {
 		case map[string]interface{}:
-			logger.Debugf("Found map[string]interface{} value for %s", fqKey)
+			log.Printf("Found map[string]interface{} value for %s", fqKey)
 			result[key] = getKeysRecursively(fqKey+".", getenv, val, subTypes[key])
 
 		case map[interface{}]interface{}:
-			logger.Debugf("Found map[interface{}]interface{} value for %s", fqKey)
+			log.Printf("Found map[interface{}]interface{} value for %s", fqKey)
 			result[key] = getKeysRecursively(fqKey+".", getenv, toMapStringInterface(val), subTypes[key])
 
 		case nil:
@@ -403,7 +400,7 @@ func bccspHook(f reflect.Type, t reflect.Type, data interface{}) (interface{}, e
 
 	err := mapstructure.WeakDecode(data, config)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not decode bccsp type")
+		return nil, fmt.Errorf("could not decode bccsp type %w", err)
 	}
 
 	return config, nil
@@ -415,17 +412,17 @@ func bccspHook(f reflect.Type, t reflect.Type, data interface{}) (interface{}, e
 func (c *ConfigParser) EnhancedExactUnmarshal(output interface{}) error {
 	oType := reflect.TypeOf(output)
 	if oType.Kind() != reflect.Ptr {
-		return errors.Errorf("supplied output argument must be a pointer to a struct but is not pointer")
+		return fmt.Errorf("supplied output argument must be a pointer to a struct but is not pointer")
 	}
 	eType := oType.Elem()
 	if eType.Kind() != reflect.Struct {
-		return errors.Errorf("supplied output argument must be a pointer to a struct, but it is pointer to something else")
+		return fmt.Errorf("supplied output argument must be a pointer to a struct, but it is pointer to something else")
 	}
 
 	baseKeys := c.config
 	leafKeys := getKeysRecursively("", c.getFromEnv, baseKeys, eType)
 
-	logger.Debugf("%+v", leafKeys)
+	log.Printf("%+v", leafKeys)
 	config := &mapstructure.DecoderConfig{
 		ErrorUnused:      true,
 		Metadata:         nil,

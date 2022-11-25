@@ -10,8 +10,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/hyperledger/fabric-protos-go/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"google.golang.org/protobuf/proto"
 )
 
 func computePoliciesMapUpdate(original, updated map[string]*common.ConfigPolicy) (readSet, writeSet, sameSet map[string]*common.ConfigPolicy, updatedMembers bool) {

@@ -11,7 +11,6 @@ import (
 	"regexp"
 
 	"github.com/hyperledger/fabric/common/util"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -29,11 +28,11 @@ var LabelRegexp = regexp.MustCompile(`^[[:alnum:]][[:alnum:]_.+-]*$`)
 func PackageID(PackageFile string) (string, error) {
 	pkgBytes, err := os.ReadFile(PackageFile)
 	if err != nil {
-		return "", errors.WithMessagef(err, "failed to read chaincode package at '%s'", PackageFile)
+		return "", fmt.Errorf("failed to read chaincode package at '%s' %w", PackageFile, err)
 	}
 	metadata, _, err := ParseChaincodePackage(pkgBytes)
 	if err != nil {
-		return "", errors.WithMessage(err, "could not parse as a chaincode install package")
+		return "", fmt.Errorf("could not parse as a chaincode install package %w", err)
 	}
 	packageID := GetPackageID(metadata.Label, pkgBytes)
 	return packageID, nil
@@ -58,7 +57,7 @@ type ChaincodePackageMetadata struct {
 func ParseChaincodePackage(source []byte) (*ChaincodePackageMetadata, []byte, error) {
 	gzReader, err := gzip.NewReader(bytes.NewBuffer(source))
 	if err != nil {
-		return &ChaincodePackageMetadata{}, nil, errors.Wrapf(err, "error reading as gzip stream")
+		return &ChaincodePackageMetadata{}, nil, fmt.Errorf("error reading as gzip stream %w", err)
 	}
 
 	tarReader := tar.NewReader(gzReader)
@@ -72,16 +71,16 @@ func ParseChaincodePackage(source []byte) (*ChaincodePackageMetadata, []byte, er
 		}
 
 		if err != nil {
-			return ccPackageMetadata, nil, errors.Wrapf(err, "error inspecting next tar header")
+			return ccPackageMetadata, nil, fmt.Errorf("error inspecting next tar header %w", err)
 		}
 
 		if header.Typeflag != tar.TypeReg {
-			return ccPackageMetadata, nil, errors.Errorf("tar entry %s is not a regular file, type %v", header.Name, header.Typeflag)
+			return ccPackageMetadata, nil, fmt.Errorf("tar entry %s is not a regular file, type %v %w", header.Name, header.Typeflag, err)
 		}
 
 		fileBytes, err := io.ReadAll(tarReader)
 		if err != nil {
-			return ccPackageMetadata, nil, errors.Wrapf(err, "could not read %s from tar", header.Name)
+			return ccPackageMetadata, nil, fmt.Errorf("could not read %s from tar %w", header.Name, err)
 		}
 
 		switch header.Name {
@@ -90,7 +89,7 @@ func ParseChaincodePackage(source []byte) (*ChaincodePackageMetadata, []byte, er
 			ccPackageMetadata = &ChaincodePackageMetadata{}
 			err := json.Unmarshal(fileBytes, ccPackageMetadata)
 			if err != nil {
-				return ccPackageMetadata, nil, errors.Wrapf(err, "could not unmarshal %s as json", MetadataFile)
+				return ccPackageMetadata, nil, fmt.Errorf("could not unmarshal %s as json %w", MetadataFile, err)
 			}
 
 		case CodePackageFile:
@@ -101,11 +100,11 @@ func ParseChaincodePackage(source []byte) (*ChaincodePackageMetadata, []byte, er
 	}
 
 	if codePackage == nil {
-		return ccPackageMetadata, nil, errors.Errorf("did not find a code package inside the package")
+		return ccPackageMetadata, nil, fmt.Errorf("did not find a code package inside the package")
 	}
 
 	if ccPackageMetadata == nil {
-		return ccPackageMetadata, nil, errors.Errorf("did not find any package metadata (missing %s)", MetadataFile)
+		return ccPackageMetadata, nil, fmt.Errorf("did not find any package metadata (missing %s)", MetadataFile)
 	}
 
 	if err := ValidateLabel(ccPackageMetadata.Label); err != nil {
@@ -119,7 +118,7 @@ func ParseChaincodePackage(source []byte) (*ChaincodePackageMetadata, []byte, er
 // characters, as determined by LabelRegexp.
 func ValidateLabel(label string) error {
 	if !LabelRegexp.MatchString(label) {
-		return errors.Errorf("invalid label '%s'. Label must be non-empty, can only consist of alphanumerics, symbols from '.+-_', and can only begin with alphanumerics", label)
+		return fmt.Errorf("invalid label '%s'. Label must be non-empty, can only consist of alphanumerics, symbols from '.+-_', and can only begin with alphanumerics", label)
 	}
 
 	return nil

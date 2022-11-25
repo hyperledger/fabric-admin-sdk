@@ -8,13 +8,13 @@ import (
 	"errors"
 	"fabric-admin-sdk/internal/osnadmin"
 	"fabric-admin-sdk/internal/pkg/identity"
+	"fabric-admin-sdk/internal/protoutil"
 	"fmt"
 	"io"
 	"net/http"
 
-	cb "github.com/hyperledger/fabric-protos-go/common"
-	pb "github.com/hyperledger/fabric-protos-go/peer"
-	"github.com/hyperledger/fabric/protoutil"
+	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
+	pb "github.com/hyperledger/fabric-protos-go-apiv2/peer"
 )
 
 type ChannelList struct {
@@ -72,8 +72,7 @@ func executeJoin(Signer identity.CryptoImpl, endorsementClinet pb.EndorserClient
 	}
 
 	var signedProp *pb.SignedProposal
-
-	signedProp, err = protoutil.GetSignedProposal(prop, Signer)
+	signedProp, err = protoutil.GetSignedProposal(prop, &Signer)
 	if err != nil {
 		return fmt.Errorf("Error creating signed proposal %s", err)
 	}

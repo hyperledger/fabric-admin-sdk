@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"fabric-admin-sdk/internal/network"
 	"fabric-admin-sdk/internal/pkg/identity"
 	"fabric-admin-sdk/pkg/chaincode"
 	"fabric-admin-sdk/pkg/channel"
@@ -16,12 +17,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hyperledger-twgc/tape/pkg/infra/basic"
-	"github.com/hyperledger/fabric-protos-go/peer"
-	pb "github.com/hyperledger/fabric-protos-go/peer"
+	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
+	npb "github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -31,7 +30,7 @@ const (
 
 type ConnectionDetails struct {
 	signer     identity.SignerSerializer
-	connection peer.EndorserClient
+	connection npb.EndorserClient
 }
 
 var _ = Describe("e2e", func() {
@@ -80,14 +79,16 @@ var _ = Describe("e2e", func() {
 			SignCert := "../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
 			MSPID := "Org1MSP"
 
-			logger := log.New()
-			peer1 := basic.Node{
+			peer1 := network.Node{
 				Addr:      org1PeerAddress,
 				TLSCACert: TLSCACert,
 			}
 			err = peer1.LoadConfig()
 			Expect(err).NotTo(HaveOccurred())
-			connection1, err := basic.CreateEndorserClient(peer1, logger)
+			n_conn1, err := network.DialConnection(peer1)
+			Expect(err).NotTo(HaveOccurred())
+
+			connection1 := npb.NewEndorserClient(n_conn1)
 			Expect(err).NotTo(HaveOccurred())
 			org1MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
@@ -102,13 +103,15 @@ var _ = Describe("e2e", func() {
 			SignCert = "../../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem"
 			MSPID = "Org2MSP"
 
-			peer2 := basic.Node{
+			peer2 := network.Node{
 				Addr:      org2PeerAddress,
 				TLSCACert: TLSCACert,
 			}
 			err = peer2.LoadConfig()
 			Expect(err).NotTo(HaveOccurred())
-			connection2, err := basic.CreateEndorserClient(peer2, logger)
+			n_conn2, err := network.DialConnection(peer2)
+			Expect(err).NotTo(HaveOccurred())
+			connection2 := npb.NewEndorserClient(n_conn2)
 			Expect(err).NotTo(HaveOccurred())
 			org2MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
@@ -206,7 +209,7 @@ var _ = Describe("e2e", func() {
 			// orderer
 			orderer_addr := "localhost:7050"
 			orderer_TLSCACert := "../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
-			orderer_node := basic.Node{
+			orderer_node := network.Node{
 				Addr:      orderer_addr,
 				TLSCACert: orderer_TLSCACert,
 			}
@@ -214,9 +217,11 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			// approve from org2
 			time.Sleep(time.Duration(15) * time.Second)
-			endorsement_org2_group := make([]pb.EndorserClient, 1)
+			endorsement_org2_group := make([]npb.EndorserClient, 1)
 			endorsement_org2_group[0] = connection2
-			connection3, err := basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
+			n_conn3, err := network.DialConnection(orderer_node)
+			Expect(err).NotTo(HaveOccurred())
+			connection3, err := orderer.NewAtomicBroadcastClient(n_conn3).Broadcast(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			err = chaincode.Approve(CCDefine, *org2MSP, endorsement_org2_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
@@ -226,7 +231,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// approve from org1
-			endorsement_org1_group := make([]pb.EndorserClient, 1)
+			endorsement_org1_group := make([]npb.EndorserClient, 1)
 			endorsement_org1_group[0] = connection1
 			err = chaincode.Approve(CCDefine, *org1MSP, endorsement_org1_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
@@ -236,15 +241,17 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// commit from org1
+			n_conn3, err = network.DialConnection(orderer_node)
+			Expect(err).NotTo(HaveOccurred())
 			time.Sleep(time.Duration(15) * time.Second)
-			connection3, err = basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
+			connection3, err = orderer.NewAtomicBroadcastClient(n_conn3).Broadcast(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			err = chaincode.Commit(CCDefine, *org1MSP, endorsement_org1_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 
 			// commit from org2
 			time.Sleep(time.Duration(15) * time.Second)
-			connection3, err = basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
+			connection3, err = orderer.NewAtomicBroadcastClient(n_conn3).Broadcast(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 			err = chaincode.Commit(CCDefine, *org2MSP, endorsement_org2_group, connection3)
 			Expect(err).NotTo(HaveOccurred())

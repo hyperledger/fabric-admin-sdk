@@ -3,23 +3,23 @@ package chaincode
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fabric-admin-sdk/internal/pkg/identity"
+	"fabric-admin-sdk/internal/protoutil"
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
-	cb "github.com/hyperledger/fabric-protos-go/common"
-	ab "github.com/hyperledger/fabric-protos-go/orderer"
-	pb "github.com/hyperledger/fabric-protos-go/peer"
-	lb "github.com/hyperledger/fabric-protos-go/peer/lifecycle"
-	"github.com/hyperledger/fabric/protoutil"
-	"github.com/pkg/errors"
+	"github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
+	"google.golang.org/protobuf/proto"
 )
 
 const approveFuncName = "ApproveChaincodeDefinitionForMyOrg"
 const lifecycleName = "_lifecycle"
 const checkCommitReadinessFuncName = "CheckCommitReadiness"
 
-func Approve(CCDefine CCDefine, Signer identity.CryptoImpl, EndorserClients []pb.EndorserClient, BroadcastClient ab.AtomicBroadcast_BroadcastClient) error {
+func Approve(CCDefine CCDefine, Signer identity.CryptoImpl, EndorserClients []peer.EndorserClient, BroadcastClient orderer.AtomicBroadcast_BroadcastClient) error {
 	proposal, _, err := createProposal(CCDefine, Signer)
 	if err != nil {
 		return err
@@ -27,25 +27,25 @@ func Approve(CCDefine CCDefine, Signer identity.CryptoImpl, EndorserClients []pb
 	return processProposalWithBroadcast(proposal, Signer, EndorserClients, BroadcastClient)
 }
 
-func createProposal(CCDefine CCDefine, Signer identity.CryptoImpl) (proposal *pb.Proposal, txID string, err error) {
-	var ccsrc *lb.ChaincodeSource
+func createProposal(CCDefine CCDefine, Signer identity.CryptoImpl) (proposal *peer.Proposal, txID string, err error) {
+	var ccsrc *lifecycle.ChaincodeSource
 	if CCDefine.PackageID != "" {
-		ccsrc = &lb.ChaincodeSource{
-			Type: &lb.ChaincodeSource_LocalPackage{
-				LocalPackage: &lb.ChaincodeSource_Local{
+		ccsrc = &lifecycle.ChaincodeSource{
+			Type: &lifecycle.ChaincodeSource_LocalPackage{
+				LocalPackage: &lifecycle.ChaincodeSource_Local{
 					PackageId: CCDefine.PackageID,
 				},
 			},
 		}
 	} else {
-		ccsrc = &lb.ChaincodeSource{
-			Type: &lb.ChaincodeSource_Unavailable_{
-				Unavailable: &lb.ChaincodeSource_Unavailable{},
+		ccsrc = &lifecycle.ChaincodeSource{
+			Type: &lifecycle.ChaincodeSource_Unavailable_{
+				Unavailable: &lifecycle.ChaincodeSource_Unavailable{},
 			},
 		}
 	}
 
-	args := &lb.ApproveChaincodeDefinitionForMyOrgArgs{
+	args := &lifecycle.ApproveChaincodeDefinitionForMyOrgArgs{
 		Name:                CCDefine.Name,
 		Version:             CCDefine.Version,
 		Sequence:            CCDefine.Sequence,
@@ -61,29 +61,29 @@ func createProposal(CCDefine CCDefine, Signer identity.CryptoImpl) (proposal *pb
 	if err != nil {
 		return nil, "", err
 	}
-	ccInput := &pb.ChaincodeInput{Args: [][]byte{[]byte(approveFuncName), argsBytes}}
+	ccInput := &peer.ChaincodeInput{Args: [][]byte{[]byte(approveFuncName), argsBytes}}
 
-	cis := &pb.ChaincodeInvocationSpec{
-		ChaincodeSpec: &pb.ChaincodeSpec{
-			ChaincodeId: &pb.ChaincodeID{Name: lifecycleName},
+	cis := &peer.ChaincodeInvocationSpec{
+		ChaincodeSpec: &peer.ChaincodeSpec{
+			ChaincodeId: &peer.ChaincodeID{Name: lifecycleName},
 			Input:       ccInput,
 		},
 	}
 
 	creatorBytes, err := Signer.Serialize()
 	if err != nil {
-		return nil, "", errors.WithMessage(err, "failed to serialize identity")
+		return nil, "", fmt.Errorf("failed to serialize identity %w", err)
 	}
 
-	proposal, txID, err = protoutil.CreateChaincodeProposalWithTxIDAndTransient(cb.HeaderType_ENDORSER_TRANSACTION, CCDefine.ChannelID, cis, creatorBytes, CCDefine.InputTxID, nil)
+	proposal, txID, err = protoutil.CreateChaincodeProposalWithTxIDAndTransient(common.HeaderType_ENDORSER_TRANSACTION, CCDefine.ChannelID, cis, creatorBytes, CCDefine.InputTxID, nil)
 	if err != nil {
-		return nil, "", errors.WithMessage(err, "failed to create ChaincodeInvocationSpec proposal")
+		return nil, "", fmt.Errorf("failed to create ChaincodeInvocationSpec proposal %w", err)
 	}
 
 	return proposal, txID, nil
 }
 
-func signProposal(proposal *pb.Proposal, signer identity.CryptoImpl) (*pb.SignedProposal, error) {
+func signProposal(proposal *peer.Proposal, signer identity.CryptoImpl) (*peer.SignedProposal, error) {
 	// check for nil argument
 	if proposal == nil {
 		return nil, errors.New("proposal cannot be nil")
@@ -91,7 +91,7 @@ func signProposal(proposal *pb.Proposal, signer identity.CryptoImpl) (*pb.Signed
 
 	proposalBytes, err := proto.Marshal(proposal)
 	if err != nil {
-		return nil, errors.Wrap(err, "error marshaling proposal")
+		return nil, fmt.Errorf("error marshaling proposal %w", err)
 	}
 
 	signature, err := signer.Sign(proposalBytes)
@@ -99,40 +99,40 @@ func signProposal(proposal *pb.Proposal, signer identity.CryptoImpl) (*pb.Signed
 		return nil, err
 	}
 
-	return &pb.SignedProposal{
+	return &peer.SignedProposal{
 		ProposalBytes: proposalBytes,
 		Signature:     signature,
 	}, nil
 }
 
-func processProposalWithBroadcast(proposal *pb.Proposal, Signer identity.CryptoImpl, EndorserClients []pb.EndorserClient, BroadcastClient ab.AtomicBroadcast_BroadcastClient) error {
+func processProposalWithBroadcast(proposal *peer.Proposal, Signer identity.CryptoImpl, EndorserClients []peer.EndorserClient, BroadcastClient orderer.AtomicBroadcast_BroadcastClient) error {
 	//sign
 	signedProposal, err := signProposal(proposal, Signer)
 	if err != nil {
 		return err
 	}
 	//ProcessProposal
-	var responses []*pb.ProposalResponse
+	var responses []*peer.ProposalResponse
 	for _, endorser := range EndorserClients {
 		proposalResponse, err := endorser.ProcessProposal(context.Background(), signedProposal)
 		if err != nil {
-			return errors.WithMessage(err, "failed to endorse proposal")
+			return fmt.Errorf("failed to endorse proposal %w", err)
 		}
 		responses = append(responses, proposalResponse)
 	}
 	//CreateSignedTx
 	env, err := protoutil.CreateSignedTx(proposal, Signer, responses...)
 	if err != nil {
-		return errors.WithMessage(err, "failed to create signed transaction")
+		return fmt.Errorf("failed to create signed transaction %w", err)
 	}
 	//Send Broadcast
 	if err = BroadcastClient.Send(env); err != nil {
-		return errors.WithMessage(err, "failed to send transaction")
+		return fmt.Errorf("failed to send transaction %w", err)
 	}
 	return nil
 }
 
-func ReadinessCheck(CCDefine CCDefine, Signer identity.CryptoImpl, EndorserClient pb.EndorserClient) error {
+func ReadinessCheck(CCDefine CCDefine, Signer identity.CryptoImpl, EndorserClient peer.EndorserClient) error {
 	proposal, err := createReadinessCheckProposal(CCDefine, Signer)
 	if err != nil {
 		return err
@@ -140,16 +140,16 @@ func ReadinessCheck(CCDefine CCDefine, Signer identity.CryptoImpl, EndorserClien
 	return processProposal(proposal, Signer, EndorserClient)
 }
 
-func processProposal(proposal *pb.Proposal, Signer identity.CryptoImpl, EndorserClient pb.EndorserClient) error {
+func processProposal(proposal *peer.Proposal, Signer identity.CryptoImpl, EndorserClient peer.EndorserClient) error {
 	signedProposal, err := signProposal(proposal, Signer)
 	if err != nil {
-		return errors.WithMessage(err, "failed to create signed proposal")
+		return fmt.Errorf("failed to create signed proposal %w", err)
 	}
 
 	// checkcommitreadiness currently only supports a single peer
 	proposalResponse, err := EndorserClient.ProcessProposal(context.Background(), signedProposal)
 	if err != nil {
-		return errors.WithMessage(err, "failed to endorse proposal")
+		return fmt.Errorf("failed to endorse proposal %w", err)
 	}
 
 	if proposalResponse == nil {
@@ -160,30 +160,30 @@ func processProposal(proposal *pb.Proposal, Signer identity.CryptoImpl, Endorser
 		return errors.New("received proposal response with nil response")
 	}
 
-	if proposalResponse.Response.Status != int32(cb.Status_SUCCESS) {
-		return errors.Errorf("query failed with status: %d - %s", proposalResponse.Response.Status, proposalResponse.Response.Message)
+	if proposalResponse.Response.Status != int32(common.Status_SUCCESS) {
+		return fmt.Errorf("query failed with status: %d - %s", proposalResponse.Response.Status, proposalResponse.Response.Message)
 	}
 
-	return printResponseAsJSON(proposalResponse, &lb.CheckCommitReadinessResult{})
+	return printResponseAsJSON(proposalResponse, &lifecycle.CheckCommitReadinessResult{})
 }
 
-func printResponseAsJSON(proposalResponse *pb.ProposalResponse, msg proto.Message) error {
+func printResponseAsJSON(proposalResponse *peer.ProposalResponse, msg proto.Message) error {
 	err := proto.Unmarshal(proposalResponse.Response.Payload, msg)
 	if err != nil {
-		return errors.Wrapf(err, "failed to unmarshal proposal response's response payload as type %T", msg)
+		return fmt.Errorf("failed to unmarshal proposal response's response payload as type %T %w", msg, err)
 	}
 
 	bytes, err := json.MarshalIndent(msg, "", "\t")
 	if err != nil {
-		return errors.Wrap(err, "failed to marshal output")
+		return fmt.Errorf("failed to marshal output %w", err)
 	}
 
 	fmt.Println(string(bytes))
 	return nil
 }
 
-func createReadinessCheckProposal(CCDefine CCDefine, Signer identity.CryptoImpl) (*pb.Proposal, error) {
-	args := &lb.CheckCommitReadinessArgs{
+func createReadinessCheckProposal(CCDefine CCDefine, Signer identity.CryptoImpl) (*peer.Proposal, error) {
+	args := &lifecycle.CheckCommitReadinessArgs{
 		Name:                CCDefine.Name,
 		Version:             CCDefine.Version,
 		Sequence:            CCDefine.Sequence,
@@ -198,23 +198,23 @@ func createReadinessCheckProposal(CCDefine CCDefine, Signer identity.CryptoImpl)
 	if err != nil {
 		return nil, err
 	}
-	ccInput := &pb.ChaincodeInput{Args: [][]byte{[]byte(checkCommitReadinessFuncName), argsBytes}}
+	ccInput := &peer.ChaincodeInput{Args: [][]byte{[]byte(checkCommitReadinessFuncName), argsBytes}}
 
-	cis := &pb.ChaincodeInvocationSpec{
-		ChaincodeSpec: &pb.ChaincodeSpec{
-			ChaincodeId: &pb.ChaincodeID{Name: lifecycleName},
+	cis := &peer.ChaincodeInvocationSpec{
+		ChaincodeSpec: &peer.ChaincodeSpec{
+			ChaincodeId: &peer.ChaincodeID{Name: lifecycleName},
 			Input:       ccInput,
 		},
 	}
 
 	creatorBytes, err := Signer.Serialize()
 	if err != nil {
-		return nil, errors.WithMessage(err, "failed to serialize identity")
+		return nil, fmt.Errorf("failed to serialize identity %w", err)
 	}
 
-	proposal, _, err := protoutil.CreateChaincodeProposalWithTxIDAndTransient(cb.HeaderType_ENDORSER_TRANSACTION, CCDefine.ChannelID, cis, creatorBytes, CCDefine.InputTxID, nil)
+	proposal, _, err := protoutil.CreateChaincodeProposalWithTxIDAndTransient(common.HeaderType_ENDORSER_TRANSACTION, CCDefine.ChannelID, cis, creatorBytes, CCDefine.InputTxID, nil)
 	if err != nil {
-		return nil, errors.WithMessage(err, "failed to create ChaincodeInvocationSpec proposal")
+		return nil, fmt.Errorf("failed to create ChaincodeInvocationSpec proposal %w", err)
 	}
 
 	return proposal, nil

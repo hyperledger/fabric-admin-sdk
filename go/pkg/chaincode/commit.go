@@ -2,15 +2,15 @@ package chaincode
 
 import (
 	"fabric-admin-sdk/internal/pkg/identity"
+	"fabric-admin-sdk/internal/protoutil"
+	"fmt"
 
-	"github.com/golang/protobuf/proto"
-	cb "github.com/hyperledger/fabric-protos-go/common"
-	ab "github.com/hyperledger/fabric-protos-go/orderer"
-	"github.com/hyperledger/fabric-protos-go/peer"
-	pb "github.com/hyperledger/fabric-protos-go/peer"
-	lb "github.com/hyperledger/fabric-protos-go/peer/lifecycle"
-	"github.com/hyperledger/fabric/protoutil"
-	"github.com/pkg/errors"
+	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
+	ab "github.com/hyperledger/fabric-protos-go-apiv2/orderer"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
+	pb "github.com/hyperledger/fabric-protos-go-apiv2/peer"
+	lb "github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
+	"google.golang.org/protobuf/proto"
 )
 
 const commitFuncName = "CommitChaincodeDefinition"
@@ -64,12 +64,12 @@ func createCommitProposal(CCDefine CCDefine, Signer identity.CryptoImpl) (propos
 
 	creatorBytes, err := Signer.Serialize()
 	if err != nil {
-		return nil, "", errors.WithMessage(err, "failed to serialize identity")
+		return nil, "", fmt.Errorf("failed to serialize identity %w", err)
 	}
 
 	proposal, txID, err = protoutil.CreateChaincodeProposalWithTxIDAndTransient(cb.HeaderType_ENDORSER_TRANSACTION, CCDefine.ChannelID, cis, creatorBytes, CCDefine.InputTxID, nil)
 	if err != nil {
-		return nil, "", errors.WithMessage(err, "failed to create ChaincodeInvocationSpec proposal")
+		return nil, "", fmt.Errorf("failed to create ChaincodeInvocationSpec proposal %w", err)
 	}
 
 	return proposal, txID, nil

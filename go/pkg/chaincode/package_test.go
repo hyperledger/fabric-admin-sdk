@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"fabric-admin-sdk/pkg/chaincode"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -11,7 +12,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/pkg/errors"
 )
 
 var _ = Describe("Package", func() {
@@ -57,27 +57,27 @@ func Untar(buffer io.Reader, dst string) error {
 		}
 
 		if err != nil {
-			return errors.WithMessage(err, "could not get next tar element")
+			return fmt.Errorf("could not get next tar element %w", err)
 		}
 
 		if !ValidPath(header.Name) {
-			return errors.Errorf("tar contains the absolute or escaping path '%s'", header.Name)
+			return fmt.Errorf("tar contains the absolute or escaping path '%s'", header.Name)
 		}
 
 		target := filepath.Join(dst, header.Name)
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if err := os.MkdirAll(target, 0o700); err != nil {
-				return errors.WithMessagef(err, "could not create directory '%s'", header.Name)
+				return fmt.Errorf("could not create directory '%s' %w", header.Name, err)
 			}
 		case tar.TypeReg:
 			if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
-				return errors.WithMessagef(err, "could not create directory '%s'", filepath.Dir(header.Name))
+				return fmt.Errorf("could not create directory '%s' %w", filepath.Dir(header.Name), err)
 			}
 
 			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
-				return errors.WithMessagef(err, "could not create file '%s'", header.Name)
+				return fmt.Errorf("could not create file '%s' %w", header.Name, err)
 			}
 
 			// copy over contents
@@ -87,7 +87,7 @@ func Untar(buffer io.Reader, dst string) error {
 
 			f.Close()
 		default:
-			return errors.Errorf("invalid file type '%v' contained in archive for file '%s'", header.Typeflag, header.Name)
+			return fmt.Errorf("invalid file type '%v' contained in archive for file '%s'", header.Typeflag, header.Name)
 		}
 	}
 }
