@@ -1,4 +1,9 @@
-package test
+/*
+Copyright IBM Corp. All Rights Reserved.
+SPDX-License-Identifier: Apache-2.0
+*/
+
+package lifecycle_test
 
 import (
 	"os"
@@ -8,12 +13,12 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestE2e(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "e2e Suite")
-}
+const chaincodePackageEnv = "CHAINCODE_PACKAGE"
 
-const testNetworkPath = "../../fabric-samples/test-network"
+func TestChaincode(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Chaincode lifecycle suite")
+}
 
 var tmpDir string
 

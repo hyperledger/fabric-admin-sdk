@@ -16,15 +16,15 @@ import (
 var _ = Describe("channel", func() {
 	Context("get channel list", func() {
 		It("should work", func() {
-			_, err := os.Stat("../../../fabric-samples/test-network")
+			_, err := os.Stat("../" + testNetworkPath)
 			if err != nil {
 				Skip("skip for unit test")
 			}
 			var caFile, clientCert, clientKey, osnURL string
 			osnURL = "https://orderer.example.com:7053"
-			caFile = "../../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
-			clientCert = "../../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt"
-			clientKey = "../../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key"
+			caFile = testNetworkPath + "/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
+			clientCert = testNetworkPath + "/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt"
+			clientKey = testNetworkPath + "/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key"
 			caCertPool := x509.NewCertPool()
 			caFilePEM, err := os.ReadFile(caFile)
 			caCertPool.AppendCertsFromPEM(caFilePEM)
@@ -41,14 +41,14 @@ var _ = Describe("channel", func() {
 
 	Context("get config block", func() {
 		It("should work", func() {
-			_, err := os.Stat("../../../fabric-samples/test-network")
+			_, err := os.Stat("../" + testNetworkPath)
 			if err != nil {
 				Skip("skip for unit test")
 			}
 			var peerAddr = "peer0.org1.example.com:7051"
-			var TLSCACert = "../../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
-			var PrivKeyPath = "../../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
-			var SignCert = "../../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
+			var TLSCACert = testNetworkPath + "/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
+			var PrivKeyPath = testNetworkPath + "/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
+			var SignCert = testNetworkPath + "/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
 			var MSPID = "Org1MSP"
 			var channelID = "mychannel"
 
@@ -69,14 +69,14 @@ var _ = Describe("channel", func() {
 
 	Context("get block chain info", func() {
 		It("should work", func() {
-			_, err := os.Stat("../../../fabric-samples/test-network")
+			_, err := os.Stat("../" + testNetworkPath)
 			if err != nil {
 				Skip("skip for unit test")
 			}
 			var peerAddr = "peer0.org1.example.com:7051"
-			var TLSCACert = "../../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
-			var PrivKeyPath = "../../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
-			var SignCert = "../../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
+			var TLSCACert = testNetworkPath + "/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
+			var PrivKeyPath = testNetworkPath + "/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
+			var SignCert = testNetworkPath + "/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
 			var MSPID = "Org1MSP"
 			var channelID = "mychannel"
 

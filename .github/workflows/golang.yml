@@ -20,3 +20,14 @@ jobs:
       - run: make unit-test
         name: run unit test
 
+  intergration-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: go
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/setup-go@main
+        with:
+          go-version: 1.18
+      - run: make integration-test

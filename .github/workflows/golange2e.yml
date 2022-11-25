@@ -26,7 +26,7 @@ jobs:
       - run: mkdir -p ../organizations && cp -r ../../fabric-samples/test-network/organizations/* ../organizations/ && ls ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
         working-directory: go/test
         name: prepare msp for test
-      - run: go test -v ./...
+      - run: go test
         working-directory: go/test
         name: test
       - run: docker network ls

@@ -18,7 +18,6 @@ import (
 
 	"github.com/hyperledger-twgc/tape/pkg/infra/basic"
 	"github.com/hyperledger/fabric-protos-go/peer"
-	pb "github.com/hyperledger/fabric-protos-go/peer"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	log "github.com/sirupsen/logrus"
@@ -38,7 +37,7 @@ var _ = Describe("e2e", func() {
 	Context("the e2e test with test network", func() {
 		It("should work", func(specCtx SpecContext) {
 			//genesis block
-			_, err := os.Stat("../../fabric-samples/test-network")
+			_, err := os.Stat(testNetworkPath)
 			if err != nil {
 				Skip("skip for unit test")
 			}
@@ -53,9 +52,9 @@ var _ = Describe("e2e", func() {
 			//create channel
 			var caFile, clientCert, clientKey, osnURL string
 			osnURL = "https://localhost:7053"
-			caFile = "../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
-			clientCert = "../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt"
-			clientKey = "../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key"
+			caFile = testNetworkPath + "/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
+			clientCert = testNetworkPath + "/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt"
+			clientKey = testNetworkPath + "/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key"
 			caCertPool := x509.NewCertPool()
 			caFilePEM, err := os.ReadFile(caFile)
 			caCertPool.AppendCertsFromPEM(caFilePEM)
@@ -75,9 +74,9 @@ var _ = Describe("e2e", func() {
 			Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
 
 			//join peer1
-			TLSCACert := "../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
-			PrivKeyPath := "../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
-			SignCert := "../../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
+			TLSCACert := testNetworkPath + "/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
+			PrivKeyPath := testNetworkPath + "/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
+			SignCert := testNetworkPath + "/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
 			MSPID := "Org1MSP"
 
 			logger := log.New()
@@ -97,9 +96,9 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			//join peer2
-			TLSCACert = "../../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt"
-			PrivKeyPath = "../../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/priv_sk"
-			SignCert = "../../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem"
+			TLSCACert = testNetworkPath + "/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt"
+			PrivKeyPath = testNetworkPath + "/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/priv_sk"
+			SignCert = testNetworkPath + "/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem"
 			MSPID = "Org2MSP"
 
 			peer2 := basic.Node{
@@ -205,7 +204,7 @@ var _ = Describe("e2e", func() {
 			}
 			// orderer
 			orderer_addr := "localhost:7050"
-			orderer_TLSCACert := "../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
+			orderer_TLSCACert := testNetworkPath + "/organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
 			orderer_node := basic.Node{
 				Addr:      orderer_addr,
 				TLSCACert: orderer_TLSCACert,
@@ -214,7 +213,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			// approve from org2
 			time.Sleep(time.Duration(15) * time.Second)
-			endorsement_org2_group := make([]pb.EndorserClient, 1)
+			endorsement_org2_group := make([]peer.EndorserClient, 1)
 			endorsement_org2_group[0] = connection2
 			connection3, err := basic.CreateBroadcastClient(context.Background(), orderer_node, logger)
 			Expect(err).NotTo(HaveOccurred())
@@ -226,7 +225,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// approve from org1
-			endorsement_org1_group := make([]pb.EndorserClient, 1)
+			endorsement_org1_group := make([]peer.EndorserClient, 1)
 			endorsement_org1_group[0] = connection1
 			err = chaincode.Approve(CCDefine, *org1MSP, endorsement_org1_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
