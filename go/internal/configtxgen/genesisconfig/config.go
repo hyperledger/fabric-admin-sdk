@@ -10,23 +10,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fabric-admin-sdk/internal/configtxgen/viperutil"
+	"fabric-admin-sdk/internal/msp"
 	"fmt"
+	"log"
 	"path/filepath"
 	"sync"
 	"time"
 
-	"github.com/hyperledger/fabric-protos-go/orderer/etcdraft"
-	"github.com/hyperledger/fabric/common/flogging"
+	"github.com/hyperledger/fabric-protos-go-apiv2/orderer/etcdraft"
 	cf "github.com/hyperledger/fabric/core/config"
-	"github.com/hyperledger/fabric/msp"
 )
 
 const (
 	// The type key for etcd based RAFT consensus.
 	EtcdRaft = "etcdraft"
 )
-
-var logger = flogging.MustGetLogger("common.tools.configtxgen.localconfig")
 
 const (
 	// SampleInsecureSoloProfile references the sample profile which does not
@@ -212,16 +210,16 @@ func LoadTopLevel(configPaths ...string) *TopLevel {
 
 	err := config.ReadInConfig()
 	if err != nil {
-		logger.Panicf("Error reading configuration: %s", err)
+		panic(fmt.Errorf("Error reading configuration: %w", err))
 	}
-	logger.Debugf("Using config file: %s", config.ConfigFileUsed())
+	log.Printf("Using config file: %s", config.ConfigFileUsed())
 
 	uconf, err := cache.load(config, config.ConfigFileUsed())
 	if err != nil {
-		logger.Panicf("failed to load configCache: %s", err)
+		panic(fmt.Errorf("Error reading configuration: %w", err))
 	}
 	uconf.completeInitialization(filepath.Dir(config.ConfigFileUsed()))
-	logger.Infof("Loaded configuration: %s", config.ConfigFileUsed())
+	fmt.Printf("Loaded configuration: %s", config.ConfigFileUsed())
 
 	return uconf
 }
@@ -239,21 +237,21 @@ func Load(profile string, configPaths ...string) (*Profile, error) {
 	if err != nil {
 		return nil, errors.New("Error reading configuration: " + err.Error())
 	}
-	logger.Debugf("Using config file: %s", config.ConfigFileUsed())
+	log.Printf("Using config file: %s", config.ConfigFileUsed())
 
 	uconf, err := cache.load(config, config.ConfigFileUsed())
 	if err != nil {
-		logger.Panicf("Error loading config from config cache: %s", err)
+		panic(fmt.Errorf("Error loading config from config cache: %w", err))
 	}
 
 	result, ok := uconf.Profiles[profile]
 	if !ok {
-		logger.Panicf("Could not find profile: %s", profile)
+		panic(fmt.Errorf("Could not find profile: " + profile))
 	}
 
 	result.completeInitialization(filepath.Dir(config.ConfigFileUsed()))
 
-	logger.Infof("Loaded configuration: %s", config.ConfigFileUsed())
+	log.Printf("Loaded configuration: %s", config.ConfigFileUsed())
 
 	return result, nil
 }
@@ -309,26 +307,26 @@ loop:
 	for {
 		switch {
 		case ord.OrdererType == "":
-			logger.Infof("Orderer.OrdererType unset, setting to %v", genesisDefaults.Orderer.OrdererType)
+			log.Printf("Orderer.OrdererType unset, setting to %v", genesisDefaults.Orderer.OrdererType)
 			ord.OrdererType = genesisDefaults.Orderer.OrdererType
 		case ord.BatchTimeout == 0:
-			logger.Infof("Orderer.BatchTimeout unset, setting to %s", genesisDefaults.Orderer.BatchTimeout)
+			log.Printf("Orderer.BatchTimeout unset, setting to %s", genesisDefaults.Orderer.BatchTimeout)
 			ord.BatchTimeout = genesisDefaults.Orderer.BatchTimeout
 		case ord.BatchSize.MaxMessageCount == 0:
-			logger.Infof("Orderer.BatchSize.MaxMessageCount unset, setting to %v", genesisDefaults.Orderer.BatchSize.MaxMessageCount)
+			log.Printf("Orderer.BatchSize.MaxMessageCount unset, setting to %v", genesisDefaults.Orderer.BatchSize.MaxMessageCount)
 			ord.BatchSize.MaxMessageCount = genesisDefaults.Orderer.BatchSize.MaxMessageCount
 		case ord.BatchSize.AbsoluteMaxBytes == 0:
-			logger.Infof("Orderer.BatchSize.AbsoluteMaxBytes unset, setting to %v", genesisDefaults.Orderer.BatchSize.AbsoluteMaxBytes)
+			log.Printf("Orderer.BatchSize.AbsoluteMaxBytes unset, setting to %v", genesisDefaults.Orderer.BatchSize.AbsoluteMaxBytes)
 			ord.BatchSize.AbsoluteMaxBytes = genesisDefaults.Orderer.BatchSize.AbsoluteMaxBytes
 		case ord.BatchSize.PreferredMaxBytes == 0:
-			logger.Infof("Orderer.BatchSize.PreferredMaxBytes unset, setting to %v", genesisDefaults.Orderer.BatchSize.PreferredMaxBytes)
+			log.Printf("Orderer.BatchSize.PreferredMaxBytes unset, setting to %v", genesisDefaults.Orderer.BatchSize.PreferredMaxBytes)
 			ord.BatchSize.PreferredMaxBytes = genesisDefaults.Orderer.BatchSize.PreferredMaxBytes
 		default:
 			break loop
 		}
 	}
 
-	logger.Infof("orderer type: %s", ord.OrdererType)
+	log.Printf("orderer type: %s", ord.OrdererType)
 	// Additional, consensus type-dependent initialization goes here
 	// Also using this to panic on unknown orderer type.
 	switch ord.OrdererType {
@@ -336,42 +334,42 @@ loop:
 		// nothing to be done here
 	case "kafka":
 		if ord.Kafka.Brokers == nil {
-			logger.Infof("Orderer.Kafka unset, setting to %v", genesisDefaults.Orderer.Kafka.Brokers)
+			log.Printf("Orderer.Kafka unset, setting to %v", genesisDefaults.Orderer.Kafka.Brokers)
 			ord.Kafka.Brokers = genesisDefaults.Orderer.Kafka.Brokers
 		}
 	case EtcdRaft:
 		if ord.EtcdRaft == nil {
-			logger.Panicf("%s configuration missing", EtcdRaft)
+			log.Panicf("%s configuration missing", EtcdRaft)
 		}
 		if ord.EtcdRaft.Options == nil {
-			logger.Infof("Orderer.EtcdRaft.Options unset, setting to %v", genesisDefaults.Orderer.EtcdRaft.Options)
+			log.Printf("Orderer.EtcdRaft.Options unset, setting to %v", genesisDefaults.Orderer.EtcdRaft.Options)
 			ord.EtcdRaft.Options = genesisDefaults.Orderer.EtcdRaft.Options
 		}
 	second_loop:
 		for {
 			switch {
 			case ord.EtcdRaft.Options.TickInterval == "":
-				logger.Infof("Orderer.EtcdRaft.Options.TickInterval unset, setting to %v", genesisDefaults.Orderer.EtcdRaft.Options.TickInterval)
+				log.Printf("Orderer.EtcdRaft.Options.TickInterval unset, setting to %v", genesisDefaults.Orderer.EtcdRaft.Options.TickInterval)
 				ord.EtcdRaft.Options.TickInterval = genesisDefaults.Orderer.EtcdRaft.Options.TickInterval
 
 			case ord.EtcdRaft.Options.ElectionTick == 0:
-				logger.Infof("Orderer.EtcdRaft.Options.ElectionTick unset, setting to %v", genesisDefaults.Orderer.EtcdRaft.Options.ElectionTick)
+				log.Printf("Orderer.EtcdRaft.Options.ElectionTick unset, setting to %v", genesisDefaults.Orderer.EtcdRaft.Options.ElectionTick)
 				ord.EtcdRaft.Options.ElectionTick = genesisDefaults.Orderer.EtcdRaft.Options.ElectionTick
 
 			case ord.EtcdRaft.Options.HeartbeatTick == 0:
-				logger.Infof("Orderer.EtcdRaft.Options.HeartbeatTick unset, setting to %v", genesisDefaults.Orderer.EtcdRaft.Options.HeartbeatTick)
+				log.Printf("Orderer.EtcdRaft.Options.HeartbeatTick unset, setting to %v", genesisDefaults.Orderer.EtcdRaft.Options.HeartbeatTick)
 				ord.EtcdRaft.Options.HeartbeatTick = genesisDefaults.Orderer.EtcdRaft.Options.HeartbeatTick
 
 			case ord.EtcdRaft.Options.MaxInflightBlocks == 0:
-				logger.Infof("Orderer.EtcdRaft.Options.MaxInflightBlocks unset, setting to %v", genesisDefaults.Orderer.EtcdRaft.Options.MaxInflightBlocks)
+				log.Printf("Orderer.EtcdRaft.Options.MaxInflightBlocks unset, setting to %v", genesisDefaults.Orderer.EtcdRaft.Options.MaxInflightBlocks)
 				ord.EtcdRaft.Options.MaxInflightBlocks = genesisDefaults.Orderer.EtcdRaft.Options.MaxInflightBlocks
 
 			case ord.EtcdRaft.Options.SnapshotIntervalSize == 0:
-				logger.Infof("Orderer.EtcdRaft.Options.SnapshotIntervalSize unset, setting to %v", genesisDefaults.Orderer.EtcdRaft.Options.SnapshotIntervalSize)
+				log.Printf("Orderer.EtcdRaft.Options.SnapshotIntervalSize unset, setting to %v", genesisDefaults.Orderer.EtcdRaft.Options.SnapshotIntervalSize)
 				ord.EtcdRaft.Options.SnapshotIntervalSize = genesisDefaults.Orderer.EtcdRaft.Options.SnapshotIntervalSize
 
 			case len(ord.EtcdRaft.Consenters) == 0:
-				logger.Panicf("%s configuration did not specify any consenter", EtcdRaft)
+				log.Panicf("%s configuration did not specify any consenter", EtcdRaft)
 
 			default:
 				break second_loop
@@ -379,26 +377,26 @@ loop:
 		}
 
 		if _, err := time.ParseDuration(ord.EtcdRaft.Options.TickInterval); err != nil {
-			logger.Panicf("Etcdraft TickInterval (%s) must be in time duration format", ord.EtcdRaft.Options.TickInterval)
+			log.Panicf("Etcdraft TickInterval (%s) must be in time duration format", ord.EtcdRaft.Options.TickInterval)
 		}
 
 		// validate the specified members for Options
 		if ord.EtcdRaft.Options.ElectionTick <= ord.EtcdRaft.Options.HeartbeatTick {
-			logger.Panicf("election tick must be greater than heartbeat tick")
+			log.Panicf("election tick must be greater than heartbeat tick")
 		}
 
 		for _, c := range ord.EtcdRaft.GetConsenters() {
 			if c.Host == "" {
-				logger.Panicf("consenter info in %s configuration did not specify host", EtcdRaft)
+				log.Panicf("consenter info in %s configuration did not specify host", EtcdRaft)
 			}
 			if c.Port == 0 {
-				logger.Panicf("consenter info in %s configuration did not specify port", EtcdRaft)
+				log.Panicf("consenter info in %s configuration did not specify port", EtcdRaft)
 			}
 			if c.ClientTlsCert == nil {
-				logger.Panicf("consenter info in %s configuration did not specify client TLS cert", EtcdRaft)
+				log.Panicf("consenter info in %s configuration did not specify client TLS cert", EtcdRaft)
 			}
 			if c.ServerTlsCert == nil {
-				logger.Panicf("consenter info in %s configuration did not specify server TLS cert", EtcdRaft)
+				log.Panicf("consenter info in %s configuration did not specify server TLS cert", EtcdRaft)
 			}
 			clientCertPath := string(c.GetClientTlsCert())
 			cf.TranslatePathInPlace(configDir, &clientCertPath)
@@ -408,7 +406,7 @@ loop:
 			c.ServerTlsCert = []byte(serverCertPath)
 		}
 	default:
-		logger.Panicf("unknown orderer type: %s", ord.OrdererType)
+		log.Panicf("unknown orderer type: %s", ord.OrdererType)
 	}
 }
 
@@ -436,7 +434,7 @@ func (c *configCache) load(config *viperutil.ConfigParser, configPath string) (*
 
 	conf := &TopLevel{}
 	serializedConf, ok := c.cache[configPath]
-	logger.Debugf("Loading configuration from cache: %t", ok)
+	log.Printf("Loading configuration from cache: %t", ok)
 	if !ok {
 		err := config.EnhancedExactUnmarshal(conf)
 		if err != nil {

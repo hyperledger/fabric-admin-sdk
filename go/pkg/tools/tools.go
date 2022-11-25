@@ -17,9 +17,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/golang/protobuf/proto"
-	cb "github.com/hyperledger/fabric-protos-go/common"
-	"github.com/hyperledger/fabric-protos-go/msp"
+	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
+	"google.golang.org/protobuf/proto"
 )
 
 // configtxGen

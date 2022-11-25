@@ -3,13 +3,13 @@ package channel
 import (
 	"context"
 	"fabric-admin-sdk/internal/pkg/identity"
+	"fabric-admin-sdk/internal/protoutil"
 	"fabric-admin-sdk/pkg/tools"
+	"fmt"
 
-	"github.com/golang/protobuf/proto"
-	cb "github.com/hyperledger/fabric-protos-go/common"
-	pb "github.com/hyperledger/fabric-protos-go/peer"
-	"github.com/hyperledger/fabric/protoutil"
-	"github.com/pkg/errors"
+	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
+	pb "github.com/hyperledger/fabric-protos-go-apiv2/peer"
+	"google.golang.org/protobuf/proto"
 )
 
 // GetConfigBlock get block config
@@ -17,16 +17,16 @@ func GetConfigBlock(signCert, priKey, MSPID, channelID string, connection pb.End
 
 	signer, err := tools.CreateSigner(priKey, signCert, MSPID)
 	if err != nil {
-		return nil, errors.WithMessage(err, "create signer")
+		return nil, fmt.Errorf("create signer %w", err)
 	}
 	proposalResp, err := getSignedProposal(channelID, "cscc", "GetConfigBlock", signer, connection)
 	if err != nil {
-		return nil, errors.WithMessage(err, "get signed proposal")
+		return nil, fmt.Errorf("get signed proposal %w", err)
 	}
 
 	block := &cb.Block{}
 	if err := proto.Unmarshal(proposalResp.Response.Payload, block); err != nil {
-		return nil, errors.WithMessage(err, "block unmarshal")
+		return nil, fmt.Errorf("block unmarshal %w", err)
 	}
 	return block, nil
 }
@@ -36,17 +36,17 @@ func GetBlockChainInfo(signCert, priKey, MSPID, channelID string, connection pb.
 
 	signer, err := tools.CreateSigner(priKey, signCert, MSPID)
 	if err != nil {
-		return nil, errors.WithMessage(err, "get signer")
+		return nil, fmt.Errorf("get signer %w", err)
 	}
 	proposalResp, err := getSignedProposal(channelID, "qscc", "GetChainInfo", signer, connection)
 	if err != nil {
-		return nil, errors.WithMessage(err, "get signed proposal")
+		return nil, fmt.Errorf("get signed proposal %w", err)
 	}
 
 	blockChainInfo := &cb.BlockchainInfo{}
 	err = proto.Unmarshal(proposalResp.Response.Payload, blockChainInfo)
 	if err != nil {
-		return nil, errors.WithMessage(err, "block unmarshal")
+		return nil, fmt.Errorf("block unmarshal %w", err)
 	}
 	return blockChainInfo, nil
 }
@@ -63,23 +63,23 @@ func getSignedProposal(channelID, ccName, funcName string, signer *identity.Cryp
 
 	c, err := signer.Serialize()
 	if err != nil {
-		return nil, errors.WithMessage(err, "signer serialize")
+		return nil, fmt.Errorf("signer serialize %w", err)
 	}
 	prop, _, err := protoutil.CreateProposalFromCIS(cb.HeaderType_ENDORSER_TRANSACTION, channelID, spec, c)
 	if err != nil {
-		return nil, errors.WithMessage(err, "create proposal")
+		return nil, fmt.Errorf("create proposal %w", err)
 	}
 
 	var signedProp *pb.SignedProposal
 	signedProp, err = protoutil.GetSignedProposal(prop, signer)
 	if err != nil {
-		return nil, errors.WithMessage(err, "get signe proposal")
+		return nil, fmt.Errorf("get signe proposal %w", err)
 	}
 
 	var proposalResp *pb.ProposalResponse
 	proposalResp, err = connection.ProcessProposal(context.Background(), signedProp)
 	if err != nil {
-		return nil, errors.WithMessage(err, "process proposal")
+		return nil, fmt.Errorf("process proposal %w", err)
 	}
 
 	return proposalResp, nil
