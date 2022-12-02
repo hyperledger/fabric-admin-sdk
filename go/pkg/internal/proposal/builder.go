@@ -46,6 +46,7 @@ func NewProposal(
 
 	builder := &builder{
 		chaincodeName:   chaincodeName,
+		headerType:      common.HeaderType_ENDORSER_TRANSACTION,
 		transactionName: transactionName,
 		transactionCtx:  transactionCtx,
 	}
@@ -62,6 +63,7 @@ func NewProposal(
 type builder struct {
 	channelName     string
 	chaincodeName   string
+	headerType      common.HeaderType
 	transactionName string
 	transactionCtx  *transactionContext
 	transient       map[string][]byte
@@ -180,6 +182,13 @@ func WithTransient(transient map[string][]byte) Option {
 func WithChannel(channelName string) Option {
 	return func(b *builder) error {
 		b.channelName = channelName
+		return nil
+	}
+}
+
+func WithType(headerType common.HeaderType) Option {
+	return func(b *builder) error {
+		b.headerType = headerType
 		return nil
 	}
 }

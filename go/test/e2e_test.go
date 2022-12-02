@@ -18,9 +18,10 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
-	npb "github.com/hyperledger/fabric-protos-go-apiv2/peer"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -30,7 +31,8 @@ const (
 
 type ConnectionDetails struct {
 	signer     identity.SignerSerializer
-	connection npb.EndorserClient
+	connection grpc.ClientConnInterface
+	client     peer.EndorserClient
 }
 
 var _ = Describe("e2e", func() {
@@ -88,7 +90,7 @@ var _ = Describe("e2e", func() {
 			n_conn1, err := network.DialConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
 
-			connection1 := npb.NewEndorserClient(n_conn1)
+			connection1 := peer.NewEndorserClient(n_conn1)
 			Expect(err).NotTo(HaveOccurred())
 			org1MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
@@ -111,7 +113,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			n_conn2, err := network.DialConnection(peer2)
 			Expect(err).NotTo(HaveOccurred())
-			connection2 := npb.NewEndorserClient(n_conn2)
+			connection2 := peer.NewEndorserClient(n_conn2)
 			Expect(err).NotTo(HaveOccurred())
 			org2MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
@@ -141,11 +143,13 @@ var _ = Describe("e2e", func() {
 
 			peerConnections := []*ConnectionDetails{
 				{
-					connection: connection1,
+					client:     connection1,
+					connection: n_conn1,
 					signer:     org1MSP,
 				},
 				{
-					connection: connection2,
+					client:     connection2,
+					connection: n_conn2,
 					signer:     org2MSP,
 				},
 			}
@@ -217,7 +221,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			// approve from org2
 			time.Sleep(time.Duration(15) * time.Second)
-			endorsement_org2_group := make([]npb.EndorserClient, 1)
+			endorsement_org2_group := make([]peer.EndorserClient, 1)
 			endorsement_org2_group[0] = connection2
 			n_conn3, err := network.DialConnection(orderer_node)
 			Expect(err).NotTo(HaveOccurred())
@@ -231,7 +235,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// approve from org1
-			endorsement_org1_group := make([]npb.EndorserClient, 1)
+			endorsement_org1_group := make([]peer.EndorserClient, 1)
 			endorsement_org1_group[0] = connection1
 			err = chaincode.Approve(CCDefine, *org1MSP, endorsement_org1_group, connection3)
 			Expect(err).NotTo(HaveOccurred())

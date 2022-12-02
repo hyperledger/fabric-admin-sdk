@@ -10,24 +10,6 @@ import (
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 )
 
-// CreateChaincodeProposalWithTxIDAndTransient creates a proposal from given
-// input. It returns the proposal and the transaction id associated with the
-// proposal
-func CreateChaincodeProposalWithTxIDAndTransient(typ common.HeaderType, channelID string, cis *peer.ChaincodeInvocationSpec, creator []byte, txid string, transientMap map[string][]byte) (*peer.Proposal, string, error) {
-	// generate a random nonce
-	nonce, err := getRandomNonce()
-	if err != nil {
-		return nil, "", err
-	}
-
-	// compute txid unless provided by tests
-	if txid == "" {
-		txid = ComputeTxID(nonce, creator)
-	}
-
-	return CreateChaincodeProposalWithTxIDNonceAndTransient(txid, typ, channelID, cis, nonce, creator, transientMap)
-}
-
 // CreateSignedTx assembles an Envelope message from proposal, endorsements,
 // and a signer. This function should be called by a client when it has
 // collected enough endorsements for a proposal to create a transaction and

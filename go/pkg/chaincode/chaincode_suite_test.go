@@ -12,6 +12,8 @@ func TestChaincode(t *testing.T) {
 	RunSpecs(t, "Chaincode Suite")
 }
 
+const processProposalMethod = "/protos.Endorser/ProcessProposal"
+
 var tmpDir string
 
 var _ = BeforeSuite(func() {

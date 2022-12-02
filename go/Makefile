@@ -1,7 +1,7 @@
 .PHONY: unit-test
 unit-test:
 	@echo "Run unit test......"
-	go test -v -coverpkg=./pkg/... -coverprofile=coverage.out ./pkg/...
+	go test -coverpkg=./pkg/... -coverprofile=coverage.out ./pkg/...
 
 include gotools.mk
 

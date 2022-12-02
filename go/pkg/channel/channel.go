@@ -5,16 +5,17 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"errors"
 	"fabric-admin-sdk/internal/osnadmin"
 	"fabric-admin-sdk/internal/pkg/identity"
 	"fabric-admin-sdk/internal/protoutil"
+	"fabric-admin-sdk/pkg/internal/proposal"
 	"fmt"
 	"io"
 	"net/http"
 
 	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
 	pb "github.com/hyperledger/fabric-protos-go-apiv2/peer"
+	"google.golang.org/protobuf/proto"
 )
 
 type ChannelList struct {
@@ -30,66 +31,31 @@ func CreateChannel(osnURL string, block *cb.Block, caCertPool *x509.CertPool, tl
 	return osnadmin.Join(osnURL, block_byte, caCertPool, tlsClientCert)
 }
 
-func JoinChannel(block *cb.Block, Signer identity.CryptoImpl, connection pb.EndorserClient) error {
-	spec, err := getJoinCCSpec(block)
+func JoinChannel(block *cb.Block, signer identity.CryptoImpl, connection pb.EndorserClient) error {
+	blockBytes, err := proto.Marshal(block)
 	if err != nil {
-		return err
-	}
-	return executeJoin(Signer, connection, spec)
-}
-
-const (
-	UndefinedParamValue = ""
-)
-
-func getJoinCCSpec(block *cb.Block) (*pb.ChaincodeSpec, error) {
-	block_byte := protoutil.MarshalOrPanic(block)
-	// Build the spec
-	input := &pb.ChaincodeInput{Args: [][]byte{[]byte("JoinChain"), block_byte}}
-
-	spec := &pb.ChaincodeSpec{
-		Type:        pb.ChaincodeSpec_Type(pb.ChaincodeSpec_Type_value["GOLANG"]),
-		ChaincodeId: &pb.ChaincodeID{Name: "cscc"},
-		Input:       input,
+		return fmt.Errorf("failed to marshal block: %w", err)
 	}
 
-	return spec, nil
-}
-
-func executeJoin(Signer identity.CryptoImpl, endorsementClinet pb.EndorserClient, spec *pb.ChaincodeSpec) (err error) {
-	// Build the ChaincodeInvocationSpec message
-	invocation := &pb.ChaincodeInvocationSpec{ChaincodeSpec: spec}
-
-	creator, err := Signer.Serialize()
-	if err != nil {
-		return fmt.Errorf("Error serializing identity for reason %s", err)
-	}
-
-	var prop *pb.Proposal
-	prop, _, err = protoutil.CreateProposalFromCIS(cb.HeaderType_CONFIG, "", invocation, creator)
-	if err != nil {
-		return fmt.Errorf("Error creating proposal for join %s", err)
-	}
-
-	var signedProp *pb.SignedProposal
-	signedProp, err = protoutil.GetSignedProposal(prop, &Signer)
-	if err != nil {
-		return fmt.Errorf("Error creating signed proposal %s", err)
-	}
-
-	var proposalResp *pb.ProposalResponse
-	proposalResp, err = endorsementClinet.ProcessProposal(context.Background(), signedProp)
+	prop, err := proposal.NewProposal(signer, "cscc", "JoinChain", proposal.WithArguments(blockBytes), proposal.WithType(cb.HeaderType_CONFIG))
 	if err != nil {
 		return err
 	}
 
-	if proposalResp == nil {
-		return errors.New("nil proposal response")
+	signedProp, err := proposal.NewSignedProposal(prop, signer)
+	if err != nil {
+		return err
 	}
 
-	if proposalResp.Response.Status != 0 && proposalResp.Response.Status != 200 {
-		return fmt.Errorf("bad proposal response %d: %s", proposalResp.Response.Status, proposalResp.Response.Message)
+	proposalResp, err := connection.ProcessProposal(context.Background(), signedProp)
+	if err != nil {
+		return err
 	}
+
+	if err = proposal.CheckSuccessfulResponse(proposalResp); err != nil {
+		return err
+	}
+
 	return nil
 }
 

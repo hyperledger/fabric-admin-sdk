@@ -13,12 +13,14 @@ import (
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
 
 const queryInstalledTransactionName = "QueryInstalledChaincodes"
 
-func QueryInstalled(ctx context.Context, endorser peer.EndorserClient, signer identity.SignerSerializer) (*lifecycle.QueryInstalledChaincodesResult, error) {
+// QueryInstalled chaincode on a specific peer.
+func QueryInstalled(ctx context.Context, connection grpc.ClientConnInterface, signer identity.SignerSerializer) (*lifecycle.QueryInstalledChaincodesResult, error) {
 	queryArgs := &lifecycle.QueryInstalledChaincodesArgs{}
 	queryArgsBytes, err := proto.Marshal(queryArgs)
 	if err != nil {
@@ -34,6 +36,8 @@ func QueryInstalled(ctx context.Context, endorser peer.EndorserClient, signer id
 	if err != nil {
 		return nil, err
 	}
+
+	endorser := peer.NewEndorserClient(connection)
 
 	proposalResponse, err := endorser.ProcessProposal(ctx, signedProposal)
 	if err != nil {

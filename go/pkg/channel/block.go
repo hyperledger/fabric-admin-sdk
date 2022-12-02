@@ -3,7 +3,7 @@ package channel
 import (
 	"context"
 	"fabric-admin-sdk/internal/pkg/identity"
-	"fabric-admin-sdk/internal/protoutil"
+	"fabric-admin-sdk/pkg/internal/proposal"
 	"fabric-admin-sdk/pkg/tools"
 	"fmt"
 
@@ -52,28 +52,14 @@ func GetBlockChainInfo(signCert, priKey, MSPID, channelID string, connection pb.
 }
 
 func getSignedProposal(channelID, ccName, funcName string, signer *identity.CryptoImpl, connection pb.EndorserClient) (*pb.ProposalResponse, error) {
-
-	spec := &pb.ChaincodeInvocationSpec{
-		ChaincodeSpec: &pb.ChaincodeSpec{
-			Type:        pb.ChaincodeSpec_Type(pb.ChaincodeSpec_Type_value["GOLANG"]),
-			ChaincodeId: &pb.ChaincodeID{Name: ccName},
-			Input:       &pb.ChaincodeInput{Args: [][]byte{[]byte(funcName), []byte(channelID)}},
-		},
+	prop, err := proposal.NewProposal(signer, ccName, funcName, proposal.WithChannel(channelID), proposal.WithArguments([]byte(channelID)))
+	if err != nil {
+		return nil, err
 	}
 
-	c, err := signer.Serialize()
+	signedProp, err := proposal.NewSignedProposal(prop, signer)
 	if err != nil {
-		return nil, fmt.Errorf("signer serialize %w", err)
-	}
-	prop, _, err := protoutil.CreateProposalFromCIS(cb.HeaderType_ENDORSER_TRANSACTION, channelID, spec, c)
-	if err != nil {
-		return nil, fmt.Errorf("create proposal %w", err)
-	}
-
-	var signedProp *pb.SignedProposal
-	signedProp, err = protoutil.GetSignedProposal(prop, signer)
-	if err != nil {
-		return nil, fmt.Errorf("get signe proposal %w", err)
+		return nil, err
 	}
 
 	var proposalResp *pb.ProposalResponse
