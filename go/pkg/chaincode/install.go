@@ -9,6 +9,7 @@ import (
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -17,7 +18,8 @@ const (
 	installTransactionName = "InstallChaincode"
 )
 
-func Install(ctx context.Context, endorser peer.EndorserClient, signer identity.SignerSerializer, packageReader io.Reader) error {
+// Install a chaincode package to specific peer.
+func Install(ctx context.Context, connection grpc.ClientConnInterface, signer identity.SignerSerializer, packageReader io.Reader) error {
 	packageBytes, err := io.ReadAll(packageReader)
 	if err != nil {
 		return fmt.Errorf("failed to read chaincode package: %w", err)
@@ -40,6 +42,8 @@ func Install(ctx context.Context, endorser peer.EndorserClient, signer identity.
 	if err != nil {
 		return err
 	}
+
+	endorser := peer.NewEndorserClient(connection)
 
 	proposalResponse, err := endorser.ProcessProposal(ctx, signedProposal)
 	if err != nil {

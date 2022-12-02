@@ -10,7 +10,7 @@ jobs:
         working-directory: node
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@main
+      - uses: actions/checkout@v3
       - name: check default node version
         run: node --version
       - run: npm i
@@ -27,7 +27,7 @@ jobs:
   #      working-directory: ts
   #  runs-on: ubuntu-latest
   #  steps:
-  #    - uses: actions/checkout@main
+  #    - uses: actions/checkout@v3
   #    - run: npm i
   #      working-directory: ts/formatter
   #    - run: npm test

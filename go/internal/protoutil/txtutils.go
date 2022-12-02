@@ -8,62 +8,12 @@ import (
 	"errors"
 	"fabric-admin-sdk/internal/pkg/identity"
 	"fmt"
-	"time"
 
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
-
-// GetSignedProposal returns a signed proposal given a Proposal message and a
-// signing identity
-func GetSignedProposal(prop *peer.Proposal, signer *identity.CryptoImpl) (*peer.SignedProposal, error) {
-	// check for nil argument
-	if prop == nil || signer == nil {
-		return nil, errors.New("nil arguments")
-	}
-
-	propBytes, err := proto.Marshal(prop)
-	if err != nil {
-		return nil, err
-	}
-
-	signature, err := signer.Sign(propBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return &peer.SignedProposal{ProposalBytes: propBytes, Signature: signature}, nil
-}
-
-// CreateProposalFromCIS returns a proposal given a serialized identity and a
-// ChaincodeInvocationSpec
-func CreateProposalFromCIS(typ common.HeaderType, channelID string, cis *peer.ChaincodeInvocationSpec, creator []byte) (*peer.Proposal, string, error) {
-	return CreateChaincodeProposal(typ, channelID, cis, creator)
-}
-
-// CreateChaincodeProposal creates a proposal from given input.
-// It returns the proposal and the transaction id associated to the proposal
-func CreateChaincodeProposal(typ common.HeaderType, channelID string, cis *peer.ChaincodeInvocationSpec, creator []byte) (*peer.Proposal, string, error) {
-	return CreateChaincodeProposalWithTransient(typ, channelID, cis, creator, nil)
-}
-
-// CreateChaincodeProposalWithTransient creates a proposal from given input
-// It returns the proposal and the transaction id associated to the proposal
-func CreateChaincodeProposalWithTransient(typ common.HeaderType, channelID string, cis *peer.ChaincodeInvocationSpec, creator []byte, transientMap map[string][]byte) (*peer.Proposal, string, error) {
-	// generate a random nonce
-	nonce, err := getRandomNonce()
-	if err != nil {
-		return nil, "", err
-	}
-
-	// compute txid
-	txid := ComputeTxID(nonce, creator)
-
-	return CreateChaincodeProposalWithTxIDNonceAndTransient(txid, typ, channelID, cis, nonce, creator, transientMap)
-}
 
 // ComputeTxID computes TxID as the Hash computed
 // over the concatenation of nonce and creator.
@@ -88,66 +38,6 @@ func getRandomNonce() ([]byte, error) {
 		return nil, fmt.Errorf("error getting random bytes %w", err)
 	}
 	return key, nil
-}
-
-// CreateChaincodeProposalWithTxIDNonceAndTransient creates a proposal from
-// given input
-func CreateChaincodeProposalWithTxIDNonceAndTransient(txid string, typ common.HeaderType, channelID string, cis *peer.ChaincodeInvocationSpec, nonce, creator []byte, transientMap map[string][]byte) (*peer.Proposal, string, error) {
-	ccHdrExt := &peer.ChaincodeHeaderExtension{ChaincodeId: cis.ChaincodeSpec.ChaincodeId}
-	ccHdrExtBytes, err := proto.Marshal(ccHdrExt)
-	if err != nil {
-		return nil, "", fmt.Errorf("error marshaling ChaincodeHeaderExtension %w", err)
-	}
-
-	cisBytes, err := proto.Marshal(cis)
-	if err != nil {
-		return nil, "", fmt.Errorf("error marshaling ChaincodeInvocationSpec %w", err)
-	}
-
-	ccPropPayload := &peer.ChaincodeProposalPayload{Input: cisBytes, TransientMap: transientMap}
-	ccPropPayloadBytes, err := proto.Marshal(ccPropPayload)
-	if err != nil {
-		return nil, "", errors.Unwrap(fmt.Errorf("error marshaling ChaincodeProposalPayload %w", err))
-	}
-
-	// TODO: epoch is now set to zero. This must be changed once we
-	// get a more appropriate mechanism to handle it in.
-	var epoch uint64
-
-	timestamp, err := ptypes.TimestampProto(time.Now().UTC())
-	if err != nil {
-		return nil, "", fmt.Errorf("error validating Timestamp %w", err)
-	}
-
-	hdr := &common.Header{
-		ChannelHeader: MarshalOrPanic(
-			&common.ChannelHeader{
-				Type:      int32(typ),
-				TxId:      txid,
-				Timestamp: timestamp,
-				ChannelId: channelID,
-				Extension: ccHdrExtBytes,
-				Epoch:     epoch,
-			},
-		),
-		SignatureHeader: MarshalOrPanic(
-			&common.SignatureHeader{
-				Nonce:   nonce,
-				Creator: creator,
-			},
-		),
-	}
-
-	hdrBytes, err := proto.Marshal(hdr)
-	if err != nil {
-		return nil, "", err
-	}
-
-	prop := &peer.Proposal{
-		Header:  hdrBytes,
-		Payload: ccPropPayloadBytes,
-	}
-	return prop, txid, nil
 }
 
 // MarshalOrPanic serializes a protobuf message and panics if this
@@ -228,12 +118,9 @@ func CreateSignedEnvelopeWithTLSBinding(
 // MakeChannelHeader creates a ChannelHeader.
 func MakeChannelHeader(headerType common.HeaderType, version int32, chainID string, epoch uint64) *common.ChannelHeader {
 	return &common.ChannelHeader{
-		Type:    int32(headerType),
-		Version: version,
-		Timestamp: &timestamp.Timestamp{
-			Seconds: time.Now().Unix(),
-			Nanos:   0,
-		},
+		Type:      int32(headerType),
+		Version:   version,
+		Timestamp: timestamppb.Now(),
 		ChannelId: chainID,
 		Epoch:     epoch,
 	}
