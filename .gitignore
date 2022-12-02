@@ -1,2 +1,5 @@
 .vscode
 fabric-samples
+coverage.out
+**/*_mock_test.go
+vendor
