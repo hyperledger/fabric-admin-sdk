@@ -6,8 +6,8 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fabric-admin-sdk/internal/osnadmin"
-	"fabric-admin-sdk/internal/pkg/identity"
 	"fabric-admin-sdk/internal/protoutil"
+	"fabric-admin-sdk/pkg/identity"
 	"fabric-admin-sdk/pkg/internal/proposal"
 	"fmt"
 	"io"
@@ -31,18 +31,18 @@ func CreateChannel(osnURL string, block *cb.Block, caCertPool *x509.CertPool, tl
 	return osnadmin.Join(osnURL, block_byte, caCertPool, tlsClientCert)
 }
 
-func JoinChannel(block *cb.Block, signer identity.CryptoImpl, connection pb.EndorserClient) error {
+func JoinChannel(block *cb.Block, id identity.SigningIdentity, connection pb.EndorserClient) error {
 	blockBytes, err := proto.Marshal(block)
 	if err != nil {
 		return fmt.Errorf("failed to marshal block: %w", err)
 	}
 
-	prop, err := proposal.NewProposal(signer, "cscc", "JoinChain", proposal.WithArguments(blockBytes), proposal.WithType(cb.HeaderType_CONFIG))
+	prop, err := proposal.NewProposal(id, "cscc", "JoinChain", proposal.WithArguments(blockBytes), proposal.WithType(cb.HeaderType_CONFIG))
 	if err != nil {
 		return err
 	}
 
-	signedProp, err := proposal.NewSignedProposal(prop, signer)
+	signedProp, err := proposal.NewSignedProposal(prop, id)
 	if err != nil {
 		return err
 	}

@@ -3,11 +3,11 @@ package chaincode_test
 import (
 	"context"
 	"errors"
-	"fabric-admin-sdk/internal/pkg/identity/mocks"
 	"fabric-admin-sdk/pkg/chaincode"
 
 	"github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
 	. "github.com/onsi/ginkgo/v2"
@@ -28,12 +28,6 @@ func AssertProtoEqual(expected proto.Message, actual proto.Message) {
 }
 
 var _ = Describe("QueryInstalled", func() {
-	var mockSigner *mocks.SignerSerializer
-
-	BeforeEach(func() {
-		mockSigner = &mocks.SignerSerializer{}
-	})
-
 	It("Endorser client called with supplied context", func(specCtx SpecContext) {
 		controller, ctx := gomock.WithContext(specCtx, GinkgoT())
 		defer controller.Finish()
@@ -44,6 +38,8 @@ var _ = Describe("QueryInstalled", func() {
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
 				CopyProto(NewProposalResponse(common.Status_SUCCESS, ""), out)
 			})
+
+		mockSigner := NewMockSigner(controller, "", nil, nil)
 
 		_, err := chaincode.QueryInstalled(ctx, mockConnection, mockSigner)
 		Expect(err).NotTo(HaveOccurred())
@@ -59,6 +55,8 @@ var _ = Describe("QueryInstalled", func() {
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(expectedErr)
+
+		mockSigner := NewMockSigner(controller, "", nil, nil)
 
 		_, err := chaincode.QueryInstalled(ctx, mockConnection, mockSigner)
 
@@ -78,6 +76,8 @@ var _ = Describe("QueryInstalled", func() {
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
 				CopyProto(NewProposalResponse(expectedStatus, expectedMessage), out)
 			})
+
+		mockSigner := NewMockSigner(controller, "", nil, nil)
 
 		_, err := chaincode.QueryInstalled(ctx, mockConnection, mockSigner)
 
@@ -105,7 +105,7 @@ var _ = Describe("QueryInstalled", func() {
 			}).
 			Times(1)
 
-		mockSigner.SignReturns(expected, nil)
+		mockSigner := NewMockSigner(controller, "", nil, expected)
 
 		_, err := chaincode.QueryInstalled(ctx, mockConnection, mockSigner)
 		Expect(err).NotTo(HaveOccurred())
@@ -115,7 +115,10 @@ var _ = Describe("QueryInstalled", func() {
 	})
 
 	It("Proposal includes creator", func(specCtx SpecContext) {
-		expected := []byte("MY_SIGNATURE")
+		expected := &msp.SerializedIdentity{
+			Mspid:   "MSP_ID",
+			IdBytes: []byte("CREDENTIALS"),
+		}
 
 		controller, ctx := gomock.WithContext(specCtx, GinkgoT())
 		defer controller.Finish()
@@ -130,15 +133,17 @@ var _ = Describe("QueryInstalled", func() {
 			}).
 			Times(1)
 
-		mockSigner.SerializeReturns(expected, nil)
+		mockSigner := NewMockSigner(controller, expected.Mspid, expected.IdBytes, nil)
 
 		_, err := chaincode.QueryInstalled(ctx, mockConnection, mockSigner)
 		Expect(err).NotTo(HaveOccurred())
 
 		signatureHeader := AssertUnmarshalSignatureHeader(signedProposal)
 
-		actual := signatureHeader.GetCreator()
-		Expect(actual).To(BeEquivalentTo(expected), "signature")
+		actual := &msp.SerializedIdentity{}
+		AssertUnmarshal(signatureHeader.GetCreator(), actual)
+
+		AssertProtoEqual(expected, actual)
 	})
 
 	It("Installed chaincodes returned on successful proposal response", func(specCtx SpecContext) {
@@ -163,6 +168,8 @@ var _ = Describe("QueryInstalled", func() {
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
 				CopyProto(response, out)
 			})
+
+		mockSigner := NewMockSigner(controller, "", nil, nil)
 
 		actual, err := chaincode.QueryInstalled(ctx, mockConnection, mockSigner)
 		Expect(err).NotTo(HaveOccurred())

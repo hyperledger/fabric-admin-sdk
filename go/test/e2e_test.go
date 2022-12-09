@@ -5,9 +5,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fabric-admin-sdk/internal/network"
-	"fabric-admin-sdk/internal/pkg/identity"
 	"fabric-admin-sdk/pkg/chaincode"
 	"fabric-admin-sdk/pkg/channel"
+	"fabric-admin-sdk/pkg/identity"
 	"fabric-admin-sdk/pkg/tools"
 	"fmt"
 	"io"
@@ -30,7 +30,7 @@ const (
 )
 
 type ConnectionDetails struct {
-	signer     identity.SignerSerializer
+	id         identity.SigningIdentity
 	connection grpc.ClientConnInterface
 	client     peer.EndorserClient
 }
@@ -95,7 +95,7 @@ var _ = Describe("e2e", func() {
 			org1MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
 			err = channel.JoinChannel(
-				block, *org1MSP, connection1,
+				block, org1MSP, connection1,
 			)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -118,7 +118,7 @@ var _ = Describe("e2e", func() {
 			org2MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
 			err = channel.JoinChannel(
-				block, *org2MSP, connection2,
+				block, org2MSP, connection2,
 			)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -145,12 +145,12 @@ var _ = Describe("e2e", func() {
 				{
 					client:     connection1,
 					connection: n_conn1,
-					signer:     org1MSP,
+					id:         org1MSP,
 				},
 				{
 					client:     connection2,
 					connection: n_conn2,
-					signer:     org2MSP,
+					id:         org2MSP,
 				},
 			}
 
@@ -167,7 +167,7 @@ var _ = Describe("e2e", func() {
 					ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
 					defer cancel()
 
-					err = chaincode.Install(ctx, target.connection, target.signer, packageFile)
+					err = chaincode.Install(ctx, target.connection, target.id, packageFile)
 					Expect(err).NotTo(HaveOccurred(), "chaincode install")
 				}(installTarget)
 			}
@@ -184,7 +184,7 @@ var _ = Describe("e2e", func() {
 					ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
 					defer cancel()
 
-					result, err := chaincode.QueryInstalled(ctx, target.connection, target.signer)
+					result, err := chaincode.QueryInstalled(ctx, target.connection, target.id)
 					Expect(err).NotTo(HaveOccurred(), "query installed chaincode")
 
 					installedChaincodes := result.GetInstalledChaincodes()
@@ -227,21 +227,21 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			connection3, err := orderer.NewAtomicBroadcastClient(n_conn3).Broadcast(context.Background())
 			Expect(err).NotTo(HaveOccurred())
-			err = chaincode.Approve(CCDefine, *org2MSP, endorsement_org2_group, connection3)
+			err = chaincode.Approve(CCDefine, org2MSP, endorsement_org2_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 			// ReadinessCheck from org2
 			time.Sleep(time.Duration(15) * time.Second)
-			err = chaincode.ReadinessCheck(CCDefine, *org2MSP, connection2)
+			err = chaincode.ReadinessCheck(CCDefine, org2MSP, connection2)
 			Expect(err).NotTo(HaveOccurred())
 
 			// approve from org1
 			endorsement_org1_group := make([]peer.EndorserClient, 1)
 			endorsement_org1_group[0] = connection1
-			err = chaincode.Approve(CCDefine, *org1MSP, endorsement_org1_group, connection3)
+			err = chaincode.Approve(CCDefine, org1MSP, endorsement_org1_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 			// ReadinessCheck from org1
 			time.Sleep(time.Duration(15) * time.Second)
-			err = chaincode.ReadinessCheck(CCDefine, *org1MSP, connection1)
+			err = chaincode.ReadinessCheck(CCDefine, org1MSP, connection1)
 			Expect(err).NotTo(HaveOccurred())
 
 			// commit from org1
@@ -250,14 +250,14 @@ var _ = Describe("e2e", func() {
 			time.Sleep(time.Duration(15) * time.Second)
 			connection3, err = orderer.NewAtomicBroadcastClient(n_conn3).Broadcast(context.Background())
 			Expect(err).NotTo(HaveOccurred())
-			err = chaincode.Commit(CCDefine, *org1MSP, endorsement_org1_group, connection3)
+			err = chaincode.Commit(CCDefine, org1MSP, endorsement_org1_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 
 			// commit from org2
 			time.Sleep(time.Duration(15) * time.Second)
 			connection3, err = orderer.NewAtomicBroadcastClient(n_conn3).Broadcast(context.Background())
 			Expect(err).NotTo(HaveOccurred())
-			err = chaincode.Commit(CCDefine, *org2MSP, endorsement_org2_group, connection3)
+			err = chaincode.Commit(CCDefine, org2MSP, endorsement_org2_group, connection3)
 			Expect(err).NotTo(HaveOccurred())
 
 			f, _ := os.Create("PackageID")

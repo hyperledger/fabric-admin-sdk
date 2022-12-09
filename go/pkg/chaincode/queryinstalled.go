@@ -7,7 +7,7 @@ package chaincode
 
 import (
 	"context"
-	"fabric-admin-sdk/internal/pkg/identity"
+	"fabric-admin-sdk/pkg/identity"
 	"fabric-admin-sdk/pkg/internal/proposal"
 	"fmt"
 
@@ -20,19 +20,19 @@ import (
 const queryInstalledTransactionName = "QueryInstalledChaincodes"
 
 // QueryInstalled chaincode on a specific peer.
-func QueryInstalled(ctx context.Context, connection grpc.ClientConnInterface, signer identity.SignerSerializer) (*lifecycle.QueryInstalledChaincodesResult, error) {
+func QueryInstalled(ctx context.Context, connection grpc.ClientConnInterface, signingID identity.SigningIdentity) (*lifecycle.QueryInstalledChaincodesResult, error) {
 	queryArgs := &lifecycle.QueryInstalledChaincodesArgs{}
 	queryArgsBytes, err := proto.Marshal(queryArgs)
 	if err != nil {
 		return nil, err
 	}
 
-	proposalProto, err := proposal.NewProposal(signer, lifecycleChaincodeName, queryInstalledTransactionName, proposal.WithArguments(queryArgsBytes))
+	proposalProto, err := proposal.NewProposal(signingID, lifecycleChaincodeName, queryInstalledTransactionName, proposal.WithArguments(queryArgsBytes))
 	if err != nil {
 		return nil, err
 	}
 
-	signedProposal, err := proposal.NewSignedProposal(proposalProto, signer)
+	signedProposal, err := proposal.NewSignedProposal(proposalProto, signingID)
 	if err != nil {
 		return nil, err
 	}

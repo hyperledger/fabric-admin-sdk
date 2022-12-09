@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fabric-admin-sdk/internal/pkg/identity"
 	"fabric-admin-sdk/internal/protoutil"
+	"fabric-admin-sdk/pkg/identity"
 	"fabric-admin-sdk/pkg/internal/proposal"
 	"fmt"
 
@@ -17,18 +17,17 @@ import (
 )
 
 const approveFuncName = "ApproveChaincodeDefinitionForMyOrg"
-const lifecycleName = "_lifecycle"
 const checkCommitReadinessFuncName = "CheckCommitReadiness"
 
-func Approve(CCDefine CCDefine, Signer identity.CryptoImpl, EndorserClients []peer.EndorserClient, BroadcastClient orderer.AtomicBroadcast_BroadcastClient) error {
-	proposal, err := createProposal(CCDefine, Signer)
+func Approve(CCDefine CCDefine, id identity.SigningIdentity, EndorserClients []peer.EndorserClient, BroadcastClient orderer.AtomicBroadcast_BroadcastClient) error {
+	proposal, err := createProposal(CCDefine, id)
 	if err != nil {
 		return err
 	}
-	return processProposalWithBroadcast(proposal, Signer, EndorserClients, BroadcastClient)
+	return processProposalWithBroadcast(proposal, id, EndorserClients, BroadcastClient)
 }
 
-func createProposal(CCDefine CCDefine, Signer identity.CryptoImpl) (*peer.Proposal, error) {
+func createProposal(CCDefine CCDefine, id identity.SigningIdentity) (*peer.Proposal, error) {
 	var ccsrc *lifecycle.ChaincodeSource
 	if CCDefine.PackageID != "" {
 		ccsrc = &lifecycle.ChaincodeSource{
@@ -63,11 +62,11 @@ func createProposal(CCDefine CCDefine, Signer identity.CryptoImpl) (*peer.Propos
 		return nil, err
 	}
 
-	return proposal.NewProposal(Signer, lifecycleName, approveFuncName, proposal.WithChannel(CCDefine.ChannelID), proposal.WithArguments(argsBytes))
+	return proposal.NewProposal(id, lifecycleChaincodeName, approveFuncName, proposal.WithChannel(CCDefine.ChannelID), proposal.WithArguments(argsBytes))
 }
 
-func processProposalWithBroadcast(proposalProto *peer.Proposal, Signer identity.CryptoImpl, EndorserClients []peer.EndorserClient, BroadcastClient orderer.AtomicBroadcast_BroadcastClient) error {
-	signedProposal, err := proposal.NewSignedProposal(proposalProto, Signer)
+func processProposalWithBroadcast(proposalProto *peer.Proposal, id identity.SigningIdentity, EndorserClients []peer.EndorserClient, BroadcastClient orderer.AtomicBroadcast_BroadcastClient) error {
+	signedProposal, err := proposal.NewSignedProposal(proposalProto, id)
 	if err != nil {
 		return err
 	}
@@ -82,7 +81,7 @@ func processProposalWithBroadcast(proposalProto *peer.Proposal, Signer identity.
 		responses = append(responses, proposalResponse)
 	}
 	//CreateSignedTx
-	env, err := protoutil.CreateSignedTx(proposalProto, Signer, responses...)
+	env, err := protoutil.CreateSignedTx(proposalProto, id, responses...)
 	if err != nil {
 		return fmt.Errorf("failed to create signed transaction %w", err)
 	}
@@ -93,16 +92,16 @@ func processProposalWithBroadcast(proposalProto *peer.Proposal, Signer identity.
 	return nil
 }
 
-func ReadinessCheck(CCDefine CCDefine, Signer identity.CryptoImpl, EndorserClient peer.EndorserClient) error {
-	proposal, err := createReadinessCheckProposal(CCDefine, Signer)
+func ReadinessCheck(CCDefine CCDefine, id identity.SigningIdentity, EndorserClient peer.EndorserClient) error {
+	proposal, err := createReadinessCheckProposal(CCDefine, id)
 	if err != nil {
 		return err
 	}
-	return processProposal(proposal, Signer, EndorserClient)
+	return processProposal(proposal, id, EndorserClient)
 }
 
-func processProposal(proposalProto *peer.Proposal, Signer identity.CryptoImpl, EndorserClient peer.EndorserClient) error {
-	signedProposal, err := proposal.NewSignedProposal(proposalProto, Signer)
+func processProposal(proposalProto *peer.Proposal, signer identity.Signer, EndorserClient peer.EndorserClient) error {
+	signedProposal, err := proposal.NewSignedProposal(proposalProto, signer)
 	if err != nil {
 		return err
 	}
@@ -143,7 +142,7 @@ func printResponseAsJSON(proposalResponse *peer.ProposalResponse, msg proto.Mess
 	return nil
 }
 
-func createReadinessCheckProposal(CCDefine CCDefine, Signer identity.CryptoImpl) (*peer.Proposal, error) {
+func createReadinessCheckProposal(CCDefine CCDefine, id identity.Identity) (*peer.Proposal, error) {
 	args := &lifecycle.CheckCommitReadinessArgs{
 		Name:                CCDefine.Name,
 		Version:             CCDefine.Version,
@@ -160,5 +159,5 @@ func createReadinessCheckProposal(CCDefine CCDefine, Signer identity.CryptoImpl)
 		return nil, err
 	}
 
-	return proposal.NewProposal(Signer, lifecycleName, checkCommitReadinessFuncName, proposal.WithChannel(CCDefine.ChannelID), proposal.WithArguments(argsBytes))
+	return proposal.NewProposal(id, lifecycleChaincodeName, checkCommitReadinessFuncName, proposal.WithChannel(CCDefine.ChannelID), proposal.WithArguments(argsBytes))
 }

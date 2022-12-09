@@ -1,7 +1,7 @@
 package chaincode
 
 import (
-	"fabric-admin-sdk/internal/pkg/identity"
+	"fabric-admin-sdk/pkg/identity"
 	"fabric-admin-sdk/pkg/internal/proposal"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
@@ -26,15 +26,15 @@ type CCDefine struct {
 	CollectionConfigPackage  *peer.CollectionConfigPackage
 }
 
-func Commit(CCDefine CCDefine, signer identity.CryptoImpl, EndorserClients []peer.EndorserClient, BroadcastClient orderer.AtomicBroadcast_BroadcastClient) error {
-	proposal, err := createCommitProposal(CCDefine, signer)
+func Commit(CCDefine CCDefine, id identity.SigningIdentity, EndorserClients []peer.EndorserClient, BroadcastClient orderer.AtomicBroadcast_BroadcastClient) error {
+	proposal, err := createCommitProposal(CCDefine, id)
 	if err != nil {
 		return err
 	}
-	return processProposalWithBroadcast(proposal, signer, EndorserClients, BroadcastClient)
+	return processProposalWithBroadcast(proposal, id, EndorserClients, BroadcastClient)
 }
 
-func createCommitProposal(CCDefine CCDefine, signer identity.CryptoImpl) (*peer.Proposal, error) {
+func createCommitProposal(CCDefine CCDefine, id identity.SigningIdentity) (*peer.Proposal, error) {
 	args := &lifecycle.CommitChaincodeDefinitionArgs{
 		Name:                CCDefine.Name,
 		Version:             CCDefine.Version,
@@ -51,5 +51,5 @@ func createCommitProposal(CCDefine CCDefine, signer identity.CryptoImpl) (*peer.
 		return nil, err
 	}
 
-	return proposal.NewProposal(signer, lifecycleName, commitFuncName, proposal.WithChannel(CCDefine.ChannelID), proposal.WithArguments(argsBytes))
+	return proposal.NewProposal(id, lifecycleChaincodeName, commitFuncName, proposal.WithChannel(CCDefine.ChannelID), proposal.WithArguments(argsBytes))
 }

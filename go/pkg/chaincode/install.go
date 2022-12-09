@@ -2,7 +2,7 @@ package chaincode
 
 import (
 	"context"
-	"fabric-admin-sdk/internal/pkg/identity"
+	"fabric-admin-sdk/pkg/identity"
 	"fabric-admin-sdk/pkg/internal/proposal"
 	"fmt"
 	"io"
@@ -13,13 +13,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const (
-	lifecycleChaincodeName = "_lifecycle"
-	installTransactionName = "InstallChaincode"
-)
+const installTransactionName = "InstallChaincode"
 
 // Install a chaincode package to specific peer.
-func Install(ctx context.Context, connection grpc.ClientConnInterface, signer identity.SignerSerializer, packageReader io.Reader) error {
+func Install(ctx context.Context, connection grpc.ClientConnInterface, signingID identity.SigningIdentity, packageReader io.Reader) error {
 	packageBytes, err := io.ReadAll(packageReader)
 	if err != nil {
 		return fmt.Errorf("failed to read chaincode package: %w", err)
@@ -33,12 +30,12 @@ func Install(ctx context.Context, connection grpc.ClientConnInterface, signer id
 		return err
 	}
 
-	proposalProto, err := proposal.NewProposal(signer, lifecycleChaincodeName, installTransactionName, proposal.WithArguments(installArgsBytes))
+	proposalProto, err := proposal.NewProposal(signingID, lifecycleChaincodeName, installTransactionName, proposal.WithArguments(installArgsBytes))
 	if err != nil {
 		return err
 	}
 
-	signedProposal, err := proposal.NewSignedProposal(proposalProto, signer)
+	signedProposal, err := proposal.NewSignedProposal(proposalProto, signingID)
 	if err != nil {
 		return err
 	}
