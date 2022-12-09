@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 package proposal
 
 import (
-	"fabric-admin-sdk/internal/pkg/identity"
+	"fabric-admin-sdk/pkg/identity"
 	"fmt"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
@@ -34,12 +34,12 @@ func NewSignedProposal(proposal *peer.Proposal, signer identity.Signer) (*peer.S
 }
 
 func NewProposal(
-	serializer identity.Serializer,
+	id identity.Identity,
 	chaincodeName string,
 	transactionName string,
 	options ...Option,
 ) (*peer.Proposal, error) {
-	transactionCtx, err := newTransactionContext(serializer)
+	transactionCtx, err := newTransactionContext(id)
 	if err != nil {
 		return nil, err
 	}

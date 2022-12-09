@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"fabric-admin-sdk/internal/network"
 	"fabric-admin-sdk/pkg/channel"
+	"fabric-admin-sdk/pkg/tools"
 	"fmt"
 	"os"
 
@@ -62,8 +63,11 @@ var _ = Describe("channel", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			connection := npb.NewEndorserClient(n_conn1)
+
+			id, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
-			configBlock, err := channel.GetConfigBlock(SignCert, PrivKeyPath, MSPID, channelID, connection)
+
+			configBlock, err := channel.GetConfigBlock(id, channelID, connection)
 			Expect(err).NotTo(HaveOccurred())
 			fmt.Println("config block", configBlock)
 		})
@@ -91,7 +95,11 @@ var _ = Describe("channel", func() {
 			n_conn1, err := network.DialConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
 			connection := npb.NewEndorserClient(n_conn1)
-			blockChainInfo, err := channel.GetBlockChainInfo(SignCert, PrivKeyPath, MSPID, channelID, connection)
+
+			id, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
+			Expect(err).NotTo(HaveOccurred())
+
+			blockChainInfo, err := channel.GetBlockChainInfo(id, channelID, connection)
 			Expect(err).NotTo(HaveOccurred())
 			fmt.Println("blockchain info", blockChainInfo)
 		})

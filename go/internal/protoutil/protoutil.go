@@ -3,7 +3,7 @@ package protoutil
 import (
 	"bytes"
 	"errors"
-	"fabric-admin-sdk/internal/pkg/identity"
+	"fabric-admin-sdk/pkg/identity"
 	"fmt"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
@@ -16,7 +16,7 @@ import (
 // submit it to peers for ordering
 func CreateSignedTx(
 	proposal *peer.Proposal,
-	signer identity.CryptoImpl,
+	signer identity.Signer,
 	resps ...*peer.ProposalResponse,
 ) (*common.Envelope, error) {
 	if len(resps) == 0 {
@@ -33,22 +33,6 @@ func CreateSignedTx(
 	pPayl, err := UnmarshalChaincodeProposalPayload(proposal.Payload)
 	if err != nil {
 		return nil, err
-	}
-
-	// check that the signer is the same that is referenced in the header
-	// TODO: maybe worth removing?
-	signerBytes, err := signer.Serialize()
-	if err != nil {
-		return nil, err
-	}
-
-	shdr, err := UnmarshalSignatureHeader(hdr.SignatureHeader)
-	if err != nil {
-		return nil, err
-	}
-
-	if !bytes.Equal(signerBytes, shdr.Creator) {
-		return nil, errors.New("signer must be the same as the one referenced in the header")
 	}
 
 	// ensure that all actions are bitwise equal and that they are successful

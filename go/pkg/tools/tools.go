@@ -13,13 +13,11 @@ import (
 	"errors"
 	"fabric-admin-sdk/internal/configtxgen/encoder"
 	"fabric-admin-sdk/internal/configtxgen/genesisconfig"
-	"fabric-admin-sdk/internal/pkg/identity"
+	"fabric-admin-sdk/pkg/identity"
 	"fmt"
 	"os"
 
 	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
-	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
-	"google.golang.org/protobuf/proto"
 )
 
 // configtxGen
@@ -40,35 +38,18 @@ func LoadProfile(configName, FABRIC_CFG_PATH string) (*genesisconfig.Profile, er
 	return genesisconfig.Load(configName, FABRIC_CFG_PATH)
 }
 
-func CreateSigner(PrivKeyPath, SignCert, MSPID string) (*identity.CryptoImpl, error) {
-	priv, err := GetPrivateKey(PrivKeyPath)
+func CreateSigner(privateKeyPath, certificatePath, mspID string) (identity.SigningIdentity, error) {
+	priv, err := GetPrivateKey(privateKeyPath)
 	if err != nil {
 		return nil, err
 	}
 
-	cert, certBytes, err := GetCertificate(SignCert)
+	cert, _, err := GetCertificate(certificatePath)
 	if err != nil {
 		return nil, err
 	}
 
-	id := &msp.SerializedIdentity{
-		Mspid:   MSPID,
-		IdBytes: certBytes,
-	}
-
-	name, err := proto.Marshal(id)
-	if err != nil {
-		return nil, err
-	}
-
-	//get signer
-	CryptoImpl := &identity.CryptoImpl{
-		Creator:  name,
-		PrivKey:  priv,
-		SignCert: cert,
-	}
-
-	return CryptoImpl, nil
+	return identity.NewPrivateKeySigningIdentity(mspID, cert, priv)
 }
 
 func GetPrivateKey(f string) (*ecdsa.PrivateKey, error) {

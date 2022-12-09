@@ -9,9 +9,11 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"fabric-admin-sdk/internal/pkg/identity"
+	"fabric-admin-sdk/pkg/identity"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
+	"google.golang.org/protobuf/proto"
 )
 
 type transactionContext struct {
@@ -19,13 +21,17 @@ type transactionContext struct {
 	SignatureHeader *common.SignatureHeader
 }
 
-func newTransactionContext(serializer identity.Serializer) (*transactionContext, error) {
+func newTransactionContext(id identity.Identity) (*transactionContext, error) {
 	nonce := make([]byte, 24)
 	if _, err := rand.Read(nonce); err != nil {
 		return nil, err
 	}
 
-	creator, err := serializer.Serialize()
+	serializedIdentity := &msp.SerializedIdentity{
+		Mspid:   id.MspID(),
+		IdBytes: id.Credentials(),
+	}
+	creator, err := proto.Marshal(serializedIdentity)
 	if err != nil {
 		return nil, err
 	}

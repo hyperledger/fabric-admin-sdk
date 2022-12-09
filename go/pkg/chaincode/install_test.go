@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fabric-admin-sdk/internal/pkg/identity/mocks"
 	"fabric-admin-sdk/pkg/chaincode"
 	"io"
 	"strings"
 
 	"github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
 	. "github.com/onsi/ginkgo/v2"
@@ -20,6 +20,16 @@ import (
 )
 
 //go:generate mockgen -destination ./clientconnection_mock_test.go -package ${GOPACKAGE} google.golang.org/grpc ClientConnInterface
+//go:generate mockgen -destination ./signingidentity_mock_test.go -package ${GOPACKAGE} fabric-admin-sdk/pkg/identity SigningIdentity
+
+func NewMockSigner(controller *gomock.Controller, mspID string, credentials []byte, signature []byte) *MockSigningIdentity {
+	id := NewMockSigningIdentity(controller)
+	id.EXPECT().MspID().Return(mspID).AnyTimes()
+	id.EXPECT().Credentials().Return(credentials).AnyTimes()
+	id.EXPECT().Sign(gomock.Any()).Return(signature, nil).AnyTimes()
+
+	return id
+}
 
 func NewProposalResponse(status common.Status, message string) *peer.ProposalResponse {
 	return &peer.ProposalResponse{
@@ -87,11 +97,9 @@ func CopyProto(from proto.Message, to proto.Message) {
 }
 
 var _ = Describe("Install", func() {
-	var mockSigner *mocks.SignerSerializer
 	var packageReader io.Reader
 
 	BeforeEach(func() {
-		mockSigner = &mocks.SignerSerializer{}
 		packageReader = strings.NewReader("CHAINCODE_PACKAGE")
 	})
 
@@ -105,6 +113,8 @@ var _ = Describe("Install", func() {
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
 				CopyProto(NewProposalResponse(common.Status_SUCCESS, ""), out)
 			})
+
+		mockSigner := NewMockSigner(controller, "", nil, nil)
 
 		err := chaincode.Install(ctx, mockConnection, mockSigner, packageReader)
 		Expect(err).NotTo(HaveOccurred())
@@ -120,6 +130,8 @@ var _ = Describe("Install", func() {
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(expectedErr)
+
+		mockSigner := NewMockSigner(controller, "", nil, nil)
 
 		err := chaincode.Install(ctx, mockConnection, mockSigner, packageReader)
 
@@ -139,6 +151,8 @@ var _ = Describe("Install", func() {
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
 				CopyProto(NewProposalResponse(expectedStatus, expectedMessage), out)
 			})
+
+		mockSigner := NewMockSigner(controller, "", nil, nil)
 
 		err := chaincode.Install(ctx, mockConnection, mockSigner, packageReader)
 
@@ -166,7 +180,7 @@ var _ = Describe("Install", func() {
 			}).
 			Times(1)
 
-		mockSigner.SignReturns(expected, nil)
+		mockSigner := NewMockSigner(controller, "", nil, expected)
 
 		err := chaincode.Install(ctx, mockConnection, mockSigner, packageReader)
 		Expect(err).NotTo(HaveOccurred())
@@ -191,6 +205,7 @@ var _ = Describe("Install", func() {
 			}).
 			Times(1)
 
+		mockSigner := NewMockSigner(controller, "", nil, nil)
 		packageReader = bytes.NewReader(expected)
 
 		err := chaincode.Install(ctx, mockConnection, mockSigner, packageReader)
@@ -208,7 +223,10 @@ var _ = Describe("Install", func() {
 	})
 
 	It("Proposal includes creator", func(specCtx SpecContext) {
-		expected := []byte("MY_SIGNATURE")
+		expected := &msp.SerializedIdentity{
+			Mspid:   "MSP_ID",
+			IdBytes: []byte("CREDENTIALS"),
+		}
 
 		controller, ctx := gomock.WithContext(specCtx, GinkgoT())
 		defer controller.Finish()
@@ -223,14 +241,16 @@ var _ = Describe("Install", func() {
 			}).
 			Times(1)
 
-		mockSigner.SerializeReturns(expected, nil)
+		mockSigner := NewMockSigner(controller, expected.Mspid, expected.IdBytes, nil)
 
 		err := chaincode.Install(ctx, mockConnection, mockSigner, packageReader)
 		Expect(err).NotTo(HaveOccurred())
 
 		signatureHeader := AssertUnmarshalSignatureHeader(signedProposal)
 
-		actual := signatureHeader.GetCreator()
-		Expect(actual).To(BeEquivalentTo(expected), "signature")
+		actual := &msp.SerializedIdentity{}
+		AssertUnmarshal(signatureHeader.GetCreator(), actual)
+
+		AssertProtoEqual(expected, actual)
 	})
 })

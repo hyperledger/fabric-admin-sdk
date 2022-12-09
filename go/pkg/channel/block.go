@@ -2,9 +2,8 @@ package channel
 
 import (
 	"context"
-	"fabric-admin-sdk/internal/pkg/identity"
+	"fabric-admin-sdk/pkg/identity"
 	"fabric-admin-sdk/pkg/internal/proposal"
-	"fabric-admin-sdk/pkg/tools"
 	"fmt"
 
 	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
@@ -13,13 +12,8 @@ import (
 )
 
 // GetConfigBlock get block config
-func GetConfigBlock(signCert, priKey, MSPID, channelID string, connection pb.EndorserClient) (*cb.Block, error) {
-
-	signer, err := tools.CreateSigner(priKey, signCert, MSPID)
-	if err != nil {
-		return nil, fmt.Errorf("create signer %w", err)
-	}
-	proposalResp, err := getSignedProposal(channelID, "cscc", "GetConfigBlock", signer, connection)
+func GetConfigBlock(id identity.SigningIdentity, channelID string, connection pb.EndorserClient) (*cb.Block, error) {
+	proposalResp, err := getSignedProposal(channelID, "cscc", "GetConfigBlock", id, connection)
 	if err != nil {
 		return nil, fmt.Errorf("get signed proposal %w", err)
 	}
@@ -32,13 +26,8 @@ func GetConfigBlock(signCert, priKey, MSPID, channelID string, connection pb.End
 }
 
 // GetBlockChainInfo get chain info
-func GetBlockChainInfo(signCert, priKey, MSPID, channelID string, connection pb.EndorserClient) (*cb.BlockchainInfo, error) {
-
-	signer, err := tools.CreateSigner(priKey, signCert, MSPID)
-	if err != nil {
-		return nil, fmt.Errorf("get signer %w", err)
-	}
-	proposalResp, err := getSignedProposal(channelID, "qscc", "GetChainInfo", signer, connection)
+func GetBlockChainInfo(id identity.SigningIdentity, channelID string, connection pb.EndorserClient) (*cb.BlockchainInfo, error) {
+	proposalResp, err := getSignedProposal(channelID, "qscc", "GetChainInfo", id, connection)
 	if err != nil {
 		return nil, fmt.Errorf("get signed proposal %w", err)
 	}
@@ -51,13 +40,13 @@ func GetBlockChainInfo(signCert, priKey, MSPID, channelID string, connection pb.
 	return blockChainInfo, nil
 }
 
-func getSignedProposal(channelID, ccName, funcName string, signer *identity.CryptoImpl, connection pb.EndorserClient) (*pb.ProposalResponse, error) {
-	prop, err := proposal.NewProposal(signer, ccName, funcName, proposal.WithChannel(channelID), proposal.WithArguments([]byte(channelID)))
+func getSignedProposal(channelID, ccName, funcName string, id identity.SigningIdentity, connection pb.EndorserClient) (*pb.ProposalResponse, error) {
+	prop, err := proposal.NewProposal(id, ccName, funcName, proposal.WithChannel(channelID), proposal.WithArguments([]byte(channelID)))
 	if err != nil {
 		return nil, err
 	}
 
-	signedProp, err := proposal.NewSignedProposal(prop, signer)
+	signedProp, err := proposal.NewSignedProposal(prop, id)
 	if err != nil {
 		return nil, err
 	}
