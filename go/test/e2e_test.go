@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fabric-admin-sdk/internal/network"
 	"fabric-admin-sdk/pkg/chaincode"
 	"fabric-admin-sdk/pkg/channel"
@@ -17,22 +18,78 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hyperledger/fabric-gateway/pkg/client"
+	gatewaypb "github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 const (
 	org1PeerAddress = "localhost:7051"
 	org2PeerAddress = "localhost:9051"
+	channelName     = "mychannel"
 )
 
 type ConnectionDetails struct {
 	id         identity.SigningIdentity
 	connection grpc.ClientConnInterface
 	client     peer.EndorserClient
+}
+
+func runParallel[T any](args []T, f func(T)) {
+	var wg sync.WaitGroup
+	for _, arg := range args {
+		wg.Add(1)
+
+		go func(target T) {
+			defer GinkgoRecover()
+			defer wg.Done()
+			f(target)
+		}(arg)
+	}
+
+	wg.Wait()
+}
+
+func printGrpcError(err error) {
+	if err == nil {
+		return
+	}
+
+	switch err := err.(type) {
+	case *client.EndorseError:
+		fmt.Printf("Endorse error for transaction %s with gRPC status %v: %s\n", err.TransactionID, status.Code(err), err)
+	case *client.SubmitError:
+		fmt.Printf("Submit error for transaction %s with gRPC status %v: %s\n", err.TransactionID, status.Code(err), err)
+	case *client.CommitStatusError:
+		if errors.Is(err, context.DeadlineExceeded) {
+			fmt.Printf("Timeout waiting for transaction %s commit status: %s", err.TransactionID, err)
+		} else {
+			fmt.Printf("Error obtaining commit status for transaction %s with gRPC status %v: %s\n", err.TransactionID, status.Code(err), err)
+		}
+	case *client.CommitError:
+		fmt.Printf("Transaction %s failed to commit with status %d: %s\n", err.TransactionID, int32(err.Code), err)
+	default:
+		fmt.Printf("unexpected error type %T: %s", err, err)
+	}
+
+	statusErr := status.Convert(err)
+
+	details := statusErr.Details()
+	if len(details) > 0 {
+		fmt.Println("Error Details:")
+
+		for _, detail := range details {
+			switch detail := detail.(type) {
+			case *gatewaypb.ErrorDetail:
+				fmt.Printf("- address: %s, mspId: %s, message: %s\n", detail.Address, detail.MspId, detail.Message)
+			}
+		}
+	}
 }
 
 var _ = Describe("e2e", func() {
@@ -47,7 +104,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(profile).ToNot(BeNil())
 			Expect(profile.Orderer.BatchSize.MaxMessageCount).To(Equal(uint32(10)))
-			block, err := tools.ConfigTxGen(profile, "mychannel")
+			block, err := tools.ConfigTxGen(profile, channelName)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(block).ToNot(BeNil())
 
@@ -154,62 +211,61 @@ var _ = Describe("e2e", func() {
 				},
 			}
 
-			var installWaitGroup sync.WaitGroup
-			for _, installTarget := range peerConnections {
-				installWaitGroup.Add(1)
+			runParallel(peerConnections, func(target *ConnectionDetails) {
+				packageFile, err := os.Open(packageFilePath)
+				Expect(err).NotTo(HaveOccurred(), "open chaincode package file")
 
-				go func(target *ConnectionDetails) {
-					defer installWaitGroup.Done()
+				ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
+				defer cancel()
 
-					packageFile, err := os.Open(packageFilePath)
-					Expect(err).NotTo(HaveOccurred(), "open chaincode package file")
+				err = chaincode.Install(ctx, target.connection, target.id, packageFile)
+				Expect(err).NotTo(HaveOccurred(), "chaincode install")
+			})
 
-					ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
-					defer cancel()
+			runParallel(peerConnections, func(target *ConnectionDetails) {
+				ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
+				defer cancel()
 
-					err = chaincode.Install(ctx, target.connection, target.id, packageFile)
-					Expect(err).NotTo(HaveOccurred(), "chaincode install")
-				}(installTarget)
+				result, err := chaincode.QueryInstalled(ctx, target.connection, target.id)
+				Expect(err).NotTo(HaveOccurred(), "query installed chaincode")
+
+				installedChaincodes := result.GetInstalledChaincodes()
+				Expect(installedChaincodes).To(HaveLen(1), "number of installed chaincodes")
+				Expect(installedChaincodes[0].GetPackageId()).To(Equal(packageID), "installed chaincode package ID")
+				Expect(installedChaincodes[0].GetLabel()).To(Equal(dummyMeta.Label), "installed chaincode label")
+			})
+
+			time.Sleep(time.Duration(15) * time.Second)
+
+			chaincodeDefinition := &chaincode.Definition{
+				Name:     "basic",
+				Version:  "1.0",
+				Sequence: 1,
 			}
 
-			installWaitGroup.Wait()
+			runParallel(peerConnections, func(target *ConnectionDetails) {
+				ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
+				defer cancel()
 
-			var queryInstalledWaitGroup sync.WaitGroup
-			for _, queryInstalledTarget := range peerConnections {
-				queryInstalledWaitGroup.Add(1)
+				err := chaincode.Approve(ctx, target.connection, target.id, channelName, chaincodeDefinition)
+				printGrpcError(err)
+				Expect(err).NotTo(HaveOccurred(), "approve chaincode for org %s", target.id.MspID())
+			})
 
-				go func(target *ConnectionDetails) {
-					defer queryInstalledWaitGroup.Done()
-
-					ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
-					defer cancel()
-
-					result, err := chaincode.QueryInstalled(ctx, target.connection, target.id)
-					Expect(err).NotTo(HaveOccurred(), "query installed chaincode")
-
-					installedChaincodes := result.GetInstalledChaincodes()
-					Expect(installedChaincodes).To(HaveLen(1), "number of installed chaincodes")
-					Expect(installedChaincodes[0].GetPackageId()).To(Equal(packageID), "installed chaincode package ID")
-					Expect(installedChaincodes[0].GetLabel()).To(Equal(dummyMeta.Label), "installed chaincode label")
-				}(queryInstalledTarget)
-			}
-
-			queryInstalledWaitGroup.Wait()
-
-			//cc define
 			CCDefine := chaincode.CCDefine{
-				ChannelID:                "mychannel",
+				ChannelID:                channelName,
 				InputTxID:                "",
 				PackageID:                "",
-				Name:                     "basic",
-				Version:                  "1.0",
+				Name:                     chaincodeDefinition.Name,
+				Version:                  chaincodeDefinition.Version,
 				EndorsementPlugin:        "",
 				ValidationPlugin:         "",
-				Sequence:                 1,
+				Sequence:                 chaincodeDefinition.Sequence,
 				ValidationParameterBytes: nil,
 				InitRequired:             false,
 				CollectionConfigPackage:  nil,
 			}
+
 			// orderer
 			orderer_addr := "localhost:7050"
 			orderer_TLSCACert := "../../fabric-samples/test-network/organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
@@ -219,45 +275,34 @@ var _ = Describe("e2e", func() {
 			}
 			err = orderer_node.LoadConfig()
 			Expect(err).NotTo(HaveOccurred())
-			// approve from org2
-			time.Sleep(time.Duration(15) * time.Second)
-			endorsement_org2_group := make([]peer.EndorserClient, 1)
-			endorsement_org2_group[0] = connection2
-			n_conn3, err := network.DialConnection(orderer_node)
-			Expect(err).NotTo(HaveOccurred())
-			connection3, err := orderer.NewAtomicBroadcastClient(n_conn3).Broadcast(context.Background())
-			Expect(err).NotTo(HaveOccurred())
-			err = chaincode.Approve(CCDefine, org2MSP, endorsement_org2_group, connection3)
-			Expect(err).NotTo(HaveOccurred())
+
 			// ReadinessCheck from org2
 			time.Sleep(time.Duration(15) * time.Second)
 			err = chaincode.ReadinessCheck(CCDefine, org2MSP, connection2)
 			Expect(err).NotTo(HaveOccurred())
 
-			// approve from org1
-			endorsement_org1_group := make([]peer.EndorserClient, 1)
-			endorsement_org1_group[0] = connection1
-			err = chaincode.Approve(CCDefine, org1MSP, endorsement_org1_group, connection3)
-			Expect(err).NotTo(HaveOccurred())
 			// ReadinessCheck from org1
 			time.Sleep(time.Duration(15) * time.Second)
 			err = chaincode.ReadinessCheck(CCDefine, org1MSP, connection1)
 			Expect(err).NotTo(HaveOccurred())
 
-			// commit from org1
-			n_conn3, err = network.DialConnection(orderer_node)
+			ordererConnection, err := network.DialConnection(orderer_node)
 			Expect(err).NotTo(HaveOccurred())
+			ordererClient, err := orderer.NewAtomicBroadcastClient(ordererConnection).Broadcast(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+
 			time.Sleep(time.Duration(15) * time.Second)
-			connection3, err = orderer.NewAtomicBroadcastClient(n_conn3).Broadcast(context.Background())
-			Expect(err).NotTo(HaveOccurred())
-			err = chaincode.Commit(CCDefine, org1MSP, endorsement_org1_group, connection3)
+
+			// commit from org1
+			endorsement_org1_group := make([]peer.EndorserClient, 1)
+			endorsement_org1_group[0] = connection1
+			err = chaincode.Commit(CCDefine, org1MSP, endorsement_org1_group, ordererClient)
 			Expect(err).NotTo(HaveOccurred())
 
 			// commit from org2
-			time.Sleep(time.Duration(15) * time.Second)
-			connection3, err = orderer.NewAtomicBroadcastClient(n_conn3).Broadcast(context.Background())
-			Expect(err).NotTo(HaveOccurred())
-			err = chaincode.Commit(CCDefine, org2MSP, endorsement_org2_group, connection3)
+			endorsement_org2_group := make([]peer.EndorserClient, 1)
+			endorsement_org2_group[0] = connection2
+			err = chaincode.Commit(CCDefine, org2MSP, endorsement_org2_group, ordererClient)
 			Expect(err).NotTo(HaveOccurred())
 
 			f, _ := os.Create("PackageID")
