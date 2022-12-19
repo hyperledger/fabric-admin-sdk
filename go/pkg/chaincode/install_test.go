@@ -1,3 +1,8 @@
+/*
+Copyright IBM Corp. All Rights Reserved.
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package chaincode_test
 
 import (
@@ -104,26 +109,36 @@ var _ = Describe("Install", func() {
 	})
 
 	It("Endorser client called with supplied context", func(specCtx SpecContext) {
-		controller, ctx := gomock.WithContext(specCtx, GinkgoT())
+		controller := gomock.NewController(GinkgoT())
 		defer controller.Finish()
+
+		var actual context.Context
 
 		mockConnection := NewMockClientConnInterface(controller)
 		mockConnection.EXPECT().
-			Invoke(gomock.Eq(ctx), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
+			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
+				actual = ctx
 				CopyProto(NewProposalResponse(common.Status_SUCCESS, ""), out)
 			})
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
+		ctx, cancel := context.WithCancel(specCtx)
+		defer cancel()
+
 		err := chaincode.Install(ctx, mockConnection, mockSigner, packageReader)
 		Expect(err).NotTo(HaveOccurred())
+
+		Expect(actual.Err()).To(BeNil(), "context not cancelled")
+		cancel() // Cancel supplied context
+		Expect(actual.Err()).NotTo(BeNil(), "context cancelled")
 	})
 
 	It("Endorser client errors returned", func(specCtx SpecContext) {
 		expectedErr := errors.New("EXPECTED_ERROR")
 
-		controller, ctx := gomock.WithContext(specCtx, GinkgoT())
+		controller := gomock.NewController(GinkgoT())
 		defer controller.Finish()
 
 		mockConnection := NewMockClientConnInterface(controller)
@@ -133,7 +148,7 @@ var _ = Describe("Install", func() {
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
-		err := chaincode.Install(ctx, mockConnection, mockSigner, packageReader)
+		err := chaincode.Install(specCtx, mockConnection, mockSigner, packageReader)
 
 		Expect(err).To(MatchError(expectedErr))
 	})
@@ -142,7 +157,7 @@ var _ = Describe("Install", func() {
 		expectedStatus := common.Status_BAD_REQUEST
 		expectedMessage := "EXPECTED_ERROR"
 
-		controller, ctx := gomock.WithContext(specCtx, GinkgoT())
+		controller := gomock.NewController(GinkgoT())
 		defer controller.Finish()
 
 		mockConnection := NewMockClientConnInterface(controller)
@@ -154,7 +169,7 @@ var _ = Describe("Install", func() {
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
-		err := chaincode.Install(ctx, mockConnection, mockSigner, packageReader)
+		err := chaincode.Install(specCtx, mockConnection, mockSigner, packageReader)
 
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(And(
@@ -167,7 +182,7 @@ var _ = Describe("Install", func() {
 	It("Uses signer", func(specCtx SpecContext) {
 		expected := []byte("SIGNATURE")
 
-		controller, ctx := gomock.WithContext(specCtx, GinkgoT())
+		controller := gomock.NewController(GinkgoT())
 		defer controller.Finish()
 
 		var signedProposal *peer.SignedProposal
@@ -182,7 +197,7 @@ var _ = Describe("Install", func() {
 
 		mockSigner := NewMockSigner(controller, "", nil, expected)
 
-		err := chaincode.Install(ctx, mockConnection, mockSigner, packageReader)
+		err := chaincode.Install(specCtx, mockConnection, mockSigner, packageReader)
 		Expect(err).NotTo(HaveOccurred())
 
 		actual := signedProposal.GetSignature()
@@ -192,7 +207,7 @@ var _ = Describe("Install", func() {
 	It("Proposal includes supplied chaincode package", func(specCtx SpecContext) {
 		expected := []byte("MY_CHAINCODE_PACKAGE")
 
-		controller, ctx := gomock.WithContext(specCtx, GinkgoT())
+		controller := gomock.NewController(GinkgoT())
 		defer controller.Finish()
 
 		var signedProposal *peer.SignedProposal
@@ -208,7 +223,7 @@ var _ = Describe("Install", func() {
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 		packageReader = bytes.NewReader(expected)
 
-		err := chaincode.Install(ctx, mockConnection, mockSigner, packageReader)
+		err := chaincode.Install(specCtx, mockConnection, mockSigner, packageReader)
 		Expect(err).NotTo(HaveOccurred())
 
 		invocationSpec := AssertUnmarshalInvocationSpec(signedProposal)
@@ -228,7 +243,7 @@ var _ = Describe("Install", func() {
 			IdBytes: []byte("CREDENTIALS"),
 		}
 
-		controller, ctx := gomock.WithContext(specCtx, GinkgoT())
+		controller := gomock.NewController(GinkgoT())
 		defer controller.Finish()
 
 		var signedProposal *peer.SignedProposal
@@ -243,7 +258,7 @@ var _ = Describe("Install", func() {
 
 		mockSigner := NewMockSigner(controller, expected.Mspid, expected.IdBytes, nil)
 
-		err := chaincode.Install(ctx, mockConnection, mockSigner, packageReader)
+		err := chaincode.Install(specCtx, mockConnection, mockSigner, packageReader)
 		Expect(err).NotTo(HaveOccurred())
 
 		signatureHeader := AssertUnmarshalSignatureHeader(signedProposal)
