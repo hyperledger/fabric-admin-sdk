@@ -17,7 +17,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const queryCommittedTransactionName = "QueryCommittedChaincodes"
+const queryCommittedTransactionName = "QueryChaincodeDefinitions"
 
 // QueryCommitted chaincode on a specific peer.
 func QueryCommitted(ctx context.Context, connection grpc.ClientConnInterface, signingID identity.SigningIdentity) (*lifecycle.QueryInstalledChaincodesResult, error) {
