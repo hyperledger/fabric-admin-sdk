@@ -20,38 +20,33 @@ import (
 const queryCommittedTransactionName = "QueryChaincodeDefinitions"
 
 // QueryCommitted chaincode on a specific peer.
-func QueryCommitted(ctx context.Context, connection grpc.ClientConnInterface, signingID identity.SigningIdentity) (*lifecycle.QueryInstalledChaincodesResult, error) {
+func QueryCommitted(ctx context.Context, connection grpc.ClientConnInterface, signingID identity.SigningIdentity) error {
 	queryArgs := &lifecycle.QueryChaincodeDefinitionArgs{}
 	queryArgsBytes, err := proto.Marshal(queryArgs)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to query committed chaincode fail to marshal data: %w", err)
 	}
 
 	proposalProto, err := proposal.NewProposal(signingID, lifecycleChaincodeName, queryCommittedTransactionName, proposal.WithArguments(queryArgsBytes))
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to query committed chaincode fail to create proposal: %w", err)
 	}
 
 	signedProposal, err := proposal.NewSignedProposal(proposalProto, signingID)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to query committed chaincode fail to sign proposal: %w", err)
 	}
 
 	endorser := peer.NewEndorserClient(connection)
 
 	proposalResponse, err := endorser.ProcessProposal(ctx, signedProposal)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query installed chaincode: %w", err)
+		return fmt.Errorf("failed to query committed chaincode error from endorser: %w", err)
 	}
 
 	if err = proposal.CheckSuccessfulResponse(proposalResponse); err != nil {
-		return nil, err
+		return fmt.Errorf("failed to query committed chaincode error from check response checking: %w", err)
 	}
 
-	result := &lifecycle.QueryInstalledChaincodesResult{}
-	if err = proto.Unmarshal(proposalResponse.GetResponse().GetPayload(), result); err != nil {
-		return nil, fmt.Errorf("failed to deserialize query installed chaincode result: %w", err)
-	}
-
-	return result, nil
+	return printResponseAsJSON(proposalResponse, &lifecycle.QueryChaincodeDefinitionResult{})
 }
