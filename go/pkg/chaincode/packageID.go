@@ -4,13 +4,12 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"regexp"
-
-	"github.com/hyperledger/fabric/common/util"
 )
 
 const (
@@ -40,7 +39,9 @@ func PackageID(PackageFile string) (string, error) {
 
 // PackageID returns the package ID with the label and hash of the chaincode install package
 func GetPackageID(label string, ccInstallPkg []byte) string {
-	hash := util.ComputeSHA256(ccInstallPkg)
+	h := sha256.New()
+	h.Write(ccInstallPkg)
+	hash := h.Sum(nil)
 	return fmt.Sprintf("%s:%x", label, hash)
 }
 

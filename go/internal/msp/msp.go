@@ -3,12 +3,10 @@ package msp
 import (
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
-	"github.com/hyperledger/fabric/bccsp"
 	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v2"
 )
@@ -121,7 +119,7 @@ func getMspConfig(dir string, ID string, sigid *msp.SigningIdentityInfo) (*msp.M
 	if err == nil {
 		// load the file, if there is a failure in loading it then
 		// return an error
-		raw, err := ioutil.ReadFile(configFile)
+		raw, err := os.ReadFile(configFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed loading configuration file at [%s] %w", configFile, err)
 		}
@@ -193,8 +191,8 @@ func getMspConfig(dir string, ID string, sigid *msp.SigningIdentityInfo) (*msp.M
 
 	// Set FabricCryptoConfig
 	cryptoConfig := &msp.FabricCryptoConfig{
-		SignatureHashFamily:            bccsp.SHA2,
-		IdentityIdentifierHashFunction: bccsp.SHA256,
+		SignatureHashFamily:            "SHA2",
+		IdentityIdentifierHashFunction: "SHA256",
 	}
 
 	// Compose FabricMSPConfig
@@ -228,7 +226,7 @@ func getPemMaterialFromDir(dir string) ([][]byte, error) {
 	}
 
 	content := make([][]byte, 0)
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("could not read directory %s %w", dir, err)
 	}
@@ -297,7 +295,7 @@ type Configuration struct {
 }
 
 func readFile(file string) ([]byte, error) {
-	fileCont, err := ioutil.ReadFile(file)
+	fileCont, err := os.ReadFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("could not read file %s %w", file, err)
 	}

@@ -6,8 +6,8 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"net"
+	"os"
 	"time"
 
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 )
 
@@ -55,7 +56,7 @@ func GetTLSCACerts(file string) ([]byte, error) {
 		return nil, nil
 	}
 
-	in, err := ioutil.ReadFile(file)
+	in, err := os.ReadFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("error loading %s %w", file, err)
 	}
@@ -370,7 +371,7 @@ func (client *GRPCClient) NewConnection(address string, tlsOptions ...TLSOption)
 			},
 		))
 	} else {
-		dialOpts = append(dialOpts, grpc.WithInsecure())
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
 	dialOpts = append(dialOpts, grpc.WithDefaultCallOptions(
