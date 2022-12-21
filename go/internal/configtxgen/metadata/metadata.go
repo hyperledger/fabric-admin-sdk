@@ -9,15 +9,13 @@ package metadata
 import (
 	"fmt"
 	"runtime"
-
-	"github.com/hyperledger/fabric/common/metadata"
 )
 
 const ProgramName = "configtxgen"
 
 var (
-	CommitSHA = metadata.CommitSHA
-	Version   = metadata.Version
+	CommitSHA = "development build"
+	Version   = "latest"
 )
 
 func GetVersionInfo() string {

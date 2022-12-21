@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/orderer/etcdraft"
-	cf "github.com/hyperledger/fabric/core/config"
 )
 
 const (
@@ -399,10 +398,10 @@ loop:
 				log.Panicf("consenter info in %s configuration did not specify server TLS cert", EtcdRaft)
 			}
 			clientCertPath := string(c.GetClientTlsCert())
-			cf.TranslatePathInPlace(configDir, &clientCertPath)
+			TranslatePathInPlace(configDir, &clientCertPath)
 			c.ClientTlsCert = []byte(clientCertPath)
 			serverCertPath := string(c.GetServerTlsCert())
-			cf.TranslatePathInPlace(configDir, &serverCertPath)
+			TranslatePathInPlace(configDir, &serverCertPath)
 			c.ServerTlsCert = []byte(serverCertPath)
 		}
 	default:
@@ -410,8 +409,20 @@ loop:
 	}
 }
 
+func TranslatePathInPlace(base string, p *string) {
+	*p = TranslatePath(base, *p)
+}
+
+func TranslatePath(base, p string) string {
+	if filepath.IsAbs(p) {
+		return p
+	}
+
+	return filepath.Join(base, p)
+}
+
 func translatePaths(configDir string, org *Organization) {
-	cf.TranslatePathInPlace(configDir, &org.MSPDir)
+	TranslatePathInPlace(configDir, &org.MSPDir)
 }
 
 // configCache stores marshalled bytes of config structures that produced from
