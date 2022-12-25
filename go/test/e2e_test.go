@@ -314,7 +314,7 @@ var _ = Describe("e2e", func() {
 				defer cancel()
 
 				err := chaincode.QueryCommitted(ctx, target.connection, target.id)
-				Expect(err).NotTo(HaveOccurred(), "query installed chaincode")
+				Expect(err).NotTo(HaveOccurred(), "query installed chaincode "+target.id.MspID())
 			})
 		})
 	})
