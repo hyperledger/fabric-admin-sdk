@@ -20,7 +20,7 @@ jobs:
           go-version: 1.18
       - run: curl -vsS https://raw.githubusercontent.com/hyperledger/fabric/master/scripts/bootstrap.sh | bash
         name: download fabric sample following official guide
-      - run: ./network.sh up
+      - run: ./network.sh up -i 2.4
         working-directory: fabric-samples/test-network
         name: set up network
       - run: mkdir -p ../organizations && cp -r ../../fabric-samples/test-network/organizations/* ../organizations/ && ls ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
