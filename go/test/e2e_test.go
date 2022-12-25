@@ -309,13 +309,15 @@ var _ = Describe("e2e", func() {
 			_, err = io.WriteString(f, packageID)
 			Expect(err).NotTo(HaveOccurred())
 
-			runParallel(peerConnections, func(target *ConnectionDetails) {
-				ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
-				defer cancel()
+			ctx_1, cancel := context.WithTimeout(specCtx, 30*time.Second)
+			defer cancel()
+			err = chaincode.QueryCommitted(ctx_1, n_conn1, org1MSP)
+			Expect(err).NotTo(HaveOccurred(), "query installed chaincode "+org1MSP.MspID())
 
-				err := chaincode.QueryCommitted(ctx, target.connection, target.id)
-				Expect(err).NotTo(HaveOccurred(), "query installed chaincode "+target.id.MspID())
-			})
+			ctx_2, cancel := context.WithTimeout(specCtx, 30*time.Second)
+			defer cancel()
+			err = chaincode.QueryCommitted(ctx_2, n_conn2, org2MSP)
+			Expect(err).NotTo(HaveOccurred(), "query installed chaincode "+org2MSP.MspID())
 		})
 	})
 })
