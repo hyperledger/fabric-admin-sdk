@@ -4,7 +4,7 @@
 | Name | GitHub | email |
 |---|---|---|
 | Channing Duan | channingduan | phpythoner@gmail.com |
-| David Liu | davidkhala | david.yx.liu@oracle.com |
+| David Liu | davidkhala | david-khala@hotmail.com |
 | Mark Lewis | bestbeforetoday | Mark.S.Lewis@outlook.com |
 | Sam Yuan | SamYuan1990 | yy19902439@126.com |
 
