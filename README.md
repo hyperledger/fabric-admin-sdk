@@ -1,10 +1,10 @@
 # fabric-admin-sdk
 Fabric SDK for Admin Capability services 
 
-## motivation
+## [motivation](https://github.com/hyperledger/fabric-rfcs/pull/55)
 As gateway sdk will drop off admin capacity, we plan to recover admin capacity related things with this project proposal.
 
-## identified features
+## identified [features](https://github.com/Hyperledger-TWGC/fabric-admin-sdk/issues/15)
 
 ### channel
 - new channel
@@ -24,6 +24,7 @@ As gateway sdk will drop off admin capacity, we plan to recover admin capacity r
 - base on peer discovery result, generate connection profile for sdk if possible?(optional)
 
 ## languages: go, java, nodejs, typescript
+### [golang Documentation](https://pkg.go.dev/github.com/hyperledger/fabric-admin-sdk)
 
 ## init by 
 - [davidkhala](https://github.com/davidkhala)
@@ -32,9 +33,11 @@ As gateway sdk will drop off admin capacity, we plan to recover admin capacity r
 - [Peng-Du](https://github.com/Peng-Du)
 
 ## Contributors
-<a href="https://github.com/Hyperledger-TWGC/fabric-admin-sdk/graphs/contributors">
-  <img src="https://contributors-img.web.app/image?repo=Hyperledger-TWGC/fabric-admin-sdk" />
+<a href="https://github.com/Hyperledger/fabric-admin-sdk/graphs/contributors">
+  <img src="https://contributors-img.web.app/image?repo=Hyperledger/fabric-admin-sdk" />
 </a>
+
+### [Scenario tests and example](./test/e2e_test.go)
 
 ## Contribute
 Here is steps in short for any contribution. 
