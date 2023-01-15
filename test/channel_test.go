@@ -1,10 +1,15 @@
 package test
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"log"
 	"os"
+
+	"github.com/hyperledger/fabric-admin-sdk/internal/protoutil"
+	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
 
 	"github.com/hyperledger/fabric-admin-sdk/internal/network"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/channel"
@@ -103,6 +108,67 @@ var _ = Describe("channel", func() {
 			blockChainInfo, err := channel.GetBlockChainInfo(id, channelID, connection)
 			Expect(err).NotTo(HaveOccurred())
 			fmt.Println("blockchain info", blockChainInfo)
+		})
+	})
+
+	Context("update channel config", func() {
+		It("should work", func() {
+			_, err := os.Stat("../fabric-samples/test-network")
+			if err != nil {
+				Skip("skip for unit test")
+			}
+			var channelID = "mychannel"
+			// Orderer
+			var OrdererAddr = "localhost:7050"
+			var OrdererTLSCACert = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
+
+			// Peer1
+			var MSPID = "Org1MSP"
+			var PrivKeyPath = "../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
+			var SignCertPath = "../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
+
+			// Peer2
+			var MSPID2 = "Org1MSP"
+			var PrivKeyPath2 = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/priv_sk"
+			var SignCertPath2 = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem"
+
+			signer, err := tools.CreateSigner(PrivKeyPath, SignCertPath, MSPID)
+			Expect(err).NotTo(HaveOccurred())
+			signer2, err := tools.CreateSigner(PrivKeyPath2, SignCertPath2, MSPID2)
+			Expect(err).NotTo(HaveOccurred())
+
+			// get update config file, see https://hyperledger-fabric.readthedocs.io/en/release-2.4/channel_update_tutorial.html#add-the-org3-crypto-material
+			updateEnvelope, err := os.ReadFile("./org3_update_in_envelope.pb")
+			Expect(err).NotTo(HaveOccurred())
+			envelope, err := protoutil.UnmarshalEnvelope(updateEnvelope)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Peer1 sign
+			envelope, err = tools.SignConfigTx(channelID, envelope, signer)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Peer2 sign
+			envelope, err = tools.SignConfigTx(channelID, envelope, signer2)
+			Expect(err).NotTo(HaveOccurred())
+
+			ordererNode := network.Node{
+				Addr:      OrdererAddr,
+				TLSCACert: OrdererTLSCACert,
+			}
+			err = ordererNode.LoadConfig()
+			Expect(err).NotTo(HaveOccurred())
+			ordererConnection, err := network.DialConnection(ordererNode)
+			Expect(err).NotTo(HaveOccurred())
+			ordererClient, err := orderer.NewAtomicBroadcastClient(ordererConnection).Broadcast(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+			defer func(ordererClient orderer.AtomicBroadcast_BroadcastClient) {
+				_ = ordererClient.CloseSend()
+			}(ordererClient)
+			err = ordererClient.Send(envelope)
+			Expect(err).NotTo(HaveOccurred())
+			response, err := ordererClient.Recv()
+			Expect(err).NotTo(HaveOccurred())
+			log.Println("response: ", response.String())
 		})
 	})
 })

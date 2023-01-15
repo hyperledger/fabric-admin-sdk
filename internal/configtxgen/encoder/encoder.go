@@ -15,12 +15,9 @@ import (
 	"github.com/hyperledger/fabric-admin-sdk/internal/configtxlator/update"
 	"github.com/hyperledger/fabric-admin-sdk/internal/genesis"
 	"github.com/hyperledger/fabric-admin-sdk/internal/msp"
-	"github.com/hyperledger/fabric-admin-sdk/internal/pkg/identity"
 	ipc "github.com/hyperledger/fabric-admin-sdk/internal/policies"
 	ipd "github.com/hyperledger/fabric-admin-sdk/internal/policydsl"
 	"github.com/hyperledger/fabric-admin-sdk/internal/protoutil"
-	"github.com/hyperledger/fabric-admin-sdk/internal/util"
-
 	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
 	pb "github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"google.golang.org/protobuf/proto"
@@ -28,9 +25,6 @@ import (
 
 const (
 	ordererAdminsPolicyName = "/Channel/Orderer/Admins"
-
-	msgVersion = int32(0)
-	epoch      = 0
 )
 
 const (
@@ -486,80 +480,6 @@ func ConfigTemplateFromGroup(conf *genesisconfig.Profile, cg *cb.ConfigGroup) (*
 	addValue(template, icc.ConsortiumValue(conf.Consortium), icc.AdminsPolicyKey)
 
 	return template, nil
-}
-
-// MakeChannelCreationTransaction is a handy utility function for creating transactions for channel creation.
-// It assumes the invoker has no system channel context so ignores all but the application section.
-func MakeChannelCreationTransaction(
-	channelID string,
-	signer identity.SignerSerializer,
-	conf *genesisconfig.Profile,
-) (*cb.Envelope, error) {
-	template, err := DefaultConfigTemplate(conf)
-	if err != nil {
-		return nil, fmt.Errorf("could not generate default config template %w", err)
-	}
-	return MakeChannelCreationTransactionFromTemplate(channelID, signer, conf, template)
-}
-
-// MakeChannelCreationTransactionWithSystemChannelContext is a utility function for creating channel creation txes.
-// It requires a configuration representing the orderer system channel to allow more sophisticated channel creation
-// transactions modifying pieces of the configuration like the orderer set.
-func MakeChannelCreationTransactionWithSystemChannelContext(
-	channelID string,
-	signer identity.SignerSerializer,
-	conf,
-	systemChannelConf *genesisconfig.Profile,
-) (*cb.Envelope, error) {
-	cg, err := NewChannelGroup(systemChannelConf)
-	if err != nil {
-		return nil, fmt.Errorf("could not parse system channel config %w", err)
-	}
-
-	template, err := ConfigTemplateFromGroup(conf, cg)
-	if err != nil {
-		return nil, fmt.Errorf("could not create config template %w", err)
-	}
-
-	return MakeChannelCreationTransactionFromTemplate(channelID, signer, conf, template)
-}
-
-// MakeChannelCreationTransactionFromTemplate creates a transaction for creating a channel.  It uses
-// the given template to produce the config update set.  Usually, the caller will want to invoke
-// MakeChannelCreationTransaction or MakeChannelCreationTransactionWithSystemChannelContext.
-func MakeChannelCreationTransactionFromTemplate(
-	channelID string,
-	signer identity.SignerSerializer,
-	conf *genesisconfig.Profile,
-	template *cb.ConfigGroup,
-) (*cb.Envelope, error) {
-	newChannelConfigUpdate, err := NewChannelCreateConfigUpdate(channelID, conf, template)
-	if err != nil {
-		return nil, fmt.Errorf("config update generation failure %w", err)
-	}
-
-	newConfigUpdateEnv := &cb.ConfigUpdateEnvelope{
-		ConfigUpdate: protoutil.MarshalOrPanic(newChannelConfigUpdate),
-	}
-
-	if signer != nil {
-		sigHeader, err := protoutil.NewSignatureHeader(signer)
-		if err != nil {
-			return nil, fmt.Errorf("creating signature header failed %w", err)
-		}
-
-		newConfigUpdateEnv.Signatures = []*cb.ConfigSignature{{
-			SignatureHeader: protoutil.MarshalOrPanic(sigHeader),
-		}}
-
-		newConfigUpdateEnv.Signatures[0].Signature, err = signer.Sign(util.Concatenate(newConfigUpdateEnv.Signatures[0].SignatureHeader, newConfigUpdateEnv.ConfigUpdate))
-		if err != nil {
-			return nil, fmt.Errorf("signature failure over config update %w", err)
-		}
-
-	}
-
-	return protoutil.CreateSignedEnvelope(cb.HeaderType_CONFIG_UPDATE, channelID, signer, newConfigUpdateEnv, msgVersion, epoch)
 }
 
 // HasSkippedForeignOrgs is used to detect whether a configuration includes
