@@ -1,4 +1,4 @@
-package chaincode_test
+package chaincode
 
 import (
 	"archive/tar"
@@ -9,24 +9,22 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Package", func() {
 	It("CCaaS", func() {
-		dummyConnection := chaincode.Connection{
+		dummyConnection := Connection{
 			Address:      "127.0.0.1:8080",
 			Dial_timeout: "10s",
 			Tls_required: false,
 		}
-		dummyMeta := chaincode.Metadata{
+		dummyMeta := Metadata{
 			Type:  "ccaas",
 			Label: "basic-asset",
 		}
-		err := chaincode.PackageCCAAS(dummyConnection, dummyMeta, tmpDir, "chaincode.tar.gz")
+		err := PackageCCAAS(dummyConnection, dummyMeta, tmpDir, "chaincode.tar.gz")
 		Expect(err).NotTo(HaveOccurred())
 		// so far no plan to verify the file
 		file, err := os.Open(tmpDir + "/chaincode.tar.gz")

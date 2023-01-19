@@ -3,13 +3,11 @@ Copyright IBM Corp. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package chaincode_test
+package chaincode
 
 import (
 	"context"
 	"errors"
-
-	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
 
 	"github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
@@ -51,7 +49,7 @@ var _ = Describe("QueryInstalled", func() {
 		ctx, cancel := context.WithCancel(specCtx)
 		cancel()
 
-		_, err := chaincode.QueryInstalled(ctx, mockConnection, mockSigner)
+		_, err := QueryInstalled(ctx, mockConnection, mockSigner)
 
 		Expect(err).To(MatchError(context.Canceled))
 	})
@@ -69,7 +67,7 @@ var _ = Describe("QueryInstalled", func() {
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
-		_, err := chaincode.QueryInstalled(specCtx, mockConnection, mockSigner)
+		_, err := QueryInstalled(specCtx, mockConnection, mockSigner)
 
 		Expect(err).To(MatchError(expectedErr))
 	})
@@ -90,7 +88,7 @@ var _ = Describe("QueryInstalled", func() {
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
-		_, err := chaincode.QueryInstalled(specCtx, mockConnection, mockSigner)
+		_, err := QueryInstalled(specCtx, mockConnection, mockSigner)
 
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(And(
@@ -118,7 +116,7 @@ var _ = Describe("QueryInstalled", func() {
 
 		mockSigner := NewMockSigner(controller, "", nil, expected)
 
-		_, err := chaincode.QueryInstalled(specCtx, mockConnection, mockSigner)
+		_, err := QueryInstalled(specCtx, mockConnection, mockSigner)
 		Expect(err).NotTo(HaveOccurred())
 
 		actual := signedProposal.GetSignature()
@@ -146,7 +144,7 @@ var _ = Describe("QueryInstalled", func() {
 
 		mockSigner := NewMockSigner(controller, expected.Mspid, expected.IdBytes, nil)
 
-		_, err := chaincode.QueryInstalled(specCtx, mockConnection, mockSigner)
+		_, err := QueryInstalled(specCtx, mockConnection, mockSigner)
 		Expect(err).NotTo(HaveOccurred())
 
 		signatureHeader := AssertUnmarshalSignatureHeader(signedProposal)
@@ -182,7 +180,7 @@ var _ = Describe("QueryInstalled", func() {
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
-		actual, err := chaincode.QueryInstalled(specCtx, mockConnection, mockSigner)
+		actual, err := QueryInstalled(specCtx, mockConnection, mockSigner)
 		Expect(err).NotTo(HaveOccurred())
 
 		AssertProtoEqual(expected, actual)

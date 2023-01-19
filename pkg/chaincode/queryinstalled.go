@@ -18,8 +18,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const queryInstalledTransactionName = "QueryInstalledChaincodes"
-
 // QueryInstalled chaincode on a specific peer.
 func QueryInstalled(ctx context.Context, connection grpc.ClientConnInterface, signingID identity.SigningIdentity) (*lifecycle.QueryInstalledChaincodesResult, error) {
 	queryArgs := &lifecycle.QueryInstalledChaincodesArgs{}

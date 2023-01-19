@@ -20,8 +20,8 @@ import (
 	"github.com/hyperledger/fabric-admin-sdk/pkg/tools"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	gatewaypb "github.com/hyperledger/fabric-protos-go-apiv2/gateway"
-
 	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
+
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -236,37 +236,42 @@ var _ = Describe("e2e", func() {
 				Expect(installedChaincodes[0].GetLabel()).To(Equal(dummyMeta.Label), "installed chaincode label")
 			})
 
-			time.Sleep(time.Duration(15) * time.Second)
-
-			chaincodeDefinition := &chaincode.Definition{
-				Name:     "basic",
-				Version:  "1.0",
-				Sequence: 1,
+			Definition := chaincode.Definition{
+				ChannelName:         channelName,
+				PackageID:           "",
+				Name:                "basic",
+				Version:             "1.0",
+				EndorsementPlugin:   "",
+				ValidationPlugin:    "",
+				Sequence:            1,
+				ValidationParameter: nil,
+				InitRequired:        false,
+				Collections:         nil,
 			}
+			time.Sleep(time.Duration(15) * time.Second)
 
 			runParallel(peerConnections, func(target *ConnectionDetails) {
 				ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
 				defer cancel()
 
-				err := chaincode.Approve(ctx, target.connection, target.id, channelName, chaincodeDefinition)
+				err := chaincode.Approve(ctx, target.connection, target.id, &Definition)
 				printGrpcError(err)
 				Expect(err).NotTo(HaveOccurred(), "approve chaincode for org %s", target.id.MspID())
 			})
 
-			CCDefine := chaincode.CCDefine{
-				ChannelID:                channelName,
-				InputTxID:                "",
-				PackageID:                "",
-				Name:                     chaincodeDefinition.Name,
-				Version:                  chaincodeDefinition.Version,
-				EndorsementPlugin:        "",
-				ValidationPlugin:         "",
-				Sequence:                 chaincodeDefinition.Sequence,
-				ValidationParameterBytes: nil,
-				InitRequired:             false,
-				CollectionConfigPackage:  nil,
-			}
+			// ReadinessCheck from org2
+			time.Sleep(time.Duration(15) * time.Second)
+			err = chaincode.ReadinessCheck(Definition, org2MSP, connection2)
+			Expect(err).NotTo(HaveOccurred())
 
+			// ReadinessCheck from org1
+			time.Sleep(time.Duration(15) * time.Second)
+			err = chaincode.ReadinessCheck(Definition, org1MSP, connection1)
+			Expect(err).NotTo(HaveOccurred())
+
+			time.Sleep(time.Duration(15) * time.Second)
+
+			// commit from orgs
 			// orderer
 			orderer_addr := "localhost:7050"
 			orderer_TLSCACert := "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
@@ -276,34 +281,20 @@ var _ = Describe("e2e", func() {
 			}
 			err = orderer_node.LoadConfig()
 			Expect(err).NotTo(HaveOccurred())
-
-			// ReadinessCheck from org2
-			time.Sleep(time.Duration(15) * time.Second)
-			err = chaincode.ReadinessCheck(CCDefine, org2MSP, connection2)
-			Expect(err).NotTo(HaveOccurred())
-
-			// ReadinessCheck from org1
-			time.Sleep(time.Duration(15) * time.Second)
-			err = chaincode.ReadinessCheck(CCDefine, org1MSP, connection1)
-			Expect(err).NotTo(HaveOccurred())
-
 			ordererConnection, err := network.DialConnection(orderer_node)
 			Expect(err).NotTo(HaveOccurred())
 			ordererClient, err := orderer.NewAtomicBroadcastClient(ordererConnection).Broadcast(context.Background())
 			Expect(err).NotTo(HaveOccurred())
-
-			time.Sleep(time.Duration(15) * time.Second)
-
 			// commit from org1
 			endorsement_org1_group := make([]peer.EndorserClient, 1)
 			endorsement_org1_group[0] = connection1
-			err = chaincode.Commit(CCDefine, org1MSP, endorsement_org1_group, ordererClient)
+			err = chaincode.Commit(Definition, org1MSP, endorsement_org1_group, ordererClient)
 			Expect(err).NotTo(HaveOccurred())
 
 			// commit from org2
 			endorsement_org2_group := make([]peer.EndorserClient, 1)
 			endorsement_org2_group[0] = connection2
-			err = chaincode.Commit(CCDefine, org2MSP, endorsement_org2_group, ordererClient)
+			err = chaincode.Commit(Definition, org2MSP, endorsement_org2_group, ordererClient)
 			Expect(err).NotTo(HaveOccurred())
 
 			f, _ := os.Create("PackageID")

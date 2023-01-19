@@ -19,8 +19,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const installTransactionName = "InstallChaincode"
-
 // Install a chaincode package to specific peer.
 func Install(ctx context.Context, connection grpc.ClientConnInterface, signingID identity.SigningIdentity, packageReader io.Reader) error {
 	packageBytes, err := io.ReadAll(packageReader)
