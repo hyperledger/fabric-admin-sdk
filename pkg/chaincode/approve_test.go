@@ -3,14 +3,13 @@ Copyright IBM Corp. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package chaincode_test
+package chaincode
 
 import (
 	"context"
 	"errors"
 
 	"github.com/golang/mock/gomock"
-	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
@@ -68,14 +67,15 @@ func NewCommitStatusResponse(result peer.TxValidationCode, blockNumber uint64) *
 
 var _ = Describe("Approve", func() {
 	var channelName string
-	var chaincodeDefinition *chaincode.Definition
+	var chaincodeDefinition *Definition
 
 	BeforeEach(func() {
 		channelName = "CHANNEL"
-		chaincodeDefinition = &chaincode.Definition{
-			Name:     "CHAINCODE",
-			Version:  "1.0",
-			Sequence: 1,
+		chaincodeDefinition = &Definition{
+			Name:        "CHAINCODE",
+			Version:     "1.0",
+			Sequence:    1,
+			ChannelName: channelName,
 		}
 	})
 
@@ -111,7 +111,7 @@ var _ = Describe("Approve", func() {
 		ctx, cancel := context.WithCancel(specCtx)
 		cancel()
 
-		err := chaincode.Approve(ctx, mockConnection, mockSigner, channelName, chaincodeDefinition)
+		err := Approve(ctx, mockConnection, mockSigner, chaincodeDefinition)
 
 		Expect(endorseCtxErr).To(BeIdenticalTo(context.Canceled), "endorse context error")
 		Expect(submitCtxErr).To(BeIdenticalTo(context.Canceled), "submit context error")
@@ -131,7 +131,7 @@ var _ = Describe("Approve", func() {
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
-		err := chaincode.Approve(specCtx, mockConnection, mockSigner, channelName, chaincodeDefinition)
+		err := Approve(specCtx, mockConnection, mockSigner, chaincodeDefinition)
 
 		Expect(err).To(MatchError(expectedErr))
 	})
@@ -159,7 +159,7 @@ var _ = Describe("Approve", func() {
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
-		err := chaincode.Approve(specCtx, mockConnection, mockSigner, channelName, chaincodeDefinition)
+		err := Approve(specCtx, mockConnection, mockSigner, chaincodeDefinition)
 
 		Expect(err).To(MatchError(expectedErr))
 	})
@@ -182,13 +182,13 @@ var _ = Describe("Approve", func() {
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
-		err := chaincode.Approve(specCtx, mockConnection, mockSigner, channelName, chaincodeDefinition)
+		err := Approve(specCtx, mockConnection, mockSigner, chaincodeDefinition)
 
 		Expect(err).To(MatchError(expectedErr))
 	})
 
 	DescribeTable("Proposal content",
-		func(specCtx SpecContext, newInput func(*chaincode.Definition) *chaincode.Definition, newExpected func(*lifecycle.ApproveChaincodeDefinitionForMyOrgArgs) *lifecycle.ApproveChaincodeDefinitionForMyOrgArgs) {
+		func(specCtx SpecContext, newInput func(*Definition) *Definition, newExpected func(*lifecycle.ApproveChaincodeDefinitionForMyOrgArgs) *lifecycle.ApproveChaincodeDefinitionForMyOrgArgs) {
 			input := newInput(chaincodeDefinition)
 			expected := newExpected(&lifecycle.ApproveChaincodeDefinitionForMyOrgArgs{
 				Name:     chaincodeDefinition.Name,
@@ -222,7 +222,7 @@ var _ = Describe("Approve", func() {
 
 			mockSigner := NewMockSigner(controller, "", nil, nil)
 
-			err := chaincode.Approve(specCtx, mockConnection, mockSigner, channelName, input)
+			err := Approve(specCtx, mockConnection, mockSigner, input)
 			Expect(err).NotTo(HaveOccurred())
 
 			invocationSpec := AssertUnmarshalInvocationSpec(endorseRequest.GetProposedTransaction())
@@ -236,7 +236,7 @@ var _ = Describe("Approve", func() {
 		},
 		Entry(
 			"Proposal includes specified package ID",
-			func(in *chaincode.Definition) *chaincode.Definition {
+			func(in *Definition) *Definition {
 				in.PackageID = "PACKAGE_ID"
 				return in
 			},
@@ -251,7 +251,7 @@ var _ = Describe("Approve", func() {
 		),
 		Entry(
 			"Proposal includes unspecified chaincode source with no package ID specified",
-			func(in *chaincode.Definition) *chaincode.Definition {
+			func(in *Definition) *Definition {
 				return in
 			},
 			func(in *lifecycle.ApproveChaincodeDefinitionForMyOrgArgs) *lifecycle.ApproveChaincodeDefinitionForMyOrgArgs {

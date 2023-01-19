@@ -12,18 +12,6 @@ import (
 	"regexp"
 )
 
-const (
-	// MetadataFile is the expected location of the metadata json document
-	// in the top level of the chaincode package.
-	MetadataFile = "metadata.json"
-
-	// CodePackageFile is the expected location of the code package in the
-	// top level of the chaincode package
-	CodePackageFile = "code.tar.gz"
-)
-
-var LabelRegexp = regexp.MustCompile(`^[[:alnum:]][[:alnum:]_.+-]*$`)
-
 func PackageID(PackageFile string) (string, error) {
 	pkgBytes, err := os.ReadFile(PackageFile)
 	if err != nil {
@@ -118,6 +106,7 @@ func ParseChaincodePackage(source []byte) (*ChaincodePackageMetadata, []byte, er
 // ValidateLabel return an error if the provided label contains any invalid
 // characters, as determined by LabelRegexp.
 func ValidateLabel(label string) error {
+	LabelRegexp := regexp.MustCompile(`^[[:alnum:]][[:alnum:]_.+-]*$`)
 	if !LabelRegexp.MatchString(label) {
 		return fmt.Errorf("invalid label '%s'. Label must be non-empty, can only consist of alphanumerics, symbols from '.+-_', and can only begin with alphanumerics", label)
 	}

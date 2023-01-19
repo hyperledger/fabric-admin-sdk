@@ -16,8 +16,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const checkCommitReadinessFuncName = "CheckCommitReadiness"
-
 func processProposalWithBroadcast(proposalProto *peer.Proposal, id identity.SigningIdentity, EndorserClients []peer.EndorserClient, BroadcastClient orderer.AtomicBroadcast_BroadcastClient) error {
 	signedProposal, err := proposal.NewSignedProposal(proposalProto, id)
 	if err != nil {
@@ -45,8 +43,8 @@ func processProposalWithBroadcast(proposalProto *peer.Proposal, id identity.Sign
 	return nil
 }
 
-func ReadinessCheck(CCDefine CCDefine, id identity.SigningIdentity, EndorserClient peer.EndorserClient) error {
-	proposal, err := createReadinessCheckProposal(CCDefine, id)
+func ReadinessCheck(Definition Definition, id identity.SigningIdentity, EndorserClient peer.EndorserClient) error {
+	proposal, err := createReadinessCheckProposal(Definition, id)
 	if err != nil {
 		return err
 	}
@@ -95,16 +93,16 @@ func printResponseAsJSON(proposalResponse *peer.ProposalResponse, msg proto.Mess
 	return nil
 }
 
-func createReadinessCheckProposal(CCDefine CCDefine, id identity.Identity) (*peer.Proposal, error) {
+func createReadinessCheckProposal(Definition Definition, id identity.Identity) (*peer.Proposal, error) {
 	args := &lifecycle.CheckCommitReadinessArgs{
-		Name:                CCDefine.Name,
-		Version:             CCDefine.Version,
-		Sequence:            CCDefine.Sequence,
-		EndorsementPlugin:   CCDefine.EndorsementPlugin,
-		ValidationPlugin:    CCDefine.ValidationPlugin,
-		ValidationParameter: CCDefine.ValidationParameterBytes,
-		InitRequired:        CCDefine.InitRequired,
-		Collections:         CCDefine.CollectionConfigPackage,
+		Name:                Definition.Name,
+		Version:             Definition.Version,
+		Sequence:            Definition.Sequence,
+		EndorsementPlugin:   Definition.EndorsementPlugin,
+		ValidationPlugin:    Definition.ValidationPlugin,
+		ValidationParameter: Definition.ValidationParameter,
+		InitRequired:        Definition.InitRequired,
+		Collections:         Definition.Collections,
 	}
 
 	argsBytes, err := proto.Marshal(args)
@@ -112,5 +110,5 @@ func createReadinessCheckProposal(CCDefine CCDefine, id identity.Identity) (*pee
 		return nil, err
 	}
 
-	return proposal.NewProposal(id, lifecycleChaincodeName, checkCommitReadinessFuncName, proposal.WithChannel(CCDefine.ChannelID), proposal.WithArguments(argsBytes))
+	return proposal.NewProposal(id, lifecycleChaincodeName, checkCommitReadinessTransactionName, proposal.WithChannel(Definition.ChannelName), proposal.WithArguments(argsBytes))
 }

@@ -18,27 +18,17 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const approveTransactionName = "ApproveChaincodeDefinitionForMyOrg"
-
-type Definition struct {
-	Name                 string
-	Version              string
-	Sequence             int64
-	EndorsementPolicy    string
-	ValidationPlugin     string
-	ValidationParameters []byte
-	PackageID            string
-}
-
-// Install a chaincode package to specific peer.
-func Approve(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, channelName string, chaincodeDef *Definition) error {
+// Approve a chaincode package to specific peer.
+func Approve(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, chaincodeDef *Definition) error {
 	approveArgs := &lifecycle.ApproveChaincodeDefinitionForMyOrgArgs{
 		Name:                chaincodeDef.Name,
 		Version:             chaincodeDef.Version,
 		Sequence:            chaincodeDef.Sequence,
-		EndorsementPlugin:   chaincodeDef.EndorsementPolicy,
+		EndorsementPlugin:   chaincodeDef.EndorsementPlugin,
 		ValidationPlugin:    chaincodeDef.ValidationPlugin,
-		ValidationParameter: chaincodeDef.ValidationParameters,
+		ValidationParameter: chaincodeDef.ValidationParameter,
+		Collections:         chaincodeDef.Collections,
+		InitRequired:        chaincodeDef.InitRequired,
 		Source:              newChaincodeSource(chaincodeDef.PackageID),
 	}
 	approveArgsBytes, err := proto.Marshal(approveArgs)
@@ -52,7 +42,7 @@ func Approve(ctx context.Context, connection grpc.ClientConnInterface, id identi
 	}
 	defer gw.Close()
 
-	_, err = gw.GetNetwork(channelName).
+	_, err = gw.GetNetwork(chaincodeDef.ChannelName).
 		GetContract(lifecycleChaincodeName).
 		SubmitWithContext(
 			ctx,

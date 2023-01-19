@@ -1,4 +1,4 @@
-package chaincode_test
+package chaincode
 
 import (
 	"testing"

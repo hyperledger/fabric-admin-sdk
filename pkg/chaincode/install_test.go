@@ -3,7 +3,7 @@ Copyright IBM Corp. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package chaincode_test
+package chaincode
 
 import (
 	"bytes"
@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/golang/mock/gomock"
-	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
@@ -125,7 +124,7 @@ var _ = Describe("Install", func() {
 		ctx, cancel := context.WithCancel(specCtx)
 		cancel()
 
-		err := chaincode.Install(ctx, mockConnection, mockSigner, packageReader)
+		err := Install(ctx, mockConnection, mockSigner, packageReader)
 
 		Expect(err).To(MatchError(context.Canceled))
 	})
@@ -143,7 +142,7 @@ var _ = Describe("Install", func() {
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
-		err := chaincode.Install(specCtx, mockConnection, mockSigner, packageReader)
+		err := Install(specCtx, mockConnection, mockSigner, packageReader)
 
 		Expect(err).To(MatchError(expectedErr))
 	})
@@ -164,7 +163,7 @@ var _ = Describe("Install", func() {
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
-		err := chaincode.Install(specCtx, mockConnection, mockSigner, packageReader)
+		err := Install(specCtx, mockConnection, mockSigner, packageReader)
 
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(And(
@@ -192,7 +191,7 @@ var _ = Describe("Install", func() {
 
 		mockSigner := NewMockSigner(controller, "", nil, expected)
 
-		err := chaincode.Install(specCtx, mockConnection, mockSigner, packageReader)
+		err := Install(specCtx, mockConnection, mockSigner, packageReader)
 		Expect(err).NotTo(HaveOccurred())
 
 		actual := signedProposal.GetSignature()
@@ -218,7 +217,7 @@ var _ = Describe("Install", func() {
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 		packageReader = bytes.NewReader(expected)
 
-		err := chaincode.Install(specCtx, mockConnection, mockSigner, packageReader)
+		err := Install(specCtx, mockConnection, mockSigner, packageReader)
 		Expect(err).NotTo(HaveOccurred())
 
 		invocationSpec := AssertUnmarshalInvocationSpec(signedProposal)
@@ -253,7 +252,7 @@ var _ = Describe("Install", func() {
 
 		mockSigner := NewMockSigner(controller, expected.Mspid, expected.IdBytes, nil)
 
-		err := chaincode.Install(specCtx, mockConnection, mockSigner, packageReader)
+		err := Install(specCtx, mockConnection, mockSigner, packageReader)
 		Expect(err).NotTo(HaveOccurred())
 
 		signatureHeader := AssertUnmarshalSignatureHeader(signedProposal)

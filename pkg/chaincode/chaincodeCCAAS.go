@@ -9,12 +9,14 @@ import (
 	"os"
 )
 
+// Connection setting used in connection.json
 type Connection struct {
 	Address      string `json:"address"`
 	Dial_timeout string `json:"dial_timeout"`
 	Tls_required bool   `json:"tls_required"`
 }
 
+// Metadata as metadata.json
 type Metadata struct {
 	Type  string `json:"type"`
 	Label string `json:"label"`
