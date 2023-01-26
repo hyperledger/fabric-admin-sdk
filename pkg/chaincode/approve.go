@@ -7,6 +7,7 @@ package chaincode
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/gateway"
@@ -59,7 +60,11 @@ func Approve(ctx context.Context, connection grpc.ClientConnInterface, id identi
 	}
 
 	_, err = gateway.Submit(ctx, approveProposal)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to approve chaincode: %w", err)
+	}
+
+	return nil
 }
 
 func newChaincodeSource(packageID string) *lifecycle.ChaincodeSource {

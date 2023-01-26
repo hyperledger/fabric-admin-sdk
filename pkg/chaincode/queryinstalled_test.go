@@ -38,27 +38,22 @@ var _ = Describe("QueryInstalled", func() {
 		controller := gomock.NewController(GinkgoT())
 		defer controller.Finish()
 
-		var actual context.Context
-
 		mockConnection := NewMockClientConnInterface(controller)
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
-			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
-				actual = ctx
+			DoAndReturn(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) error {
 				CopyProto(NewProposalResponse(common.Status_SUCCESS, ""), out)
+				return ctx.Err()
 			})
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
 		ctx, cancel := context.WithCancel(specCtx)
-		defer cancel()
+		cancel()
 
 		_, err := chaincode.QueryInstalled(ctx, mockConnection, mockSigner)
-		Expect(err).NotTo(HaveOccurred())
 
-		Expect(actual.Err()).To(BeNil(), "context not cancelled")
-		cancel() // Cancel supplied context
-		Expect(actual.Err()).NotTo(BeNil(), "context cancelled")
+		Expect(err).To(MatchError(context.Canceled))
 	})
 
 	It("Endorser client errors returned", func(specCtx SpecContext) {

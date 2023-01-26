@@ -83,47 +83,39 @@ var _ = Describe("Approve", func() {
 		controller := gomock.NewController(GinkgoT())
 		defer controller.Finish()
 
-		var endorseCtx context.Context
-		var submitCtx context.Context
-		var commitStatusCtx context.Context
+		var endorseCtxErr error
+		var submitCtxErr error
 
 		mockConnection := NewMockClientConnInterface(controller)
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(gatewayEndorseMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *gateway.EndorseRequest, out *gateway.EndorseResponse, opts ...grpc.CallOption) {
-				endorseCtx = ctx
+				endorseCtxErr = ctx.Err()
 				CopyProto(NewEndorseResponse(channelName, ""), out)
 			})
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(gatewaySubmitMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *gateway.SubmitRequest, out *gateway.SubmitResponse, opts ...grpc.CallOption) {
-				submitCtx = ctx
+				submitCtxErr = ctx.Err()
 				CopyProto(NewSubmitResponse(), out)
 			})
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(gatewayCommitStatusMethod), gomock.Any(), gomock.Any(), gomock.Any()).
-			Do(func(ctx context.Context, method string, in *gateway.SignedCommitStatusRequest, out *gateway.CommitStatusResponse, opts ...grpc.CallOption) {
-				commitStatusCtx = ctx
+			DoAndReturn(func(ctx context.Context, method string, in *gateway.SignedCommitStatusRequest, out *gateway.CommitStatusResponse, opts ...grpc.CallOption) error {
 				CopyProto(NewCommitStatusResponse(peer.TxValidationCode_VALID, 0), out)
+				return ctx.Err()
 			})
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
 		ctx, cancel := context.WithCancel(specCtx)
-		defer cancel()
+		cancel()
 
 		err := chaincode.Approve(ctx, mockConnection, mockSigner, channelName, chaincodeDefinition)
-		Expect(err).NotTo(HaveOccurred())
 
-		Expect(endorseCtx.Err()).To(BeNil(), "endorse context not cancelled")
-		Expect(submitCtx.Err()).To(BeNil(), "submit context not cancelled")
-		Expect(commitStatusCtx.Err()).To(BeNil(), "endorse context not cancelled")
-
-		cancel() // Cancel the supplied context
-
-		Expect(endorseCtx.Err()).NotTo(BeNil(), "endorse context cancelled")
-		Expect(submitCtx.Err()).NotTo(BeNil(), "submit context cancelled")
-		Expect(commitStatusCtx.Err()).NotTo(BeNil(), "endorse context cancelled")
+		Expect(endorseCtxErr).To(BeIdenticalTo(context.Canceled), "endorse context error")
+		Expect(submitCtxErr).To(BeIdenticalTo(context.Canceled), "submit context error")
+		Expect(err).To(MatchError(context.Canceled), "endorse context error")
 	})
 
 	It("Endorse errors returned", func(specCtx SpecContext) {
