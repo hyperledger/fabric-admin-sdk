@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -12,7 +13,6 @@ import (
 
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/opentracing/opentracing-go"
-	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -91,7 +91,7 @@ func CreateGRPCClient(node Node) (*GRPCClient, error) {
 	grpcClient, err := NewGRPCClient(config)
 	//to do: unit test for this error, current fails to make case for this
 	if err != nil {
-		return nil, errors.Wrapf(err, "error connecting to %s", node.Addr)
+		return nil, fmt.Errorf("error connecting to %s: %w", node.Addr, err)
 	}
 
 	return grpcClient, nil
@@ -223,8 +223,7 @@ func (client *GRPCClient) parseSecureOptions(opts SecureOptions) error {
 			err := AddPemToCertPool(certBytes, client.tlsConfig.RootCAs)
 			if err != nil {
 				//commLogger.Debugf("error adding root certificate: %v", err)
-				return errors.WithMessage(err,
-					"error adding root certificate")
+				return fmt.Errorf("error adding root certificate: %w", err)
 			}
 		}
 	}
@@ -235,14 +234,12 @@ func (client *GRPCClient) parseSecureOptions(opts SecureOptions) error {
 			cert, err := tls.X509KeyPair(opts.Certificate,
 				opts.Key)
 			if err != nil {
-				return errors.WithMessage(err, "failed to "+
-					"load client certificate")
+				return fmt.Errorf("failed to load client certificate: %w", err)
 			}
 			client.tlsConfig.Certificates = append(
 				client.tlsConfig.Certificates, cert)
 		} else {
-			return errors.New("both Key and Certificate " +
-				"are required when using mutual TLS")
+			return errors.New("both Key and Certificate are required when using mutual TLS")
 		}
 	}
 
@@ -310,7 +307,7 @@ func DialConnection(node Node) (*grpc.ClientConn, error) {
 			fmt.Printf("%d of 3 attempts to make connection to %s, details: %s", i, node.Addr, connError)
 		}
 	}
-	return nil, errors.Wrapf(connError, "error connecting to %s", node.Addr)
+	return nil, fmt.Errorf("error connecting to %s: %w", node.Addr, connError)
 }
 
 type DynamicClientCredentials struct {
@@ -393,8 +390,7 @@ func (client *GRPCClient) NewConnection(address string, tlsOptions ...TLSOption)
 	defer cancel()
 	conn, err := grpc.DialContext(ctx, address, dialOpts...)
 	if err != nil {
-		return nil, errors.WithMessage(errors.WithStack(err),
-			"failed to create new connection")
+		return nil, fmt.Errorf("failed to create new connection: %w", err)
 	}
 	return conn, nil
 }
