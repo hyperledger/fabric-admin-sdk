@@ -52,14 +52,14 @@ func Approve(ctx context.Context, connection grpc.ClientConnInterface, id identi
 	}
 	defer gw.Close()
 
-	approveProposal, err := gw.GetNetwork(channelName).
+	_, err = gw.GetNetwork(channelName).
 		GetContract(lifecycleChaincodeName).
-		NewProposal(approveTransactionName, client.WithBytesArguments(approveArgsBytes), client.WithEndorsingOrganizations(id.MspID()))
-	if err != nil {
-		return err
-	}
-
-	_, err = gateway.Submit(ctx, approveProposal)
+		SubmitWithContext(
+			ctx,
+			approveTransactionName,
+			client.WithBytesArguments(approveArgsBytes),
+			client.WithEndorsingOrganizations(id.MspID()),
+		)
 	if err != nil {
 		return fmt.Errorf("failed to approve chaincode: %w", err)
 	}
