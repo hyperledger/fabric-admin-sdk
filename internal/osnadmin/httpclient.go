@@ -18,6 +18,7 @@ func httpClient(caCertPool *x509.CertPool, tlsClientCert tls.Certificate) *http.
 			TLSClientConfig: &tls.Config{
 				RootCAs:      caCertPool,
 				Certificates: []tls.Certificate{tlsClientCert},
+				MinVersion:   tls.VersionTLS12,
 			},
 		},
 	}

@@ -59,11 +59,11 @@ func Untar(buffer io.Reader, dst string) error {
 			return fmt.Errorf("could not get next tar element %w", err)
 		}
 
-		if !ValidPath(header.Name) {
-			return fmt.Errorf("tar contains the absolute or escaping path '%s'", header.Name)
+		target, err := SanitizeArchivePath(dst, header.Name)
+		if err != nil {
+			return err
 		}
 
-		target := filepath.Join(dst, header.Name)
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if err := os.MkdirAll(target, 0o700); err != nil {
@@ -80,6 +80,7 @@ func Untar(buffer io.Reader, dst string) error {
 			}
 
 			// copy over contents
+			//#nosec G110 - Leave to the user to check for decompression bomb?
 			if _, err := io.Copy(f, tr); err != nil {
 				return err
 			}
@@ -91,21 +92,11 @@ func Untar(buffer io.Reader, dst string) error {
 	}
 }
 
-// ValidPath checks to see if the path is absolute, or if it is a
-// relative path higher in the tree.  In these cases it returns false.
-func ValidPath(uncleanPath string) bool {
-	// sanitizedPath will eliminate non-prefix instances of '..', as well
-	// as strip './'
-	sanitizedPath := filepath.Clean(uncleanPath)
-
-	switch {
-	case filepath.IsAbs(sanitizedPath):
-		return false
-	case strings.HasPrefix(sanitizedPath, ".."+string(filepath.Separator)) || sanitizedPath == "..":
-		// Path refers either to the parent, or a directory relative to the parent (but allows ..foo or ... for instance)
-		return false
-	default:
-		// Path appears to be relative without escaping higher
-		return true
+func SanitizeArchivePath(d, t string) (string, error) {
+	target := filepath.Join(d, t)
+	if !strings.HasPrefix(target, filepath.Clean(d)) {
+		return "", fmt.Errorf("content filepath is tainted: %s", t)
 	}
+
+	return target, nil
 }

@@ -1,23 +1,21 @@
-name: js
+name: Node build
 
 on:
-  push:
-  workflow_dispatch:
+  workflow_call:
+
 jobs:
-  node-test:
-    defaults:
-      run:
-        working-directory: node
+  unit-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: check default node version
-        run: node --version
-      - run: npm i
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - run: npm install
         working-directory: node/formatter
       # - run: npm test
       #   working-directory: node/formatter
-      - run: npm i
+      - run: npm install
         working-directory: node/admin
       # - run: npm test
       #   working-directory: node/admin
