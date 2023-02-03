@@ -1,0 +1,26 @@
+name: Pull request
+
+on:
+  pull_request:
+    banches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go:
+    uses: ./.github/workflows/golang.yml
+  
+  node:
+    uses: ./.github/workflows/node.yml
+
+  pull-request:
+    needs:
+      - go
+      - node
+    name: Pull request success
+    runs-on: ubuntu-latest
+    steps:
+      - run: true
