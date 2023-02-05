@@ -29,31 +29,15 @@ var _ = Describe("Tools", func() {
 			Expect(profile).To(BeNil())
 		})
 
-		PIt("ConfigTxGen", func() {
-			profile, err := tools.LoadProfile("TwoOrgsApplicationGenesis", "../test/data")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(profile).ToNot(BeNil())
+		It("ConfigTxGen", func() {
+			profile, _ := tools.LoadProfile("TwoOrgsApplicationGenesis", "../../test/data")
 			block, err := tools.ConfigTxGen(profile, "mychannel")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(block).ToNot(BeNil())
 			_, err = ExtractEnvelope(block, 0)
 			Expect(err).NotTo(HaveOccurred())
-			//_, err = sw.NewDefaultSecurityLevelWithKeystore(sw.NewDummyKeyStore())
-			//Expect(err).NotTo(HaveOccurred())
-			/*bundle, err := channelconfig.NewBundleFromEnvelope(envelopeConfig, cryptoProvider)
-			Expect(err).NotTo(HaveOccurred())
-			oc, exists := bundle.OrdererConfig()
-			Expect(exists).To(BeTrue())
-			configMetadata := &etcdraft.ConfigMetadata{}
-			err = proto.Unmarshal(oc.ConsensusMetadata(), configMetadata)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(configMetadata.Options).NotTo(BeNil())*/
 		})
 	})
-
-	PIt("gate policy", func() {})
-	PIt("peer discovery", func() {})
-	PIt("generate connection profile for sdk", func() {})
 })
 
 // ExtractEnvelope retrieves the requested envelope from a given block and

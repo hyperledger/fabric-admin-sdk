@@ -9,8 +9,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hyperledger/fabric-admin-sdk/internal/gateway"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
-	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/gateway"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"

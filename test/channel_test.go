@@ -8,7 +8,6 @@ import (
 
 	"github.com/hyperledger/fabric-admin-sdk/internal/network"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/channel"
-	"github.com/hyperledger/fabric-admin-sdk/pkg/tools"
 
 	npb "github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	. "github.com/onsi/ginkgo/v2"
@@ -65,7 +64,7 @@ var _ = Describe("channel", func() {
 
 			connection := npb.NewEndorserClient(n_conn1)
 
-			id, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
+			id, err := CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
 
 			configBlock, err := channel.GetConfigBlock(id, channelID, connection)
@@ -97,7 +96,7 @@ var _ = Describe("channel", func() {
 			Expect(err).NotTo(HaveOccurred())
 			connection := npb.NewEndorserClient(n_conn1)
 
-			id, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
+			id, err := CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
 
 			blockChainInfo, err := channel.GetBlockChainInfo(id, channelID, connection)

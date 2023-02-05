@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hyperledger/fabric-admin-sdk/internal/proposal"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
-	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/proposal"
 
 	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
 	pb "github.com/hyperledger/fabric-protos-go-apiv2/peer"

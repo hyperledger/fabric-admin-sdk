@@ -150,7 +150,7 @@ var _ = Describe("e2e", func() {
 
 			connection1 := peer.NewEndorserClient(n_conn1)
 			Expect(err).NotTo(HaveOccurred())
-			org1MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
+			org1MSP, err := CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
 			err = channel.JoinChannel(
 				block, org1MSP, connection1,
@@ -173,7 +173,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			connection2 := peer.NewEndorserClient(n_conn2)
 			Expect(err).NotTo(HaveOccurred())
-			org2MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
+			org2MSP, err := CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
 			err = channel.JoinChannel(
 				block, org2MSP, connection2,
