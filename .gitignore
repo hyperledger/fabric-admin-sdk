@@ -4,3 +4,4 @@ coverage.out
 **/*_mock_test.go
 vendor
 .cache/
+install-fabric.sh

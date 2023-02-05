@@ -2,9 +2,12 @@ package test
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path"
 	"sync"
@@ -12,6 +15,7 @@ import (
 
 	"github.com/hyperledger/fabric-admin-sdk/internal/network"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
+	"github.com/hyperledger/fabric-admin-sdk/pkg/channel"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/tools"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
@@ -93,44 +97,10 @@ func printGrpcError(err error) {
 var _ = Describe("e2e", func() {
 	Context("the e2e test with test network", func() {
 		It("should work", func(specCtx SpecContext) {
-			//genesis block
 			_, err := os.Stat("../fabric-samples/test-network")
 			if err != nil {
 				Skip("skip for unit test")
 			}
-			profile, err := tools.LoadProfile("TwoOrgsApplicationGenesis", "./")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(profile).ToNot(BeNil())
-			Expect(profile.Orderer.BatchSize.MaxMessageCount).To(Equal(uint32(10)))
-			block, err := tools.ConfigTxGen(profile, channelName)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(block).ToNot(BeNil())
-
-			//create channel
-			// var caFile, clientCert, clientKey, osnURL string
-			// osnURL = "https://localhost:7053"
-			// caFile = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
-			// clientCert = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt"
-			// clientKey = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key"
-			// caCertPool := x509.NewCertPool()
-			// caFilePEM, err := os.ReadFile(caFile)
-			// caCertPool.AppendCertsFromPEM(caFilePEM)
-			// Expect(err).NotTo(HaveOccurred())
-			// tlsClientCert, err := tls.LoadX509KeyPair(clientCert, clientKey)
-			// Expect(err).NotTo(HaveOccurred())
-			// resp, err := channel.CreateChannel(osnURL, block, caCertPool, tlsClientCert)
-			// Expect(err).NotTo(HaveOccurred())
-			// body, err := io.ReadAll(resp.Body)
-			// if err != nil {
-			// 	fmt.Println("my Http error is ", err)
-			// }
-			// fmt.Println("response statuscode is ", resp.StatusCode,
-			// 	"\nhead[name]=", resp.Header["Name"],
-			// 	"\nbody is ", string(body))
-			// Expect(err).NotTo(HaveOccurred())
-			// Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
-
-			//join peer1
 			TLSCACert := "../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
 			PrivKeyPath := "../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
 			SignCert := "../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
@@ -148,12 +118,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			org1MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, org1MspID)
 			Expect(err).NotTo(HaveOccurred())
-			// err = channel.JoinChannel(
-			// 	block, org1MSP, connection1,
-			// )
-			// Expect(err).NotTo(HaveOccurred())
 
-			//join peer2
 			TLSCACert = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt"
 			PrivKeyPath = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/priv_sk"
 			SignCert = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem"
@@ -170,11 +135,45 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			org2MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, org2MspID)
 			Expect(err).NotTo(HaveOccurred())
-			// err = channel.JoinChannel(
-			// 	block, org2MSP, connection2,
-			// )
-			// Expect(err).NotTo(HaveOccurred())
+			//genesis block
+			createChannel, ok := os.LookupEnv("createChannel")
+			if createChannel == "true" && ok {
+				profile, err := tools.LoadProfile("TwoOrgsApplicationGenesis", "./")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(profile).ToNot(BeNil())
+				Expect(profile.Orderer.BatchSize.MaxMessageCount).To(Equal(uint32(10)))
+				block, err := tools.ConfigTxGen(profile, channelName)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(block).ToNot(BeNil())
 
+				//create channel
+				var caFile, clientCert, clientKey, osnURL string
+				osnURL = "https://localhost:7053"
+				caFile = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
+				clientCert = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt"
+				clientKey = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key"
+				caCertPool := x509.NewCertPool()
+				caFilePEM, err := os.ReadFile(caFile)
+				caCertPool.AppendCertsFromPEM(caFilePEM)
+				Expect(err).NotTo(HaveOccurred())
+				tlsClientCert, err := tls.LoadX509KeyPair(clientCert, clientKey)
+				Expect(err).NotTo(HaveOccurred())
+				resp, err := channel.CreateChannel(osnURL, block, caCertPool, tlsClientCert)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
+
+				//join peer1
+				err = channel.JoinChannel(
+					block, org1MSP, connection1,
+				)
+				Expect(err).NotTo(HaveOccurred())
+
+				//join peer2
+				err = channel.JoinChannel(
+					block, org2MSP, connection2,
+				)
+				Expect(err).NotTo(HaveOccurred())
+			}
 			// package chaincode as CCAAS
 			dummyConnection := chaincode.Connection{
 				Address:      "{{.peername}}_basic:9999",

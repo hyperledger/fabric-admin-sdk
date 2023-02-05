@@ -70,6 +70,9 @@ Organizations:
             Endorsement:
                 Type: Signature
                 Rule: "OR('Org1MSP.peer')"
+        AnchorPeers:
+            - Host: peer0.org1.example.com
+              Port: 7051
 
     - &Org2
         # DefaultOrg defines the organization which is used in the sampleconfig
@@ -97,6 +100,9 @@ Organizations:
             Endorsement:
                 Type: Signature
                 Rule: "OR('Org2MSP.peer')"
+        AnchorPeers:
+            - Host: peer0.org2.example.com
+              Port: 9051
 
 ################################################################################
 #
