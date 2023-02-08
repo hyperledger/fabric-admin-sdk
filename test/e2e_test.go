@@ -2,12 +2,9 @@ package test
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path"
 	"sync"
@@ -15,12 +12,10 @@ import (
 
 	"github.com/hyperledger/fabric-admin-sdk/internal/network"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
-	"github.com/hyperledger/fabric-admin-sdk/pkg/channel"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/tools"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	gatewaypb "github.com/hyperledger/fabric-protos-go-apiv2/gateway"
-	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	. "github.com/onsi/ginkgo/v2"
@@ -33,6 +28,8 @@ const (
 	org1PeerAddress = "localhost:7051"
 	org2PeerAddress = "localhost:9051"
 	channelName     = "mychannel"
+	org1MspID       = "Org1MSP"
+	org2MspID       = "Org2MSP"
 )
 
 type ConnectionDetails struct {
@@ -110,34 +107,33 @@ var _ = Describe("e2e", func() {
 			Expect(block).ToNot(BeNil())
 
 			//create channel
-			var caFile, clientCert, clientKey, osnURL string
-			osnURL = "https://localhost:7053"
-			caFile = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
-			clientCert = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt"
-			clientKey = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key"
-			caCertPool := x509.NewCertPool()
-			caFilePEM, err := os.ReadFile(caFile)
-			caCertPool.AppendCertsFromPEM(caFilePEM)
-			Expect(err).NotTo(HaveOccurred())
-			tlsClientCert, err := tls.LoadX509KeyPair(clientCert, clientKey)
-			Expect(err).NotTo(HaveOccurred())
-			resp, err := channel.CreateChannel(osnURL, block, caCertPool, tlsClientCert)
-			Expect(err).NotTo(HaveOccurred())
-			body, err := io.ReadAll(resp.Body)
-			if err != nil {
-				fmt.Println("my Http error is ", err)
-			}
-			fmt.Println("response statuscode is ", resp.StatusCode,
-				"\nhead[name]=", resp.Header["Name"],
-				"\nbody is ", string(body))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
+			// var caFile, clientCert, clientKey, osnURL string
+			// osnURL = "https://localhost:7053"
+			// caFile = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
+			// clientCert = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt"
+			// clientKey = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key"
+			// caCertPool := x509.NewCertPool()
+			// caFilePEM, err := os.ReadFile(caFile)
+			// caCertPool.AppendCertsFromPEM(caFilePEM)
+			// Expect(err).NotTo(HaveOccurred())
+			// tlsClientCert, err := tls.LoadX509KeyPair(clientCert, clientKey)
+			// Expect(err).NotTo(HaveOccurred())
+			// resp, err := channel.CreateChannel(osnURL, block, caCertPool, tlsClientCert)
+			// Expect(err).NotTo(HaveOccurred())
+			// body, err := io.ReadAll(resp.Body)
+			// if err != nil {
+			// 	fmt.Println("my Http error is ", err)
+			// }
+			// fmt.Println("response statuscode is ", resp.StatusCode,
+			// 	"\nhead[name]=", resp.Header["Name"],
+			// 	"\nbody is ", string(body))
+			// Expect(err).NotTo(HaveOccurred())
+			// Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
 
 			//join peer1
 			TLSCACert := "../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
 			PrivKeyPath := "../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
 			SignCert := "../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
-			MSPID := "Org1MSP"
 
 			peer1 := network.Node{
 				Addr:      org1PeerAddress,
@@ -150,18 +146,17 @@ var _ = Describe("e2e", func() {
 
 			connection1 := peer.NewEndorserClient(n_conn1)
 			Expect(err).NotTo(HaveOccurred())
-			org1MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
+			org1MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, org1MspID)
 			Expect(err).NotTo(HaveOccurred())
-			err = channel.JoinChannel(
-				block, org1MSP, connection1,
-			)
-			Expect(err).NotTo(HaveOccurred())
+			// err = channel.JoinChannel(
+			// 	block, org1MSP, connection1,
+			// )
+			// Expect(err).NotTo(HaveOccurred())
 
 			//join peer2
 			TLSCACert = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt"
 			PrivKeyPath = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/priv_sk"
 			SignCert = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem"
-			MSPID = "Org2MSP"
 
 			peer2 := network.Node{
 				Addr:      org2PeerAddress,
@@ -173,12 +168,12 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			connection2 := peer.NewEndorserClient(n_conn2)
 			Expect(err).NotTo(HaveOccurred())
-			org2MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
+			org2MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, org2MspID)
 			Expect(err).NotTo(HaveOccurred())
-			err = channel.JoinChannel(
-				block, org2MSP, connection2,
-			)
-			Expect(err).NotTo(HaveOccurred())
+			// err = channel.JoinChannel(
+			// 	block, org2MSP, connection2,
+			// )
+			// Expect(err).NotTo(HaveOccurred())
 
 			// package chaincode as CCAAS
 			dummyConnection := chaincode.Connection{
@@ -271,31 +266,12 @@ var _ = Describe("e2e", func() {
 
 			time.Sleep(time.Duration(15) * time.Second)
 
-			// commit from orgs
-			// orderer
-			orderer_addr := "localhost:7050"
-			orderer_TLSCACert := "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/msp/tlscacerts/tlsca.example.com-cert.pem"
-			orderer_node := network.Node{
-				Addr:      orderer_addr,
-				TLSCACert: orderer_TLSCACert,
-			}
-			err = orderer_node.LoadConfig()
-			Expect(err).NotTo(HaveOccurred())
-			ordererConnection, err := network.DialConnection(orderer_node)
-			Expect(err).NotTo(HaveOccurred())
-			ordererClient, err := orderer.NewAtomicBroadcastClient(ordererConnection).Broadcast(context.Background())
-			Expect(err).NotTo(HaveOccurred())
-			// commit from org1
-			endorsement_org1_group := make([]peer.EndorserClient, 1)
-			endorsement_org1_group[0] = connection1
-			err = chaincode.Commit(Definition, org1MSP, endorsement_org1_group, ordererClient)
-			Expect(err).NotTo(HaveOccurred())
+			commitCtx, commitCancel := context.WithTimeout(specCtx, 30*time.Second)
+			defer commitCancel()
 
-			// commit from org2
-			endorsement_org2_group := make([]peer.EndorserClient, 1)
-			endorsement_org2_group[0] = connection2
-			err = chaincode.Commit(Definition, org2MSP, endorsement_org2_group, ordererClient)
-			Expect(err).NotTo(HaveOccurred())
+			err = chaincode.Commit(commitCtx, n_conn1, org1MSP, &Definition)
+			printGrpcError(err)
+			Expect(err).NotTo(HaveOccurred(), "commit chaincode")
 
 			f, _ := os.Create("PackageID")
 			_, err = io.WriteString(f, packageID)

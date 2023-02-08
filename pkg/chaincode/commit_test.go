@@ -6,153 +6,182 @@ SPDX-License-Identifier: Apache-2.0
 package chaincode
 
 import (
+	"context"
 	"errors"
-	"fmt"
 
 	"github.com/golang/mock/gomock"
+	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"google.golang.org/grpc"
 )
 
-//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
-//counterfeiter:generate -o endorserclient_mock_test.go github.com/hyperledger/fabric-protos-go-apiv2/peer.EndorserClient
-//counterfeiter:generate -o broadcastclient_mock_test.go github.com/hyperledger/fabric-protos-go-apiv2/orderer.AtomicBroadcast_BroadcastClient
-
 var _ = Describe("Commit", func() {
+	var channelName string
+	var chaincodeDefinition *Definition
 
-	var chaincodeDefinition Definition
-	var endorsementClients []peer.EndorserClient
 	BeforeEach(func() {
-		chaincodeDefinition = Definition{
+		channelName = "CHANNEL"
+		chaincodeDefinition = &Definition{
 			Name:        "CHAINCODE",
 			Version:     "1.0",
 			Sequence:    1,
-			ChannelName: "CHANNEL",
+			ChannelName: channelName,
 		}
 	})
 
-	Context("CreateCommitProposal", func() {
-		It("Should work for function CreateCommitProposal", func() {
-			controller := gomock.NewController(GinkgoT())
-			defer controller.Finish()
+	It("gRPC calls made with supplied context", func(specCtx SpecContext) {
+		controller := gomock.NewController(GinkgoT())
+		defer controller.Finish()
 
-			mockSigner := NewMockSigner(controller, "", nil, nil)
-			_, err := CreateCommitProposal(chaincodeDefinition, mockSigner)
-			Expect(err).ShouldNot(HaveOccurred())
-		})
+		var endorseCtxErr error
+		var submitCtxErr error
 
-		It("when the channel name is not provided", func() {
-			errorData := Definition{
-				Name:        "CHAINCODE",
-				Version:     "1.0",
-				Sequence:    1,
-				ChannelName: "",
-			}
-			_, err := CreateCommitProposal(errorData, nil)
-			Expect(err).Should(HaveOccurred())
-		})
+		mockConnection := NewMockClientConnInterface(controller)
+		mockConnection.EXPECT().
+			Invoke(gomock.Any(), gomock.Eq(gatewayEndorseMethod), gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, method string, in *gateway.EndorseRequest, out *gateway.EndorseResponse, opts ...grpc.CallOption) {
+				endorseCtxErr = ctx.Err()
+				CopyProto(NewEndorseResponse(channelName, ""), out)
+			})
+		mockConnection.EXPECT().
+			Invoke(gomock.Any(), gomock.Eq(gatewaySubmitMethod), gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, method string, in *gateway.SubmitRequest, out *gateway.SubmitResponse, opts ...grpc.CallOption) {
+				submitCtxErr = ctx.Err()
+				CopyProto(NewSubmitResponse(), out)
+			})
+		mockConnection.EXPECT().
+			Invoke(gomock.Any(), gomock.Eq(gatewayCommitStatusMethod), gomock.Any(), gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, method string, in *gateway.SignedCommitStatusRequest, out *gateway.CommitStatusResponse, opts ...grpc.CallOption) error {
+				CopyProto(NewCommitStatusResponse(peer.TxValidationCode_VALID, 0), out)
+				return ctx.Err()
+			})
 
-		It("when the chaincode name is not provided", func() {
-			errorData := Definition{
-				Name:        "",
-				Version:     "1.0",
-				Sequence:    1,
-				ChannelName: "CHANNEL",
-			}
-			_, err := CreateCommitProposal(errorData, nil)
-			Expect(err).Should(HaveOccurred())
-		})
+		mockSigner := NewMockSigner(controller, "", nil, nil)
 
-		It("when the chaincode version is not provided", func() {
-			errorData := Definition{
-				Name:        "CHAINCODE",
-				Version:     "",
-				Sequence:    1,
-				ChannelName: "CHANNEL",
-			}
-			_, err := CreateCommitProposal(errorData, nil)
-			Expect(err).Should(HaveOccurred())
-		})
+		ctx, cancel := context.WithCancel(specCtx)
+		cancel()
 
-		It("when the sequence is not provided", func() {
-			errorData := Definition{
-				Name:        "CHAINCODE",
-				Version:     "1.0",
-				Sequence:    0,
-				ChannelName: "CHANNEL",
-			}
-			_, err := CreateCommitProposal(errorData, nil)
-			Expect(err).Should(HaveOccurred())
-		})
+		err := Commit(ctx, mockConnection, mockSigner, chaincodeDefinition)
+
+		Expect(endorseCtxErr).To(BeIdenticalTo(context.Canceled), "endorse context error")
+		Expect(submitCtxErr).To(BeIdenticalTo(context.Canceled), "submit context error")
+		Expect(err).To(MatchError(context.Canceled), "endorse context error")
 	})
 
-	Context("Commit", func() {
-		It("Should handle Sign error when Commit", func() {
-			controller := gomock.NewController(GinkgoT())
-			defer controller.Finish()
+	It("Endorse errors returned", func(specCtx SpecContext) {
+		expectedErr := errors.New("EXPECTED_ERROR")
 
-			mockSigner := NewMockSigningIdentity(controller)
-			mockSigner.EXPECT().MspID().Return("").AnyTimes()
-			mockSigner.EXPECT().Credentials().Return(nil).AnyTimes()
-			mockSigner.EXPECT().Sign(gomock.Any()).Return(nil, fmt.Errorf("tea"))
+		controller := gomock.NewController(GinkgoT())
+		defer controller.Finish()
 
-			err := Commit(chaincodeDefinition, mockSigner, endorsementClients, nil)
-			Expect(err).Should(HaveOccurred())
-		})
+		mockConnection := NewMockClientConnInterface(controller)
+		mockConnection.EXPECT().
+			Invoke(gomock.Any(), gomock.Eq(gatewayEndorseMethod), gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(expectedErr)
 
-		It("Should handle Endorsement error when Commit", func() {
-			controller := gomock.NewController(GinkgoT())
-			defer controller.Finish()
+		mockSigner := NewMockSigner(controller, "", nil, nil)
 
-			mockSigner := NewMockSigner(controller, "", nil, nil)
-			mockEndorserClient := &FakeEndorserClient{}
-			endorsementClients = make([]peer.EndorserClient, 0)
-			endorsementClients = append(endorsementClients, mockEndorserClient)
-			mockEndorserClient.ProcessProposalReturns(nil, errors.New("latte"))
-			err := Commit(chaincodeDefinition, mockSigner, endorsementClients, nil)
-			Expect(err).Should(HaveOccurred())
-		})
+		err := Commit(specCtx, mockConnection, mockSigner, chaincodeDefinition)
 
-		It("Should handle BroadcastClient error when Commit", func() {
-			controller := gomock.NewController(GinkgoT())
-			defer controller.Finish()
+		Expect(err).To(MatchError(expectedErr))
+	})
 
-			mockSigner := NewMockSigner(controller, "", nil, nil)
-			mockEndorserClient := &FakeEndorserClient{}
-			endorsementClients = make([]peer.EndorserClient, 0)
-			endorsementClients = append(endorsementClients, mockEndorserClient)
-			mockProposalResponse := &peer.ProposalResponse{
-				Response: &peer.Response{
-					Status: 200,
-				},
-				Endorsement: &peer.Endorsement{},
-			}
-			mockEndorserClient.ProcessProposalReturns(mockProposalResponse, nil)
-			mockBroadcastClient := &FakeAtomicBroadcast_BroadcastClient{}
-			mockBroadcastClient.SendReturns(errors.New("coffee"))
-			err := Commit(chaincodeDefinition, mockSigner, endorsementClients, mockBroadcastClient)
-			Expect(err).Should(HaveOccurred())
-		})
+	It("Submit errors returned", func(specCtx SpecContext) {
+		expectedErr := errors.New("EXPECTED_ERROR")
 
-		It("Should works when Commit", func() {
-			controller := gomock.NewController(GinkgoT())
-			defer controller.Finish()
+		controller := gomock.NewController(GinkgoT())
+		defer controller.Finish()
 
-			mockSigner := NewMockSigner(controller, "", nil, nil)
-			mockEndorserClient := &FakeEndorserClient{}
-			endorsementClients = make([]peer.EndorserClient, 0)
-			endorsementClients = append(endorsementClients, mockEndorserClient)
-			mockProposalResponse := &peer.ProposalResponse{
-				Response: &peer.Response{
-					Status: 200,
-				},
-				Endorsement: &peer.Endorsement{},
-			}
-			mockEndorserClient.ProcessProposalReturns(mockProposalResponse, nil)
-			mockBroadcastClient := &FakeAtomicBroadcast_BroadcastClient{}
-			err := Commit(chaincodeDefinition, mockSigner, endorsementClients, mockBroadcastClient)
-			Expect(err).ShouldNot(HaveOccurred())
-		})
+		mockConnection := NewMockClientConnInterface(controller)
+		mockConnection.EXPECT().
+			Invoke(gomock.Any(), gomock.Eq(gatewayEndorseMethod), gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, method string, in *gateway.EndorseRequest, out *gateway.EndorseResponse, opts ...grpc.CallOption) {
+				CopyProto(NewEndorseResponse(channelName, ""), out)
+			})
+		mockConnection.EXPECT().
+			Invoke(gomock.Any(), gomock.Eq(gatewaySubmitMethod), gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, method string, in *gateway.SubmitRequest, out *gateway.SubmitResponse, opts ...grpc.CallOption) {
+				CopyProto(NewSubmitResponse(), out)
+			})
+		mockConnection.EXPECT().
+			Invoke(gomock.Any(), gomock.Eq(gatewayCommitStatusMethod), gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(expectedErr)
+
+		mockSigner := NewMockSigner(controller, "", nil, nil)
+
+		err := Commit(specCtx, mockConnection, mockSigner, chaincodeDefinition)
+
+		Expect(err).To(MatchError(expectedErr))
+	})
+
+	It("CommitStatus errors returned", func(specCtx SpecContext) {
+		expectedErr := errors.New("EXPECTED_ERROR")
+
+		controller := gomock.NewController(GinkgoT())
+		defer controller.Finish()
+
+		mockConnection := NewMockClientConnInterface(controller)
+		mockConnection.EXPECT().
+			Invoke(gomock.Any(), gomock.Eq(gatewayEndorseMethod), gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, method string, in *gateway.EndorseRequest, out *gateway.EndorseResponse, opts ...grpc.CallOption) {
+				CopyProto(NewEndorseResponse(channelName, ""), out)
+			})
+		mockConnection.EXPECT().
+			Invoke(gomock.Any(), gomock.Eq(gatewaySubmitMethod), gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(expectedErr)
+
+		mockSigner := NewMockSigner(controller, "", nil, nil)
+
+		err := Commit(specCtx, mockConnection, mockSigner, chaincodeDefinition)
+
+		Expect(err).To(MatchError(expectedErr))
+	})
+
+	It("Proposal content", func(specCtx SpecContext) {
+		expected := &lifecycle.CommitChaincodeDefinitionArgs{
+			Name:     chaincodeDefinition.Name,
+			Version:  chaincodeDefinition.Version,
+			Sequence: chaincodeDefinition.Sequence,
+		}
+
+		controller := gomock.NewController(GinkgoT())
+		defer controller.Finish()
+
+		var endorseRequest *gateway.EndorseRequest
+		mockConnection := NewMockClientConnInterface(controller)
+		mockConnection.EXPECT().
+			Invoke(gomock.Any(), gomock.Eq(gatewayEndorseMethod), gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, method string, in *gateway.EndorseRequest, out *gateway.EndorseResponse, opts ...grpc.CallOption) {
+				endorseRequest = in
+				CopyProto(NewEndorseResponse(channelName, ""), out)
+			}).
+			Times(1)
+		mockConnection.EXPECT().
+			Invoke(gomock.Any(), gomock.Eq(gatewaySubmitMethod), gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, method string, in *gateway.SubmitRequest, out *gateway.SubmitResponse, opts ...grpc.CallOption) {
+				CopyProto(NewSubmitResponse(), out)
+			})
+		mockConnection.EXPECT().
+			Invoke(gomock.Any(), gomock.Eq(gatewayCommitStatusMethod), gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, method string, in *gateway.SignedCommitStatusRequest, out *gateway.CommitStatusResponse, opts ...grpc.CallOption) {
+				CopyProto(NewCommitStatusResponse(peer.TxValidationCode_VALID, 0), out)
+			})
+
+		mockSigner := NewMockSigner(controller, "", nil, nil)
+
+		err := Commit(specCtx, mockConnection, mockSigner, chaincodeDefinition)
+		Expect(err).NotTo(HaveOccurred())
+
+		invocationSpec := AssertUnmarshalInvocationSpec(endorseRequest.GetProposedTransaction())
+		args := invocationSpec.GetChaincodeSpec().GetInput().GetArgs()
+		Expect(args).To(HaveLen(2), "number of arguments")
+
+		actual := &lifecycle.CommitChaincodeDefinitionArgs{}
+		AssertUnmarshal(args[1], actual)
+
+		AssertProtoEqual(expected, actual)
 	})
 })

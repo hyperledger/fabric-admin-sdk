@@ -6,42 +6,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hyperledger/fabric-admin-sdk/internal/protoutil"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/proposal"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
-	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
 	"google.golang.org/protobuf/proto"
 )
-
-func processProposalWithBroadcast(proposalProto *peer.Proposal, id identity.SigningIdentity, EndorserClients []peer.EndorserClient, BroadcastClient orderer.AtomicBroadcast_BroadcastClient) error {
-	signedProposal, err := proposal.NewSignedProposal(proposalProto, id)
-	if err != nil {
-		return err
-	}
-
-	//ProcessProposal
-	var responses []*peer.ProposalResponse
-	for _, endorser := range EndorserClients {
-		proposalResponse, err := endorser.ProcessProposal(context.Background(), signedProposal)
-		if err != nil {
-			return fmt.Errorf("failed to endorse proposal %w", err)
-		}
-		responses = append(responses, proposalResponse)
-	}
-	//CreateSignedTx
-	env, err := protoutil.CreateSignedTx(proposalProto, id, responses...)
-	if err != nil {
-		return fmt.Errorf("failed to create signed transaction %w", err)
-	}
-	//Send Broadcast
-	if err = BroadcastClient.Send(env); err != nil {
-		return fmt.Errorf("failed to send transaction %w", err)
-	}
-	return nil
-}
 
 func ReadinessCheck(Definition Definition, id identity.SigningIdentity, EndorserClient peer.EndorserClient) error {
 	proposal, err := createReadinessCheckProposal(Definition, id)
