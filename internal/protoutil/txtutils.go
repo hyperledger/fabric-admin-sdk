@@ -8,7 +8,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hyperledger/fabric-admin-sdk/internal/pkg/identity"
+	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
+
+	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"google.golang.org/protobuf/proto"
@@ -55,7 +57,7 @@ func MarshalOrPanic(pb proto.Message) []byte {
 func CreateSignedEnvelope(
 	txType common.HeaderType,
 	channelID string,
-	signer identity.SignerSerializer,
+	signer identity.SigningIdentity,
 	dataMsg proto.Message,
 	msgVersion int32,
 	epoch uint64,
@@ -69,7 +71,7 @@ func CreateSignedEnvelope(
 func CreateSignedEnvelopeWithTLSBinding(
 	txType common.HeaderType,
 	channelID string,
-	signer identity.SignerSerializer,
+	signer identity.SigningIdentity,
 	dataMsg proto.Message,
 	msgVersion int32,
 	epoch uint64,
@@ -127,8 +129,12 @@ func MakeChannelHeader(headerType common.HeaderType, version int32, chainID stri
 }
 
 // NewSignatureHeader returns a SignatureHeader with a valid nonce.
-func NewSignatureHeader(id identity.SignerSerializer) (*common.SignatureHeader, error) {
-	creator, err := id.Serialize()
+func NewSignatureHeader(id identity.Identity) (*common.SignatureHeader, error) {
+	serializedIdentity := &msp.SerializedIdentity{
+		Mspid:   id.MspID(),
+		IdBytes: id.Credentials(),
+	}
+	creator, err := proto.Marshal(serializedIdentity)
 	if err != nil {
 		return nil, err
 	}
