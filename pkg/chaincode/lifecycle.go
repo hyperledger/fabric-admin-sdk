@@ -12,6 +12,7 @@ const (
 	approveTransactionName              = "ApproveChaincodeDefinitionForMyOrg"
 	commitTransactionName               = "CommitChaincodeDefinition"
 	queryInstalledTransactionName       = "QueryInstalledChaincodes"
+	queryCommittedTransactionName       = "QueryChaincodeDefinitions"
 	checkCommitReadinessTransactionName = "CheckCommitReadiness"
 	installTransactionName              = "InstallChaincode"
 	// MetadataFile is the expected location of the metadata json document

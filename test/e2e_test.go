@@ -273,6 +273,14 @@ var _ = Describe("e2e", func() {
 			printGrpcError(err)
 			Expect(err).NotTo(HaveOccurred(), "commit chaincode")
 
+			result, err := chaincode.QueryCommitted(specCtx, peerConnections[0].connection, peerConnections[0].id, channelName)
+			Expect(err).NotTo(HaveOccurred(), "query committed chaincode")
+
+			committedChaincodes := result.GetChaincodeDefinitions()
+			Expect(committedChaincodes).To(HaveLen(1), "number of committed chaincodes")
+			Expect(committedChaincodes[0].GetName()).To(Equal("basic"), "committed chaincode name")
+			Expect(committedChaincodes[0].GetSequence()).To(Equal(1), "committed chaincode sequence")
+
 			f, _ := os.Create("PackageID")
 			_, err = io.WriteString(f, packageID)
 			Expect(err).NotTo(HaveOccurred())
