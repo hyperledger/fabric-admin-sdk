@@ -273,7 +273,7 @@ var _ = Describe("e2e", func() {
 			printGrpcError(err)
 			Expect(err).NotTo(HaveOccurred(), "commit chaincode")
 
-			result, err := chaincode.QueryCommitted(specCtx, peerConnections[0].connection, peerConnections[0].id, channelName)
+			result, err := chaincode.QueryCommitted(specCtx, n_conn1, org1MSP, channelName)
 			Expect(err).NotTo(HaveOccurred(), "query committed chaincode")
 
 			committedChaincodes := result.GetChaincodeDefinitions()
