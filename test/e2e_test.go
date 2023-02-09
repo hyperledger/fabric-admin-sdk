@@ -274,12 +274,18 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred(), "commit chaincode")
 
 			result, err := chaincode.QueryCommitted(specCtx, n_conn1, org1MSP, channelName)
-			Expect(err).NotTo(HaveOccurred(), "query committed chaincode")
+			Expect(err).NotTo(HaveOccurred(), "query all committed chaincodes")
 
 			committedChaincodes := result.GetChaincodeDefinitions()
 			Expect(committedChaincodes).To(HaveLen(1), "number of committed chaincodes")
 			Expect(committedChaincodes[0].GetName()).To(Equal("basic"), "committed chaincode name")
 			Expect(committedChaincodes[0].GetSequence()).To(Equal(int64(1)), "committed chaincode sequence")
+
+			resultWithName, err := chaincode.QueryCommittedWithName(specCtx, n_conn1, org1MSP, channelName, Definition.Name)
+			Expect(err).NotTo(HaveOccurred(), "query committed chaincode with name")
+
+			Expect(resultWithName.GetApprovals()).To(Equal(map[string]bool{"Org1MSP": true, "Org2MSP": true}), "committed chaincode approvals")
+			Expect(resultWithName.GetSequence()).To(Equal(int64(1)), "committed chaincode sequence")
 
 			f, _ := os.Create("PackageID")
 			_, err = io.WriteString(f, packageID)

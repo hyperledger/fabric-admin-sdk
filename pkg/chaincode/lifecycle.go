@@ -8,13 +8,14 @@ package chaincode
 import "github.com/hyperledger/fabric-protos-go-apiv2/peer"
 
 const (
-	lifecycleChaincodeName              = "_lifecycle"
-	approveTransactionName              = "ApproveChaincodeDefinitionForMyOrg"
-	commitTransactionName               = "CommitChaincodeDefinition"
-	queryInstalledTransactionName       = "QueryInstalledChaincodes"
-	queryCommittedTransactionName       = "QueryChaincodeDefinitions"
-	checkCommitReadinessTransactionName = "CheckCommitReadiness"
-	installTransactionName              = "InstallChaincode"
+	lifecycleChaincodeName                = "_lifecycle"
+	approveTransactionName                = "ApproveChaincodeDefinitionForMyOrg"
+	commitTransactionName                 = "CommitChaincodeDefinition"
+	queryInstalledTransactionName         = "QueryInstalledChaincodes"
+	queryCommittedTransactionName         = "QueryChaincodeDefinitions"
+	queryCommittedWithNameTransactionName = "QueryChaincodeDefinition"
+	checkCommitReadinessTransactionName   = "CheckCommitReadiness"
+	installTransactionName                = "InstallChaincode"
 	// MetadataFile is the expected location of the metadata json document
 	// in the top level of the chaincode package.
 	MetadataFile = "metadata.json"
