@@ -20,6 +20,10 @@ import (
 
 // Approve a chaincode package to specific peer.
 func Approve(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, chaincodeDef *Definition) error {
+	err := chaincodeDef.Validate()
+	if err != nil {
+		return err
+	}
 	approveArgs := &lifecycle.ApproveChaincodeDefinitionForMyOrgArgs{
 		Name:                chaincodeDef.Name,
 		Version:             chaincodeDef.Version,

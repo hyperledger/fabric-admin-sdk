@@ -15,6 +15,10 @@ import (
 
 // Commit a chaincode package to specific peer.
 func Commit(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, chaincodeDef *Definition) error {
+	err := chaincodeDef.Validate()
+	if err != nil {
+		return err
+	}
 	commitArgs := &lifecycle.CommitChaincodeDefinitionArgs{
 		Name:                chaincodeDef.Name,
 		Version:             chaincodeDef.Version,
