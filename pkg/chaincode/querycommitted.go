@@ -10,9 +10,9 @@ import (
 	"fmt"
 
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
-	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/proposal"
+	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/gateway"
+	"github.com/hyperledger/fabric-gateway/pkg/client"
 
-	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
@@ -26,29 +26,25 @@ func QueryCommitted(ctx context.Context, connection grpc.ClientConnInterface, si
 		return nil, err
 	}
 
-	proposalProto, err := proposal.NewProposal(signingID, lifecycleChaincodeName, queryCommittedTransactionName, proposal.WithArguments(queryArgsBytes), proposal.WithChannel(channelID))
+	gw, err := gateway.New(connection, signingID)
 	if err != nil {
 		return nil, err
 	}
+	defer gw.Close()
 
-	signedProposal, err := proposal.NewSignedProposal(proposalProto, signingID)
+	r, err := gw.GetNetwork(channelID).
+		GetContract(lifecycleChaincodeName).
+		EvaluateWithContext(
+			ctx,
+			queryCommittedTransactionName,
+			client.WithBytesArguments(queryArgsBytes),
+		)
 	if err != nil {
-		return nil, err
-	}
-
-	endorser := peer.NewEndorserClient(connection)
-
-	proposalResponse, err := endorser.ProcessProposal(ctx, signedProposal)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query committed chaincode: %w", err)
-	}
-
-	if err = proposal.CheckSuccessfulResponse(proposalResponse); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query committed chaincodes: %w", err)
 	}
 
 	result := &lifecycle.QueryChaincodeDefinitionsResult{}
-	if err = proto.Unmarshal(proposalResponse.GetResponse().GetPayload(), result); err != nil {
+	if err = proto.Unmarshal(r, result); err != nil {
 		return nil, fmt.Errorf("failed to deserialize query committed chaincode result: %w", err)
 	}
 
