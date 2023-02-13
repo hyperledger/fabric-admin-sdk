@@ -21,6 +21,7 @@ import (
 
 const gatewayEndorseMethod = "/gateway.Gateway/Endorse"
 const gatewaySubmitMethod = "/gateway.Gateway/Submit"
+const gatewayEvaluateMethod = "/gateway.Gateway/Evaluate"
 const gatewayCommitStatusMethod = "/gateway.Gateway/CommitStatus"
 
 func NewEndorseResponse(channelName string, result string) *gateway.EndorseResponse {
@@ -50,6 +51,14 @@ func NewEndorseResponse(channelName string, result string) *gateway.EndorseRespo
 					},
 				}),
 			}),
+		},
+	}
+}
+
+func NewEvaluateResponse(channelName string, result string) *gateway.EvaluateResponse {
+	return &gateway.EvaluateResponse{
+		Result: &peer.Response{
+			Payload: []byte(result),
 		},
 	}
 }
