@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/hyperledger/fabric-admin-sdk/internal/protoutil"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/proposal"
+	"github.com/pkg/errors"
 
 	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
 	pb "github.com/hyperledger/fabric-protos-go-apiv2/peer"
@@ -23,19 +23,20 @@ type ChannelList struct {
 	SystemChannel interface{} `json:"systemChannel"`
 	Channels      []struct {
 		Name string `json:"name"`
-		Url  string `json:"url"`
+		URL  string `json:"url"`
 	} `json:"channels"`
 }
 
 func CreateChannel(osnURL string, block *cb.Block, caCertPool *x509.CertPool, tlsClientCert tls.Certificate) (*http.Response, error) {
-	block_byte := protoutil.MarshalOrPanic(block)
-	return osnadmin.Join(osnURL, block_byte, caCertPool, tlsClientCert)
+	blockBytes := protoutil.MarshalOrPanic(block)
+	return osnadmin.Join(osnURL, blockBytes, caCertPool, tlsClientCert)
 }
 
 func JoinChannel(block *cb.Block, id identity.SigningIdentity, connection pb.EndorserClient) error {
 	blockBytes, err := proto.Marshal(block)
 	if err != nil {
-		return fmt.Errorf("failed to marshal block: %w", err)
+		// return fmt.Errorf("failed to marshal block: %w", err)
+		return errors.Wrap(err, "failed to marshal block")
 	}
 
 	prop, err := proposal.NewProposal(id, "cscc", "JoinChain", proposal.WithArguments(blockBytes), proposal.WithType(cb.HeaderType_CONFIG))

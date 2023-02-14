@@ -55,7 +55,7 @@ func NewEndorseResponse(channelName string, result string) *gateway.EndorseRespo
 	}
 }
 
-func NewEvaluateResponse(channelName string, result string) *gateway.EvaluateResponse {
+func NewEvaluateResponse(result string) *gateway.EvaluateResponse {
 	return &gateway.EvaluateResponse{
 		Result: &peer.Response{
 			Payload: []byte(result),

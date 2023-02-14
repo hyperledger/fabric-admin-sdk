@@ -31,10 +31,21 @@ var _ = Describe("Lifecycle", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("Validate Sequence", func() {
+		It("Validate missing / zero Sequence", func() {
 			chaincodeDefinition := &chaincode.Definition{
 				Name:        "CHAINCODE",
 				Version:     "1.0",
+				ChannelName: "mycc",
+			}
+			err := chaincodeDefinition.Validate()
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("Validate negative Sequence", func() {
+			chaincodeDefinition := &chaincode.Definition{
+				Name:        "CHAINCODE",
+				Version:     "1.0",
+				Sequence:    -1,
 				ChannelName: "mycc",
 			}
 			err := chaincodeDefinition.Validate()

@@ -25,7 +25,7 @@ func PackageID(PackageFile string) (string, error) {
 	return packageID, nil
 }
 
-// PackageID returns the package ID with the label and hash of the chaincode install package
+// GetPackageID returns the package ID with the label and hash of the chaincode install package
 func GetPackageID(label string, ccInstallPkg []byte) string {
 	h := sha256.New()
 	h.Write(ccInstallPkg)

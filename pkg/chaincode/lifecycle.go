@@ -29,7 +29,7 @@ const (
 	CodePackageFile = "code.tar.gz"
 )
 
-// Chaincode Define
+// Definition of a chaincode
 type Definition struct {
 	ChannelName         string
 	PackageID           string
@@ -45,16 +45,16 @@ type Definition struct {
 
 func (d *Definition) Validate() error {
 	if d.ChannelName == "" {
-		return fmt.Errorf("For channel approve/commit channel name is required")
+		return fmt.Errorf("channel name is required for channel approve/commit")
 	}
 	if d.Name == "" {
-		return fmt.Errorf("For channel approve/commit chaincode name is required")
+		return fmt.Errorf("chaincode name is required for channel approve/commit")
 	}
 	if d.Version == "" {
-		return fmt.Errorf("For channel approve/commit chaincode version is required")
+		return fmt.Errorf("chaincode version is required for channel approve/commit")
 	}
-	if d.Sequence == 0 {
-		return fmt.Errorf("For channel approve/commit chaincode Sequence is required as bigger than 0")
+	if d.Sequence <= 0 {
+		return fmt.Errorf("chaincode sequence must be greater than 0 for channel approve/commit")
 	}
 	return nil
 }

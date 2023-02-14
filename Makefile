@@ -22,7 +22,7 @@ lint: staticcheck golangci-lint
 .PHONEY: staticcheck
 staticcheck:
 	go install honnef.co/go/tools/cmd/staticcheck@latest
-	staticcheck -f stylish '$(base_dir)'
+	staticcheck -f stylish '$(base_dir)/...'
 
 .PHONEY: golangci-lint
 golangci-lint:

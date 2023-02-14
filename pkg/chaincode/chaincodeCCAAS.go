@@ -11,9 +11,9 @@ import (
 
 // Connection setting used in connection.json
 type Connection struct {
-	Address      string `json:"address"`
-	Dial_timeout string `json:"dial_timeout"`
-	Tls_required bool   `json:"tls_required"`
+	Address     string `json:"address"`
+	DialTimeout string `json:"dial_timeout"`
+	TLSRequired bool   `json:"tls_required"`
 }
 
 // Metadata as metadata.json
@@ -23,7 +23,7 @@ type Metadata struct {
 }
 
 /*
-To use PackageCCAAS you need to start container by yourself. as sample as
+PackageCCAAS requires that you start a container by yourself. as sample as
 ${CONTAINER_CLI} run --rm -d --name peer0org1_${CC_NAME}_ccaas  \
 --network fabric_test \
 -e CHAINCODE_SERVER_ADDRESS=0.0.0.0:${CCAAS_SERVER_PORT} \
