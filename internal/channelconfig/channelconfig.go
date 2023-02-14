@@ -64,7 +64,7 @@ func (scv *StandardConfigValue) Value() proto.Message {
 	return scv.value
 }
 
-// HashingAlgorithm returns the only currently valid hashing algorithm.
+// HashingAlgorithmValue returns the only currently valid hashing algorithm.
 // It is a value for the /Channel group.
 func HashingAlgorithmValue() *StandardConfigValue {
 	return &StandardConfigValue{

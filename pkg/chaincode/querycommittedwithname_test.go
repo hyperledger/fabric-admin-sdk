@@ -37,7 +37,7 @@ var _ = Describe("QueryCommittedWithName", func() {
 			Invoke(gomock.Any(), gomock.Eq(gatewayEvaluateMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *gateway.EvaluateRequest, out *gateway.EvaluateResponse, opts ...grpc.CallOption) {
 				evaluateCtxErr = ctx.Err()
-				CopyProto(NewEvaluateResponse(channelName, ""), out)
+				CopyProto(NewEvaluateResponse(""), out)
 			})
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
@@ -82,7 +82,7 @@ var _ = Describe("QueryCommittedWithName", func() {
 			Invoke(gomock.Any(), gomock.Eq(gatewayEvaluateMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *gateway.EvaluateRequest, out *gateway.EvaluateResponse, opts ...grpc.CallOption) {
 				evaluateRequest = in
-				CopyProto(NewEvaluateResponse(channelName, ""), out)
+				CopyProto(NewEvaluateResponse(""), out)
 			}).
 			Times(1)
 		mockSigner := NewMockSigner(controller, "", nil, nil)

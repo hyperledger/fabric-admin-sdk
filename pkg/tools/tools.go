@@ -29,8 +29,7 @@ const (
 	epoch      = 0
 )
 
-// configtxGen
-// base on Profile return block
+// ConfigTxGen based on Profile return block
 func ConfigTxGen(config *genesisconfig.Profile, channelID string) (*cb.Block, error) {
 	pgen, err := encoder.NewBootstrapper(config)
 	if err != nil {
@@ -40,11 +39,9 @@ func ConfigTxGen(config *genesisconfig.Profile, channelID string) (*cb.Block, er
 	return genesisBlock, nil
 }
 
-// load profile
-// file as file path
-// profile_name name
-func LoadProfile(configName, FABRIC_CFG_PATH string) (*genesisconfig.Profile, error) {
-	return genesisconfig.Load(configName, FABRIC_CFG_PATH)
+// LoadProfile file as file path
+func LoadProfile(configName, fabricConfigPath string) (*genesisconfig.Profile, error) {
+	return genesisconfig.Load(configName, fabricConfigPath)
 }
 
 func CreateSigner(privateKeyPath, certificatePath, mspID string) (identity.SigningIdentity, error) {
@@ -95,11 +92,11 @@ func GetCertificate(f string) (*x509.Certificate, []byte, error) {
 // PEMtoPrivateKey unmarshals a pem to private key
 func PEMtoPrivateKey(raw []byte) (interface{}, error) {
 	if len(raw) == 0 {
-		return nil, errors.New("Invalid PEM. It must be different from nil.")
+		return nil, errors.New("invalid PEM. It must be different from nil")
 	}
 	block, _ := pem.Decode(raw)
 	if block == nil {
-		return nil, fmt.Errorf("Failed decoding PEM. Block must be different from nil. [% x]", raw)
+		return nil, fmt.Errorf("failed decoding PEM. Block must be different from nil. [% x]", raw)
 	}
 	cert, err := DERToPrivateKey(block.Bytes)
 	if err != nil {
@@ -120,7 +117,7 @@ func DERToPrivateKey(der []byte) (key interface{}, err error) {
 		case *ecdsa.PrivateKey:
 			return
 		default:
-			return nil, errors.New("Found unknown private key type in PKCS#8 wrapping")
+			return nil, errors.New("found unknown private key type in PKCS#8 wrapping")
 		}
 	}
 
@@ -128,7 +125,7 @@ func DERToPrivateKey(der []byte) (key interface{}, err error) {
 		return
 	}
 
-	return nil, errors.New("Invalid key type. The DER must contain an ecdsa.PrivateKey")
+	return nil, errors.New("invalid key type. The DER must contain an ecdsa.PrivateKey")
 }
 
 func SignConfigTx(channelID string, envConfigUpdate *cb.Envelope, signer identity.SigningIdentity) (*cb.Envelope, error) {
@@ -156,7 +153,7 @@ func SignConfigTx(channelID string, envConfigUpdate *cb.Envelope, signer identit
 
 	configUpdateEnv, err := protoutil.UnmarshalConfigUpdateEnvelope(payload.Data)
 	if err != nil {
-		return nil, errors.New("Bad config update env")
+		return nil, errors.New("bad config update env")
 	}
 
 	sigHeader, err := protoutil.NewSignatureHeader(signer)

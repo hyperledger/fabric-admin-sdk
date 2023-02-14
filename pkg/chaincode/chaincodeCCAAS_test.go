@@ -16,9 +16,9 @@ import (
 var _ = Describe("Package", func() {
 	It("CCaaS", func() {
 		dummyConnection := Connection{
-			Address:      "127.0.0.1:8080",
-			Dial_timeout: "10s",
-			Tls_required: false,
+			Address:     "127.0.0.1:8080",
+			DialTimeout: "10s",
+			TLSRequired: false,
 		}
 		dummyMeta := Metadata{
 			Type:  "ccaas",

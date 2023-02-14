@@ -65,15 +65,14 @@ var _ = Describe("channel", func() {
 			}
 			err = peer1.LoadConfig()
 			Expect(err).NotTo(HaveOccurred())
-			n_conn1, err := network.DialConnection(peer1)
+			peerConnection, err := network.DialConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
-
-			connection := npb.NewEndorserClient(n_conn1)
+			endorser := npb.NewEndorserClient(peerConnection)
 
 			id, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
 
-			configBlock, err := channel.GetConfigBlock(id, channelID, connection)
+			configBlock, err := channel.GetConfigBlock(id, channelID, endorser)
 			Expect(err).NotTo(HaveOccurred())
 			fmt.Println("config block", configBlock)
 		})
@@ -98,14 +97,14 @@ var _ = Describe("channel", func() {
 			}
 			err = peer1.LoadConfig()
 			Expect(err).NotTo(HaveOccurred())
-			n_conn1, err := network.DialConnection(peer1)
+			peerConnection, err := network.DialConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
-			connection := npb.NewEndorserClient(n_conn1)
+			endorser := npb.NewEndorserClient(peerConnection)
 
 			id, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
 
-			blockChainInfo, err := channel.GetBlockChainInfo(id, channelID, connection)
+			blockChainInfo, err := channel.GetBlockChainInfo(id, channelID, endorser)
 			Expect(err).NotTo(HaveOccurred())
 			fmt.Println("blockchain info", blockChainInfo)
 		})

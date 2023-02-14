@@ -13,14 +13,14 @@ import (
 	"net/http"
 )
 
-// Lists the channels an OSN is a member of.
+// ListAllChannels that an OSN is a member of.
 func ListAllChannels(osnURL string, caCertPool *x509.CertPool, tlsClientCert tls.Certificate) (*http.Response, error) {
 	url := fmt.Sprintf("%s/participation/v1/channels", osnURL)
 
 	return httpGet(url, caCertPool, tlsClientCert)
 }
 
-// Lists a single channel an OSN is a member of.
+// ListSingleChannel that an OSN is a member of.
 func ListSingleChannel(osnURL, channelID string, caCertPool *x509.CertPool, tlsClientCert tls.Certificate) (*http.Response, error) {
 	url := fmt.Sprintf("%s/participation/v1/channels/%s", osnURL, channelID)
 

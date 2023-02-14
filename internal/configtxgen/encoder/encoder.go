@@ -226,7 +226,7 @@ func NewOrdererGroup(conf *genesisconfig.Orderer) (*cb.ConfigGroup, error) {
 	return ordererGroup, nil
 }
 
-// NewConsortiumsGroup returns an org component of the channel configuration.  It defines the crypto material for the
+// NewConsortiumOrgGroup returns an org component of the channel configuration.  It defines the crypto material for the
 // organization (its MSP).  It sets the mod_policy of all elements to "Admins".
 func NewConsortiumOrgGroup(conf *genesisconfig.Organization) (*cb.ConfigGroup, error) {
 	consortiumsOrgGroup := NewConfigGroup()
@@ -364,7 +364,7 @@ func NewConsortiumsGroup(conf map[string]*genesisconfig.Consortium) (*cb.ConfigG
 	return consortiumsGroup, nil
 }
 
-// NewConsortiums returns a consortiums component of the channel configuration.  Each consortium defines the organizations which may be involved in channel
+// NewConsortiumGroup returns a consortiums component of the channel configuration.  Each consortium defines the organizations which may be involved in channel
 // creation, as well as the channel creation policy the orderer checks at channel creation time to authorize the action.  It sets the mod_policy of all
 // elements to "/Channel/Orderer/Admins".
 func NewConsortiumGroup(conf *genesisconfig.Consortium) (*cb.ConfigGroup, error) {

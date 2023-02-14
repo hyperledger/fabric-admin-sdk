@@ -111,10 +111,10 @@ var _ = Describe("e2e", func() {
 			}
 			err = peer1.LoadConfig()
 			Expect(err).NotTo(HaveOccurred())
-			n_conn1, err := network.DialConnection(peer1)
+			peer1Connection, err := network.DialConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
 
-			connection1 := peer.NewEndorserClient(n_conn1)
+			peer1Endorser := peer.NewEndorserClient(peer1Connection)
 			Expect(err).NotTo(HaveOccurred())
 			org1MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, org1MspID)
 			Expect(err).NotTo(HaveOccurred())
@@ -129,9 +129,9 @@ var _ = Describe("e2e", func() {
 			}
 			err = peer2.LoadConfig()
 			Expect(err).NotTo(HaveOccurred())
-			n_conn2, err := network.DialConnection(peer2)
+			peer2Connection, err := network.DialConnection(peer2)
 			Expect(err).NotTo(HaveOccurred())
-			connection2 := peer.NewEndorserClient(n_conn2)
+			peer2Endorser := peer.NewEndorserClient(peer2Connection)
 			Expect(err).NotTo(HaveOccurred())
 			org2MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, org2MspID)
 			Expect(err).NotTo(HaveOccurred())
@@ -164,21 +164,21 @@ var _ = Describe("e2e", func() {
 
 				//join peer1
 				err = channel.JoinChannel(
-					block, org1MSP, connection1,
+					block, org1MSP, peer1Endorser,
 				)
 				Expect(err).NotTo(HaveOccurred())
 
 				//join peer2
 				err = channel.JoinChannel(
-					block, org2MSP, connection2,
+					block, org2MSP, peer2Endorser,
 				)
 				Expect(err).NotTo(HaveOccurred())
 			}
 			// package chaincode as CCAAS
 			dummyConnection := chaincode.Connection{
-				Address:      "{{.peername}}_basic:9999",
-				Dial_timeout: "10s",
-				Tls_required: false,
+				Address:     "{{.peername}}_basic:9999",
+				DialTimeout: "10s",
+				TLSRequired: false,
 			}
 			dummyMeta := chaincode.Metadata{
 				Type:  "ccaas",
@@ -195,13 +195,13 @@ var _ = Describe("e2e", func() {
 
 			peerConnections := []*ConnectionDetails{
 				{
-					client:     connection1,
-					connection: n_conn1,
+					client:     peer1Endorser,
+					connection: peer1Connection,
 					id:         org1MSP,
 				},
 				{
-					client:     connection2,
-					connection: n_conn2,
+					client:     peer2Endorser,
+					connection: peer2Connection,
 					id:         org2MSP,
 				},
 			}
@@ -255,12 +255,12 @@ var _ = Describe("e2e", func() {
 
 			// ReadinessCheck from org2
 			time.Sleep(time.Duration(15) * time.Second)
-			err = chaincode.ReadinessCheck(Definition, org2MSP, connection2)
+			err = chaincode.ReadinessCheck(Definition, org2MSP, peer2Endorser)
 			Expect(err).NotTo(HaveOccurred())
 
 			// ReadinessCheck from org1
 			time.Sleep(time.Duration(15) * time.Second)
-			err = chaincode.ReadinessCheck(Definition, org1MSP, connection1)
+			err = chaincode.ReadinessCheck(Definition, org1MSP, peer1Endorser)
 			Expect(err).NotTo(HaveOccurred())
 
 			time.Sleep(time.Duration(15) * time.Second)
@@ -268,11 +268,11 @@ var _ = Describe("e2e", func() {
 			commitCtx, commitCancel := context.WithTimeout(specCtx, 30*time.Second)
 			defer commitCancel()
 
-			err = chaincode.Commit(commitCtx, n_conn1, org1MSP, &Definition)
+			err = chaincode.Commit(commitCtx, peer1Connection, org1MSP, &Definition)
 			printGrpcError(err)
 			Expect(err).NotTo(HaveOccurred(), "commit chaincode")
 
-			result, err := chaincode.QueryCommitted(specCtx, n_conn1, org1MSP, channelName)
+			result, err := chaincode.QueryCommitted(specCtx, peer1Connection, org1MSP, channelName)
 			Expect(err).NotTo(HaveOccurred(), "query all committed chaincodes")
 
 			committedChaincodes := result.GetChaincodeDefinitions()
@@ -280,7 +280,7 @@ var _ = Describe("e2e", func() {
 			Expect(committedChaincodes[0].GetName()).To(Equal("basic"), "committed chaincode name")
 			Expect(committedChaincodes[0].GetSequence()).To(Equal(int64(1)), "committed chaincode sequence")
 
-			resultWithName, err := chaincode.QueryCommittedWithName(specCtx, n_conn1, org1MSP, channelName, Definition.Name)
+			resultWithName, err := chaincode.QueryCommittedWithName(specCtx, peer1Connection, org1MSP, channelName, Definition.Name)
 			Expect(err).NotTo(HaveOccurred(), "query committed chaincode with name")
 
 			Expect(resultWithName.GetApprovals()).To(Equal(map[string]bool{"Org1MSP": true, "Org2MSP": true}), "committed chaincode approvals")

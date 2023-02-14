@@ -210,13 +210,13 @@ func LoadTopLevel(configPaths ...string) *TopLevel {
 
 	err := config.ReadInConfig()
 	if err != nil {
-		panic(fmt.Errorf("Error reading configuration: %w", err))
+		panic(fmt.Errorf("error reading configuration: %w", err))
 	}
 	log.Printf("Using config file: %s", config.ConfigFileUsed())
 
 	uconf, err := cache.load(config, config.ConfigFileUsed())
 	if err != nil {
-		panic(fmt.Errorf("Error reading configuration: %w", err))
+		panic(fmt.Errorf("error reading configuration: %w", err))
 	}
 	uconf.completeInitialization(filepath.Dir(config.ConfigFileUsed()))
 	fmt.Printf("Loaded configuration: %s", config.ConfigFileUsed())
@@ -241,7 +241,7 @@ func Load(profile string, configPaths ...string) (*Profile, error) {
 
 	uconf, err := cache.load(config, config.ConfigFileUsed())
 	if err != nil {
-		panic(fmt.Errorf("Error loading config from config cache: %w", err))
+		panic(fmt.Errorf("error loading config from config cache: %w", err))
 	}
 
 	result, ok := uconf.Profiles[profile]
@@ -450,7 +450,7 @@ func (c *configCache) load(config *viperutil.ConfigParser, configPath string) (*
 	if !ok {
 		err := config.EnhancedExactUnmarshal(conf)
 		if err != nil {
-			return nil, fmt.Errorf("Error unmarshalling config into struct: %s", err)
+			return nil, fmt.Errorf("error unmarshalling config into struct: %s", err)
 		}
 
 		serializedConf, err = json.Marshal(conf)

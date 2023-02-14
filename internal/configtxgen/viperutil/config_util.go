@@ -291,7 +291,7 @@ func stringFromFileDecodeHook(f reflect.Kind, t reflect.Kind, data interface{}) 
 			return string(bytes), nil
 		case ok:
 			// fileName was nil
-			return nil, fmt.Errorf("Value of File: was nil")
+			return nil, fmt.Errorf("value of File: was nil")
 		}
 	}
 	return data, nil
@@ -349,7 +349,7 @@ func pemBlocksFromFileDecodeHook(f reflect.Kind, t reflect.Kind, data interface{
 			return result, nil
 		case ok:
 			// fileName was nil
-			return nil, fmt.Errorf("Value of File: was nil")
+			return nil, fmt.Errorf("value of File: was nil")
 		}
 	}
 	return data, nil
@@ -379,7 +379,7 @@ func kafkaVersionDecodeHook(f reflect.Type, t reflect.Type, data interface{}) (i
 
 	v, err := version.NewVersion(data.(string))
 	if err != nil {
-		return nil, fmt.Errorf("Unable to parse Kafka version: %s", err)
+		return nil, fmt.Errorf("unable to parse Kafka version: %s", err)
 	}
 
 	for kafkaVersion, constraints := range kafkaVersionConstraints {
@@ -388,7 +388,7 @@ func kafkaVersionDecodeHook(f reflect.Type, t reflect.Type, data interface{}) (i
 		}
 	}
 
-	return nil, fmt.Errorf("Unsupported Kafka version: '%s'", data)
+	return nil, fmt.Errorf("unsupported Kafka version: '%s'", data)
 }
 
 func bccspHook(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
