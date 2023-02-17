@@ -17,13 +17,18 @@ import (
 	"google.golang.org/grpc"
 )
 
-var _ = Describe("QueryCommittedWithName", func() {
+var _ = Describe("CheckCommitReadiness", func() {
 	var channelName string
-	var chaincodeName string
+	var chaincodeDefinition *Definition
 
 	BeforeEach(func() {
 		channelName = "mockchannel"
-		chaincodeName = "mockchaincode"
+		chaincodeDefinition = &Definition{
+			Name:        "CHAINCODE",
+			Version:     "1.0",
+			Sequence:    1,
+			ChannelName: channelName,
+		}
 	})
 
 	It("gRPC calls made with supplied context", func(specCtx SpecContext) {
@@ -45,12 +50,12 @@ var _ = Describe("QueryCommittedWithName", func() {
 		ctx, cancel := context.WithCancel(specCtx)
 		cancel()
 
-		_, _ = QueryCommittedWithName(ctx, mockConnection, mockSigner, channelName, chaincodeName)
+		_, _ = CheckCommitReadiness(ctx, mockConnection, mockSigner, chaincodeDefinition)
 
 		Expect(evaluateCtxErr).To(BeIdenticalTo(context.Canceled))
 	})
 
-	It("Endorse errors returned", func(specCtx SpecContext) {
+	It("Evaluate errors returned", func(specCtx SpecContext) {
 		expectedErr := errors.New("EXPECTED_ERROR")
 
 		controller := gomock.NewController(GinkgoT())
@@ -63,7 +68,7 @@ var _ = Describe("QueryCommittedWithName", func() {
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
-		_, err := QueryCommittedWithName(specCtx, mockConnection, mockSigner, channelName, chaincodeName)
+		_, err := CheckCommitReadiness(specCtx, mockConnection, mockSigner, chaincodeDefinition)
 
 		Expect(err).To(MatchError(expectedErr))
 	})
@@ -72,8 +77,10 @@ var _ = Describe("QueryCommittedWithName", func() {
 		controller := gomock.NewController(GinkgoT())
 		defer controller.Finish()
 
-		expected := &lifecycle.QueryChaincodeDefinitionArgs{
-			Name: chaincodeName,
+		expected := &lifecycle.CheckCommitReadinessArgs{
+			Name:     chaincodeDefinition.Name,
+			Version:  chaincodeDefinition.Version,
+			Sequence: chaincodeDefinition.Sequence,
 		}
 
 		var evaluateRequest *gateway.EvaluateRequest
@@ -87,14 +94,14 @@ var _ = Describe("QueryCommittedWithName", func() {
 			Times(1)
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
-		_, err := QueryCommittedWithName(specCtx, mockConnection, mockSigner, channelName, chaincodeName)
+		_, err := CheckCommitReadiness(specCtx, mockConnection, mockSigner, chaincodeDefinition)
 		Expect(err).NotTo(HaveOccurred())
 
 		invocationSpec := AssertUnmarshalInvocationSpec(evaluateRequest.GetProposedTransaction())
 		args := invocationSpec.GetChaincodeSpec().GetInput().GetArgs()
 		Expect(args).To(HaveLen(2), "number of arguments")
 
-		actual := &lifecycle.QueryChaincodeDefinitionArgs{}
+		actual := &lifecycle.CheckCommitReadinessArgs{}
 		AssertUnmarshal(args[1], actual)
 
 		AssertProtoEqual(expected, actual)
