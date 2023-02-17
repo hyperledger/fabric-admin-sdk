@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/hyperledger/fabric-admin-sdk/internal/protoutil"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/proposal"
-	"github.com/pkg/errors"
 
 	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
 	pb "github.com/hyperledger/fabric-protos-go-apiv2/peer"
@@ -35,8 +35,7 @@ func CreateChannel(osnURL string, block *cb.Block, caCertPool *x509.CertPool, tl
 func JoinChannel(block *cb.Block, id identity.SigningIdentity, connection pb.EndorserClient) error {
 	blockBytes, err := proto.Marshal(block)
 	if err != nil {
-		// return fmt.Errorf("failed to marshal block: %w", err)
-		return errors.Wrap(err, "failed to marshal block")
+		return fmt.Errorf("failed to marshal block: %w", err)
 	}
 
 	prop, err := proposal.NewProposal(id, "cscc", "JoinChain", proposal.WithArguments(blockBytes), proposal.WithType(cb.HeaderType_CONFIG))
