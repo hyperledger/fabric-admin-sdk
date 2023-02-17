@@ -39,7 +39,6 @@ const (
 type ConnectionDetails struct {
 	id         identity.SigningIdentity
 	connection grpc.ClientConnInterface
-	client     peer.EndorserClient
 }
 
 func runParallel[T any](args []T, f func(T)) {
@@ -62,21 +61,25 @@ func printGrpcError(err error) {
 		return
 	}
 
-	switch err := err.(type) {
-	case *client.EndorseError:
-		fmt.Printf("Endorse error for transaction %s with gRPC status %v: %s\n", err.TransactionID, status.Code(err), err)
-	case *client.SubmitError:
-		fmt.Printf("Submit error for transaction %s with gRPC status %v: %s\n", err.TransactionID, status.Code(err), err)
-	case *client.CommitStatusError:
+	fmt.Printf("Received error type %T: %s\n", err, err)
+
+	var endorseErr *client.EndorseError
+	var submitErr *client.SubmitError
+	var commitStatusErr *client.CommitStatusError
+	var commitErr *client.CommitError
+
+	if errors.As(err, &endorseErr) {
+		fmt.Printf("Endorse error for transaction %s with gRPC status %v: %s\n", endorseErr.TransactionID, status.Code(err), endorseErr)
+	} else if errors.As(err, &submitErr) {
+		fmt.Printf("Submit error for transaction %s with gRPC status %v: %s\n", submitErr.TransactionID, status.Code(err), submitErr)
+	} else if errors.As(err, &commitStatusErr) {
 		if errors.Is(err, context.DeadlineExceeded) {
-			fmt.Printf("Timeout waiting for transaction %s commit status: %s", err.TransactionID, err)
+			fmt.Printf("Timeout waiting for transaction %s commit status: %s", commitStatusErr.TransactionID, commitStatusErr)
 		} else {
-			fmt.Printf("Error obtaining commit status for transaction %s with gRPC status %v: %s\n", err.TransactionID, status.Code(err), err)
+			fmt.Printf("Error obtaining commit status for transaction %s with gRPC status %v: %s\n", commitStatusErr.TransactionID, status.Code(commitStatusErr), commitStatusErr)
 		}
-	case *client.CommitError:
-		fmt.Printf("Transaction %s failed to commit with status %d: %s\n", err.TransactionID, int32(err.Code), err)
-	default:
-		fmt.Printf("unexpected error type %T: %s", err, err)
+	} else if errors.As(err, &commitErr) {
+		fmt.Printf("Transaction %s failed to commit with status %d: %s\n", commitErr.TransactionID, int32(commitErr.Code), commitErr)
 	}
 
 	statusErr := status.Convert(err)
@@ -195,42 +198,42 @@ var _ = Describe("e2e", func() {
 
 			peerConnections := []*ConnectionDetails{
 				{
-					client:     peer1Endorser,
 					connection: peer1Connection,
 					id:         org1MSP,
 				},
 				{
-					client:     peer2Endorser,
 					connection: peer2Connection,
 					id:         org2MSP,
 				},
 			}
 
+			// Install chaincode on each peer
 			runParallel(peerConnections, func(target *ConnectionDetails) {
 				packageFile, err := os.Open(packageFilePath)
 				Expect(err).NotTo(HaveOccurred(), "open chaincode package file")
-
 				ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
 				defer cancel()
-
 				err = chaincode.Install(ctx, target.connection, target.id, packageFile)
+				printGrpcError(err)
 				Expect(err).NotTo(HaveOccurred(), "chaincode install")
 			})
 
+			// Query installed chaincode on each peer
 			runParallel(peerConnections, func(target *ConnectionDetails) {
 				ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
 				defer cancel()
-
 				result, err := chaincode.QueryInstalled(ctx, target.connection, target.id)
+				printGrpcError(err)
 				Expect(err).NotTo(HaveOccurred(), "query installed chaincode")
-
 				installedChaincodes := result.GetInstalledChaincodes()
 				Expect(installedChaincodes).To(HaveLen(1), "number of installed chaincodes")
 				Expect(installedChaincodes[0].GetPackageId()).To(Equal(packageID), "installed chaincode package ID")
 				Expect(installedChaincodes[0].GetLabel()).To(Equal(dummyMeta.Label), "installed chaincode label")
 			})
 
-			Definition := chaincode.Definition{
+			time.Sleep(time.Duration(20) * time.Second)
+
+			chaincodeDef := &chaincode.Definition{
 				ChannelName:         channelName,
 				PackageID:           "",
 				Name:                "basic",
@@ -242,49 +245,52 @@ var _ = Describe("e2e", func() {
 				InitRequired:        false,
 				Collections:         nil,
 			}
-			time.Sleep(time.Duration(15) * time.Second)
 
+			// Approve chaincode for each org
 			runParallel(peerConnections, func(target *ConnectionDetails) {
 				ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
 				defer cancel()
-
-				err := chaincode.Approve(ctx, target.connection, target.id, &Definition)
+				err := chaincode.Approve(ctx, target.connection, target.id, chaincodeDef)
 				printGrpcError(err)
 				Expect(err).NotTo(HaveOccurred(), "approve chaincode for org %s", target.id.MspID())
 			})
 
-			// ReadinessCheck from org2
-			time.Sleep(time.Duration(15) * time.Second)
-			err = chaincode.ReadinessCheck(Definition, org2MSP, peer2Endorser)
-			Expect(err).NotTo(HaveOccurred())
+			// Check chaincode commit readiness
+			readinessCtx, readinessCancel := context.WithTimeout(specCtx, 30*time.Second)
+			defer readinessCancel()
+			readinessResult, err := chaincode.CheckCommitReadiness(readinessCtx, peer1Connection, org1MSP, chaincodeDef)
+			printGrpcError(err)
+			Expect(err).NotTo(HaveOccurred(), "check commit readiness")
+			Expect(readinessResult.GetApprovals()).To(Equal((map[string]bool{org1MspID: true, org2MspID: true})))
 
-			// ReadinessCheck from org1
-			time.Sleep(time.Duration(15) * time.Second)
-			err = chaincode.ReadinessCheck(Definition, org1MSP, peer1Endorser)
-			Expect(err).NotTo(HaveOccurred())
+			time.Sleep(time.Duration(20) * time.Second)
 
-			time.Sleep(time.Duration(15) * time.Second)
-
+			// Commit chaincode
 			commitCtx, commitCancel := context.WithTimeout(specCtx, 30*time.Second)
 			defer commitCancel()
-
-			err = chaincode.Commit(commitCtx, peer1Connection, org1MSP, &Definition)
+			err = chaincode.Commit(commitCtx, peer1Connection, org1MSP, chaincodeDef)
 			printGrpcError(err)
 			Expect(err).NotTo(HaveOccurred(), "commit chaincode")
 
-			result, err := chaincode.QueryCommitted(specCtx, peer1Connection, org1MSP, channelName)
+			// Query all committed chaincode
+			committedCtx, committedCancel := context.WithTimeout(specCtx, 30*time.Second)
+			defer committedCancel()
+			committedResult, err := chaincode.QueryCommitted(committedCtx, peer1Connection, org1MSP, channelName)
+			printGrpcError(err)
 			Expect(err).NotTo(HaveOccurred(), "query all committed chaincodes")
-
-			committedChaincodes := result.GetChaincodeDefinitions()
+			committedChaincodes := committedResult.GetChaincodeDefinitions()
 			Expect(committedChaincodes).To(HaveLen(1), "number of committed chaincodes")
 			Expect(committedChaincodes[0].GetName()).To(Equal("basic"), "committed chaincode name")
 			Expect(committedChaincodes[0].GetSequence()).To(Equal(int64(1)), "committed chaincode sequence")
 
-			resultWithName, err := chaincode.QueryCommittedWithName(specCtx, peer1Connection, org1MSP, channelName, Definition.Name)
+			// Query named committed chaincode
+			committedWithNameCtx, committedWithNameCancel := context.WithTimeout(specCtx, 30*time.Second)
+			defer committedWithNameCancel()
+			committedWithNameResult, err := chaincode.QueryCommittedWithName(committedWithNameCtx, peer1Connection, org1MSP, channelName, chaincodeDef.Name)
+			printGrpcError(err)
 			Expect(err).NotTo(HaveOccurred(), "query committed chaincode with name")
-
-			Expect(resultWithName.GetApprovals()).To(Equal(map[string]bool{"Org1MSP": true, "Org2MSP": true}), "committed chaincode approvals")
-			Expect(resultWithName.GetSequence()).To(Equal(int64(1)), "committed chaincode sequence")
+			Expect(committedWithNameResult.GetApprovals()).To(Equal(map[string]bool{org1MspID: true, org2MspID: true}), "committed chaincode approvals")
+			Expect(committedWithNameResult.GetSequence()).To(Equal(chaincodeDef.Sequence), "committed chaincode sequence")
 
 			f, _ := os.Create("PackageID")
 			_, err = io.WriteString(f, packageID)

@@ -1,0 +1,13 @@
+name: Push
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  go:
+    uses: ./.github/workflows/golang.yml
+  
+  node:
+    uses: ./.github/workflows/node.yml

@@ -32,7 +32,7 @@ func QueryCommitted(ctx context.Context, connection grpc.ClientConnInterface, si
 	}
 	defer gw.Close()
 
-	r, err := gw.GetNetwork(channelID).
+	resultBytes, err := gw.GetNetwork(channelID).
 		GetContract(lifecycleChaincodeName).
 		EvaluateWithContext(
 			ctx,
@@ -44,7 +44,7 @@ func QueryCommitted(ctx context.Context, connection grpc.ClientConnInterface, si
 	}
 
 	result := &lifecycle.QueryChaincodeDefinitionsResult{}
-	if err = proto.Unmarshal(r, result); err != nil {
+	if err = proto.Unmarshal(resultBytes, result); err != nil {
 		return nil, fmt.Errorf("failed to deserialize query committed chaincode result: %w", err)
 	}
 

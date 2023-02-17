@@ -34,7 +34,7 @@ jobs:
       fail-fast: false
       matrix:
         FABRIC_VERSION: ['2.4.8', '2.5.0-beta']
-        CREATE_CHANNEL: [create_channel, existing_create_channel]
+        CREATE_CHANNEL: [create_channel, existing_channel]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3

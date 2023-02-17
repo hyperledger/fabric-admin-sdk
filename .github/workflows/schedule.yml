@@ -1,0 +1,12 @@
+name: Scheduled build
+
+on:
+  schedule:
+    - cron: "10 01 * * *"
+
+jobs:
+  go:
+    uses: ./.github/workflows/golang.yml
+  
+  node:
+    uses: ./.github/workflows/node.yml
