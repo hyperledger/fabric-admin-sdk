@@ -21,7 +21,6 @@ import (
 
 	"github.com/Shopify/sarama"
 	version "github.com/hashicorp/go-version"
-	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v2"
 )
@@ -391,12 +390,53 @@ func kafkaVersionDecodeHook(f reflect.Type, t reflect.Type, data interface{}) (i
 	return nil, fmt.Errorf("unsupported Kafka version: '%s'", data)
 }
 
+// FactoryOpts holds configuration information used to initialize factory implementations
+type FactoryOpts struct {
+	ProviderName string  `mapstructure:"default" json:"default" yaml:"Default"`
+	SwOpts       *SwOpts `mapstructure:"SW,omitempty" json:"SW,omitempty" yaml:"SwOpts"`
+}
+
+// SwOpts contains options for the SWFactory
+type SwOpts struct {
+	// Default algorithms when not specified (Deprecated?)
+	SecLevel   int    `mapstructure:"security" json:"security" yaml:"Security"`
+	HashFamily string `mapstructure:"hash" json:"hash" yaml:"Hash"`
+
+	// Keystore Options
+	Ephemeral     bool               `mapstructure:"tempkeys,omitempty" json:"tempkeys,omitempty"`
+	FileKeystore  *FileKeystoreOpts  `mapstructure:"filekeystore,omitempty" json:"filekeystore,omitempty" yaml:"FileKeyStore"`
+	DummyKeystore *DummyKeystoreOpts `mapstructure:"dummykeystore,omitempty" json:"dummykeystore,omitempty"`
+	InmemKeystore *InmemKeystoreOpts `mapstructure:"inmemkeystore,omitempty" json:"inmemkeystore,omitempty"`
+}
+
+type FileKeystoreOpts struct {
+	KeyStorePath string `mapstructure:"keystore" yaml:"KeyStore"`
+}
+
+type DummyKeystoreOpts struct{}
+
+// InmemKeystoreOpts - empty, as there is no config for the in-memory keystore
+type InmemKeystoreOpts struct{}
+
+// GetDefaultOpts offers a default implementation for Opts
+// returns a new instance every time
+func GetDefaultOpts() *FactoryOpts {
+	return &FactoryOpts{
+		ProviderName: "SW",
+		SwOpts: &SwOpts{
+			HashFamily: "SHA2",
+			SecLevel:   256,
+			Ephemeral:  true,
+		},
+	}
+}
+
 func bccspHook(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
-	if t != reflect.TypeOf(&factory.FactoryOpts{}) {
+	if t != reflect.TypeOf(&FactoryOpts{}) {
 		return data, nil
 	}
 
-	config := factory.GetDefaultOpts()
+	config := GetDefaultOpts()
 
 	err := mapstructure.WeakDecode(data, config)
 	if err != nil {
