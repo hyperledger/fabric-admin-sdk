@@ -13,7 +13,6 @@ import (
 
 	"github.com/hyperledger/fabric-admin-sdk/internal/network"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/channel"
-	"github.com/hyperledger/fabric-admin-sdk/pkg/tools"
 
 	npb "github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	. "github.com/onsi/ginkgo/v2"
@@ -69,7 +68,7 @@ var _ = Describe("channel", func() {
 			Expect(err).NotTo(HaveOccurred())
 			endorser := npb.NewEndorserClient(peerConnection)
 
-			id, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
+			id, err := CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
 
 			configBlock, err := channel.GetConfigBlock(id, channelID, endorser)
@@ -101,7 +100,7 @@ var _ = Describe("channel", func() {
 			Expect(err).NotTo(HaveOccurred())
 			endorser := npb.NewEndorserClient(peerConnection)
 
-			id, err := tools.CreateSigner(PrivKeyPath, SignCert, MSPID)
+			id, err := CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
 
 			blockChainInfo, err := channel.GetBlockChainInfo(id, channelID, endorser)
@@ -131,9 +130,9 @@ var _ = Describe("channel", func() {
 			var PrivKeyPath2 = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/priv_sk"
 			var SignCertPath2 = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem"
 
-			signer, err := tools.CreateSigner(PrivKeyPath, SignCertPath, MSPID)
+			signer, err := CreateSigner(PrivKeyPath, SignCertPath, MSPID)
 			Expect(err).NotTo(HaveOccurred())
-			signer2, err := tools.CreateSigner(PrivKeyPath2, SignCertPath2, MSPID2)
+			signer2, err := CreateSigner(PrivKeyPath2, SignCertPath2, MSPID2)
 			Expect(err).NotTo(HaveOccurred())
 
 			// get update config file, see https://hyperledger-fabric.readthedocs.io/en/release-2.4/channel_update_tutorial.html#add-the-org3-crypto-material
@@ -143,11 +142,11 @@ var _ = Describe("channel", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// Peer1 sign
-			envelope, err = tools.SignConfigTx(channelID, envelope, signer)
+			envelope, err = SignConfigTx(channelID, envelope, signer)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Peer2 sign
-			envelope, err = tools.SignConfigTx(channelID, envelope, signer2)
+			envelope, err = SignConfigTx(channelID, envelope, signer2)
 			Expect(err).NotTo(HaveOccurred())
 
 			ordererNode := network.Node{
