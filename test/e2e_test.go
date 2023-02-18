@@ -13,11 +13,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hyperledger/fabric-admin-sdk/internal/configtxgen/genesisconfig"
 	"github.com/hyperledger/fabric-admin-sdk/internal/network"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/channel"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
-	"github.com/hyperledger/fabric-admin-sdk/pkg/tools"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	gatewaypb "github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 
@@ -119,7 +119,7 @@ var _ = Describe("e2e", func() {
 
 			peer1Endorser := peer.NewEndorserClient(peer1Connection)
 			Expect(err).NotTo(HaveOccurred())
-			org1MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, org1MspID)
+			org1MSP, err := CreateSigner(PrivKeyPath, SignCert, org1MspID)
 			Expect(err).NotTo(HaveOccurred())
 
 			TLSCACert = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt"
@@ -136,16 +136,16 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			peer2Endorser := peer.NewEndorserClient(peer2Connection)
 			Expect(err).NotTo(HaveOccurred())
-			org2MSP, err := tools.CreateSigner(PrivKeyPath, SignCert, org2MspID)
+			org2MSP, err := CreateSigner(PrivKeyPath, SignCert, org2MspID)
 			Expect(err).NotTo(HaveOccurred())
 			//genesis block
 			createChannel, ok := os.LookupEnv("createChannel")
 			if createChannel == "true" && ok {
-				profile, err := tools.LoadProfile("TwoOrgsApplicationGenesis", "./")
+				profile, err := genesisconfig.Load("TwoOrgsApplicationGenesis", "./")
 				Expect(err).NotTo(HaveOccurred())
 				Expect(profile).ToNot(BeNil())
 				Expect(profile.Orderer.BatchSize.MaxMessageCount).To(Equal(uint32(10)))
-				block, err := tools.ConfigTxGen(profile, channelName)
+				block, err := ConfigTxGen(profile, channelName)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(block).ToNot(BeNil())
 
