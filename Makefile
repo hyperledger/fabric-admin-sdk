@@ -48,7 +48,7 @@ scan-go-govulncheck:
 .PHONEY: scan-go-osv-scanner
 scan-go-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
-	osv-scanner '$(base_dir)/go.mod'
+	osv-scanner --lockfile='$(base_dir)/go.mod'
 
 .PHONEY: scan-node
 scan-node: scan-node-npm-audit scan-node-osv-scanner
@@ -64,7 +64,7 @@ scan-node-osv-scanner:
 	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
 	cd "$(node_dir)/admin" && \
 		npm install --package-lock-only && \
-		osv-scanner package-lock.json
+		osv-scanner --lockfile=package-lock.json
 
 .PHONEY: escapes_detect
 escapes_detect:
