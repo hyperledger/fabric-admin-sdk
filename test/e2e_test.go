@@ -1,6 +1,7 @@
 package test
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -192,7 +193,12 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			packageFilePath := path.Join(tmpDir, packageFileName)
-			packageID, err := chaincode.PackageID(packageFilePath)
+			packageReader, err := os.Open(packageFilePath)
+			Expect(err).NotTo(HaveOccurred(), "open chaincode package file")
+			chaincodePackage, err := io.ReadAll(packageReader)
+			Expect(err).NotTo(HaveOccurred(), "read chaincode package")
+
+			packageID, err := chaincode.PackageID(bytes.NewReader(chaincodePackage))
 			Expect(err).NotTo(HaveOccurred(), "get chaincode package ID")
 			fmt.Println(packageID)
 
@@ -209,11 +215,9 @@ var _ = Describe("e2e", func() {
 
 			// Install chaincode on each peer
 			runParallel(peerConnections, func(target *ConnectionDetails) {
-				packageFile, err := os.Open(packageFilePath)
-				Expect(err).NotTo(HaveOccurred(), "open chaincode package file")
 				ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
 				defer cancel()
-				err = chaincode.Install(ctx, target.connection, target.id, packageFile)
+				err = chaincode.Install(ctx, target.connection, target.id, bytes.NewReader(chaincodePackage))
 				printGrpcError(err)
 				Expect(err).NotTo(HaveOccurred(), "chaincode install")
 			})
@@ -229,6 +233,16 @@ var _ = Describe("e2e", func() {
 				Expect(installedChaincodes).To(HaveLen(1), "number of installed chaincodes")
 				Expect(installedChaincodes[0].GetPackageId()).To(Equal(packageID), "installed chaincode package ID")
 				Expect(installedChaincodes[0].GetLabel()).To(Equal(dummyMeta.Label), "installed chaincode label")
+			})
+
+			// Get installed chaincode package from each peer
+			runParallel(peerConnections, func(target *ConnectionDetails) {
+				ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
+				defer cancel()
+				result, err := chaincode.GetInstalled(ctx, target.connection, target.id, packageID)
+				printGrpcError(err)
+				Expect(err).NotTo(HaveOccurred(), "get installed chaincode package")
+				Expect(result).NotTo(BeEmpty())
 			})
 
 			time.Sleep(time.Duration(20) * time.Second)

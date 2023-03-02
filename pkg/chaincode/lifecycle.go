@@ -20,6 +20,7 @@ const (
 	queryCommittedWithNameTransactionName = "QueryChaincodeDefinition"
 	checkCommitReadinessTransactionName   = "CheckCommitReadiness"
 	installTransactionName                = "InstallChaincode"
+	getInstalledTransactionName           = "GetInstalledChaincodePackage"
 	// MetadataFile is the expected location of the metadata json document
 	// in the top level of the chaincode package.
 	MetadataFile = "metadata.json"

@@ -8,14 +8,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"regexp"
 )
 
-func PackageID(PackageFile string) (string, error) {
-	pkgBytes, err := os.ReadFile(PackageFile)
+func PackageID(packageReader io.Reader) (string, error) {
+	pkgBytes, err := io.ReadAll(packageReader)
 	if err != nil {
-		return "", fmt.Errorf("failed to read chaincode package at '%s' %w", PackageFile, err)
+		return "", fmt.Errorf("failed to read chaincode package: %w", err)
 	}
 	metadata, _, err := ParseChaincodePackage(pkgBytes)
 	if err != nil {
