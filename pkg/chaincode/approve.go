@@ -18,7 +18,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// Approve a chaincode package to specific peer.
+// Approve a chaincode package for the user's own organization.
 func Approve(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, chaincodeDef *Definition) error {
 	err := chaincodeDef.Validate()
 	if err != nil {
