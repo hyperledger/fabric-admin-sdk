@@ -18,20 +18,21 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// QueryInstalled chaincode on a specific peer.
-func QueryInstalled(ctx context.Context, connection grpc.ClientConnInterface, signingID identity.SigningIdentity) (*lifecycle.QueryInstalledChaincodesResult, error) {
+// QueryInstalled chaincode on a specific peer. The connection must be to the specific peer where the chaincode is
+// installed.
+func QueryInstalled(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity) (*lifecycle.QueryInstalledChaincodesResult, error) {
 	queryArgs := &lifecycle.QueryInstalledChaincodesArgs{}
 	queryArgsBytes, err := proto.Marshal(queryArgs)
 	if err != nil {
 		return nil, err
 	}
 
-	proposalProto, err := proposal.NewProposal(signingID, lifecycleChaincodeName, queryInstalledTransactionName, proposal.WithArguments(queryArgsBytes))
+	proposalProto, err := proposal.NewProposal(id, lifecycleChaincodeName, queryInstalledTransactionName, proposal.WithArguments(queryArgsBytes))
 	if err != nil {
 		return nil, err
 	}
 
-	signedProposal, err := proposal.NewSignedProposal(proposalProto, signingID)
+	signedProposal, err := proposal.NewSignedProposal(proposalProto, id)
 	if err != nil {
 		return nil, err
 	}

@@ -18,7 +18,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// QueryApproved chaincode definition for the user's own organization.
+// QueryApproved chaincode definition for the user's own organization. The connection may be to any Gateway peer that is
+// a member of the channel.
 func QueryApproved(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, channelID string, chaincodeName string, sequence int64) (*lifecycle.QueryApprovedChaincodeDefinitionResult, error) {
 	queryArgs := &lifecycle.QueryApprovedChaincodeDefinitionArgs{
 		Name:     chaincodeName,

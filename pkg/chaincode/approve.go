@@ -18,9 +18,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// Approve a chaincode package for the user's own organization.
+// Approve a chaincode package for the user's own organization. The connection may be to any Gateway peer that is a
+// member of the channel.
 func Approve(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, chaincodeDef *Definition) error {
-	err := chaincodeDef.Validate()
+	err := chaincodeDef.validate()
 	if err != nil {
 		return err
 	}

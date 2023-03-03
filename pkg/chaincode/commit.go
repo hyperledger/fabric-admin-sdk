@@ -13,9 +13,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// Commit a chaincode package to specific peer.
+// Commit a chaincode definition to the channel. This requires that sufficient organizations have approved the chaincode
+// definition. The connection may be to any Gateway peer that is a member of the channel.
 func Commit(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, chaincodeDef *Definition) error {
-	err := chaincodeDef.Validate()
+	err := chaincodeDef.validate()
 	if err != nil {
 		return err
 	}

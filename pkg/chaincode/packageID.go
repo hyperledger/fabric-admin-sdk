@@ -73,14 +73,14 @@ func ParseChaincodePackage(source []byte) (*ChaincodePackageMetadata, []byte, er
 
 		switch header.Name {
 
-		case MetadataFile:
+		case metadataFile:
 			ccPackageMetadata = &ChaincodePackageMetadata{}
 			err := json.Unmarshal(fileBytes, ccPackageMetadata)
 			if err != nil {
-				return ccPackageMetadata, nil, fmt.Errorf("could not unmarshal %s as json %w", MetadataFile, err)
+				return ccPackageMetadata, nil, fmt.Errorf("could not unmarshal %s as json %w", metadataFile, err)
 			}
 
-		case CodePackageFile:
+		case codePackageFile:
 			codePackage = fileBytes
 		default:
 			fmt.Println("Encountered unexpected file " + header.Name + " in top level of chaincode package")
@@ -92,7 +92,7 @@ func ParseChaincodePackage(source []byte) (*ChaincodePackageMetadata, []byte, er
 	}
 
 	if ccPackageMetadata == nil {
-		return ccPackageMetadata, nil, fmt.Errorf("did not find any package metadata (missing %s)", MetadataFile)
+		return ccPackageMetadata, nil, fmt.Errorf("did not find any package metadata (missing %s)", metadataFile)
 	}
 
 	if err := ValidateLabel(ccPackageMetadata.Label); err != nil {
