@@ -18,8 +18,9 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// GetInstalled chaincode package from a specific peer.
-func GetInstalled(ctx context.Context, connection grpc.ClientConnInterface, signingID identity.SigningIdentity, packageID string) ([]byte, error) {
+// GetInstalled chaincode package from a specific peer. The connection must be to the specific peer where the chaincode
+// is installed.
+func GetInstalled(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, packageID string) ([]byte, error) {
 	getInstalledArgs := &lifecycle.GetInstalledChaincodePackageArgs{
 		PackageId: packageID,
 	}
@@ -28,12 +29,12 @@ func GetInstalled(ctx context.Context, connection grpc.ClientConnInterface, sign
 		return nil, err
 	}
 
-	proposalProto, err := proposal.NewProposal(signingID, lifecycleChaincodeName, queryInstalledTransactionName, proposal.WithArguments(getInstalledArgsBytes))
+	proposalProto, err := proposal.NewProposal(id, lifecycleChaincodeName, queryInstalledTransactionName, proposal.WithArguments(getInstalledArgsBytes))
 	if err != nil {
 		return nil, err
 	}
 
-	signedProposal, err := proposal.NewSignedProposal(proposalProto, signingID)
+	signedProposal, err := proposal.NewSignedProposal(proposalProto, id)
 	if err != nil {
 		return nil, err
 	}

@@ -1,7 +1,6 @@
-package chaincode_test
+package chaincode
 
 import (
-	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -9,57 +8,57 @@ import (
 var _ = Describe("Lifecycle", func() {
 	Context("Definitions", func() {
 		It("Validate ChannelName", func() {
-			chaincodeDefinition := &chaincode.Definition{}
-			err := chaincodeDefinition.Validate()
+			chaincodeDefinition := &Definition{}
+			err := chaincodeDefinition.validate()
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("Validate Name", func() {
-			chaincodeDefinition := &chaincode.Definition{
+			chaincodeDefinition := &Definition{
 				ChannelName: "mycc",
 			}
-			err := chaincodeDefinition.Validate()
+			err := chaincodeDefinition.validate()
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("Validate Version", func() {
-			chaincodeDefinition := &chaincode.Definition{
+			chaincodeDefinition := &Definition{
 				Name:        "CHAINCODE",
 				ChannelName: "mycc",
 			}
-			err := chaincodeDefinition.Validate()
+			err := chaincodeDefinition.validate()
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("Validate missing / zero Sequence", func() {
-			chaincodeDefinition := &chaincode.Definition{
+			chaincodeDefinition := &Definition{
 				Name:        "CHAINCODE",
 				Version:     "1.0",
 				ChannelName: "mycc",
 			}
-			err := chaincodeDefinition.Validate()
+			err := chaincodeDefinition.validate()
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("Validate negative Sequence", func() {
-			chaincodeDefinition := &chaincode.Definition{
+			chaincodeDefinition := &Definition{
 				Name:        "CHAINCODE",
 				Version:     "1.0",
 				Sequence:    -1,
 				ChannelName: "mycc",
 			}
-			err := chaincodeDefinition.Validate()
+			err := chaincodeDefinition.validate()
 			Expect(err).To(HaveOccurred())
 		})
 
 		It("Pass validation", func() {
-			chaincodeDefinition := &chaincode.Definition{
+			chaincodeDefinition := &Definition{
 				Name:        "CHAINCODE",
 				Version:     "1.0",
 				Sequence:    1,
 				ChannelName: "my_cc",
 			}
-			err := chaincodeDefinition.Validate()
+			err := chaincodeDefinition.validate()
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})

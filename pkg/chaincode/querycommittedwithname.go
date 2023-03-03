@@ -18,9 +18,9 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// QueryCommittedWithName gets the chaincode definition for the given chaincode name in the given channel
-// with a specific signing identity
-func QueryCommittedWithName(ctx context.Context, connection grpc.ClientConnInterface, signingID identity.SigningIdentity, channelID, chaincodeName string) (*lifecycle.QueryChaincodeDefinitionResult, error) {
+// QueryCommittedWithName returns the definition of the named chaincode for a given channel. The connection may be to
+// any Gateway peer that is a member of the channel.
+func QueryCommittedWithName(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, channelID, chaincodeName string) (*lifecycle.QueryChaincodeDefinitionResult, error) {
 	queryArgs := &lifecycle.QueryChaincodeDefinitionArgs{
 		Name: chaincodeName,
 	}
@@ -29,7 +29,7 @@ func QueryCommittedWithName(ctx context.Context, connection grpc.ClientConnInter
 		return nil, err
 	}
 
-	gw, err := gateway.New(connection, signingID)
+	gw, err := gateway.New(connection, id)
 	if err != nil {
 		return nil, err
 	}

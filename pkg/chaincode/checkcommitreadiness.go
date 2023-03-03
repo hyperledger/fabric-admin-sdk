@@ -18,8 +18,9 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// CheckCommitReadiness for a chaincode.
-func CheckCommitReadiness(ctx context.Context, connection grpc.ClientConnInterface, signingID identity.SigningIdentity, chaincodeDef *Definition) (*lifecycle.CheckCommitReadinessResult, error) {
+// CheckCommitReadiness for a chaincode and return all approval records. The connection may be to any Gateway peer that
+// is a member of the channel.
+func CheckCommitReadiness(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, chaincodeDef *Definition) (*lifecycle.CheckCommitReadinessResult, error) {
 	args := &lifecycle.CheckCommitReadinessArgs{
 		Name:                chaincodeDef.Name,
 		Version:             chaincodeDef.Version,
@@ -35,7 +36,7 @@ func CheckCommitReadiness(ctx context.Context, connection grpc.ClientConnInterfa
 		return nil, err
 	}
 
-	gw, err := gateway.New(connection, signingID)
+	gw, err := gateway.New(connection, id)
 	if err != nil {
 		return nil, err
 	}

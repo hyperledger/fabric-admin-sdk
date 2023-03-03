@@ -18,15 +18,16 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// QueryCommitted chaincode.
-func QueryCommitted(ctx context.Context, connection grpc.ClientConnInterface, signingID identity.SigningIdentity, channelID string) (*lifecycle.QueryChaincodeDefinitionsResult, error) {
+// QueryCommitted returns the definitions of all committed chaincode for a given channel. The connection may be to any
+// Gateway peer that is a member of the channel.
+func QueryCommitted(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, channelID string) (*lifecycle.QueryChaincodeDefinitionsResult, error) {
 	queryArgs := &lifecycle.QueryChaincodeDefinitionsArgs{}
 	queryArgsBytes, err := proto.Marshal(queryArgs)
 	if err != nil {
 		return nil, err
 	}
 
-	gw, err := gateway.New(connection, signingID)
+	gw, err := gateway.New(connection, id)
 	if err != nil {
 		return nil, err
 	}
