@@ -269,6 +269,16 @@ var _ = Describe("e2e", func() {
 				Expect(err).NotTo(HaveOccurred(), "approve chaincode for org %s", target.id.MspID())
 			})
 
+			// Query approved chaincode for each org
+			runParallel(peerConnections, func(target *ConnectionDetails) {
+				ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
+				defer cancel()
+				result, err := chaincode.QueryApproved(ctx, target.connection, target.id, channelName, chaincodeDef.Name, chaincodeDef.Sequence)
+				printGrpcError(err)
+				Expect(err).NotTo(HaveOccurred(), "query approved chaincode for org %s", target.id.MspID())
+				Expect(result.GetVersion()).To(Equal(chaincodeDef.Version))
+			})
+
 			// Check chaincode commit readiness
 			readinessCtx, readinessCancel := context.WithTimeout(specCtx, 30*time.Second)
 			defer readinessCancel()

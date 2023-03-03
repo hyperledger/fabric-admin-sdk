@@ -18,15 +18,18 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// QueryCommitted chaincode.
-func QueryCommitted(ctx context.Context, connection grpc.ClientConnInterface, signingID identity.SigningIdentity, channelID string) (*lifecycle.QueryChaincodeDefinitionsResult, error) {
-	queryArgs := &lifecycle.QueryChaincodeDefinitionsArgs{}
+// QueryApproved chaincode definition for the user's own organization.
+func QueryApproved(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, channelID string, chaincodeName string, sequence int64) (*lifecycle.QueryApprovedChaincodeDefinitionResult, error) {
+	queryArgs := &lifecycle.QueryApprovedChaincodeDefinitionArgs{
+		Name:     chaincodeName,
+		Sequence: sequence,
+	}
 	queryArgsBytes, err := proto.Marshal(queryArgs)
 	if err != nil {
 		return nil, err
 	}
 
-	gw, err := gateway.New(connection, signingID)
+	gw, err := gateway.New(connection, id)
 	if err != nil {
 		return nil, err
 	}
@@ -36,16 +39,17 @@ func QueryCommitted(ctx context.Context, connection grpc.ClientConnInterface, si
 		GetContract(lifecycleChaincodeName).
 		EvaluateWithContext(
 			ctx,
-			queryCommittedTransactionName,
+			queryApprovedTransactionName,
 			client.WithBytesArguments(queryArgsBytes),
+			client.WithEndorsingOrganizations(id.MspID()),
 		)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query committed chaincodes: %w", err)
+		return nil, fmt.Errorf("failed to query approved chaincode: %w", err)
 	}
 
-	result := &lifecycle.QueryChaincodeDefinitionsResult{}
+	result := &lifecycle.QueryApprovedChaincodeDefinitionResult{}
 	if err = proto.Unmarshal(resultBytes, result); err != nil {
-		return nil, fmt.Errorf("failed to deserialize query committed chaincode result: %w", err)
+		return nil, fmt.Errorf("failed to deserialize query approved chaincode result: %w", err)
 	}
 
 	return result, nil

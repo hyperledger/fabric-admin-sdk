@@ -16,6 +16,7 @@ const (
 	approveTransactionName                = "ApproveChaincodeDefinitionForMyOrg"
 	commitTransactionName                 = "CommitChaincodeDefinition"
 	queryInstalledTransactionName         = "QueryInstalledChaincodes"
+	queryApprovedTransactionName          = "QueryApprovedChaincodeDefinition"
 	queryCommittedTransactionName         = "QueryChaincodeDefinitions"
 	queryCommittedWithNameTransactionName = "QueryChaincodeDefinition"
 	checkCommitReadinessTransactionName   = "CheckCommitReadiness"
