@@ -245,8 +245,6 @@ var _ = Describe("e2e", func() {
 				Expect(result).NotTo(BeEmpty())
 			})
 
-			time.Sleep(time.Duration(20) * time.Second)
-
 			chaincodeDef := &chaincode.Definition{
 				ChannelName:         channelName,
 				PackageID:           "",
@@ -286,8 +284,6 @@ var _ = Describe("e2e", func() {
 			printGrpcError(err)
 			Expect(err).NotTo(HaveOccurred(), "check commit readiness")
 			Expect(readinessResult.GetApprovals()).To(Equal((map[string]bool{org1MspID: true, org2MspID: true})))
-
-			time.Sleep(time.Duration(20) * time.Second)
 
 			// Commit chaincode
 			commitCtx, commitCancel := context.WithTimeout(specCtx, 30*time.Second)
