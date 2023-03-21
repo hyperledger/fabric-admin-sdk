@@ -185,7 +185,7 @@ var _ = Describe("e2e", func() {
 				TLSRequired: false,
 			}
 			dummyMeta := chaincode.Metadata{
-				Type:  "ccaas",
+				Type:  "external",
 				Label: "basic_1.0",
 			}
 			packageFileName := "basic-asset.tar.gz"
