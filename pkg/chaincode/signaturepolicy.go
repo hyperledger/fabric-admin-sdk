@@ -21,23 +21,23 @@ import (
 
 // Gate values
 const (
-	GateAnd   = "And"
-	GateOr    = "Or"
-	GateOutOf = "OutOf"
+	gateand   = "And"
+	gateor    = "Or"
+	gateoutof = "OutOf"
 )
 
 // Role values for principals
 const (
-	RoleAdmin   = "admin"
-	RoleMember  = "member"
-	RoleClient  = "client"
-	RolePeer    = "peer"
-	RoleOrderer = "orderer"
+	roleadmin   = "admin"
+	rolemember  = "member"
+	roleclient  = "client"
+	rolepeer    = "peer"
+	roleorderer = "orderer"
 )
 
 var regex = regexp.MustCompile(
 	fmt.Sprintf("^([[:alnum:].-]+)([.])(%s|%s|%s|%s|%s)$",
-		RoleAdmin, RoleMember, RoleClient, RolePeer, RoleOrderer),
+		roleadmin, rolemember, roleclient, rolepeer, roleorderer),
 )
 
 var regexErr = regexp.MustCompile("^No parameter '([^']+)' found[.]$")
@@ -114,8 +114,8 @@ func firstPass(args ...interface{}) (interface{}, error) {
 	return toret + ")", nil
 }
 
-// SignedBy creates a SignaturePolicy requiring a given signer's signature
-func SignedBy(index int32) *cb.SignaturePolicy {
+// signedBy creates a SignaturePolicy requiring a given signer's signature
+func signedBy(index int32) *cb.SignaturePolicy {
 	return &cb.SignaturePolicy{
 		Type: &cb.SignaturePolicy_SignedBy{
 			SignedBy: index,
@@ -123,8 +123,8 @@ func SignedBy(index int32) *cb.SignaturePolicy {
 	}
 }
 
-// NOutOf creates a policy which requires N out of the slice of policies to evaluate to true
-func NOutOf(n int32, policies []*cb.SignaturePolicy) *cb.SignaturePolicy {
+// nOutOf creates a policy which requires N out of the slice of policies to evaluate to true
+func nOutOf(n int32, policies []*cb.SignaturePolicy) *cb.SignaturePolicy {
 	return &cb.SignaturePolicy{
 		Type: &cb.SignaturePolicy_NOutOf_{
 			NOutOf: &cb.SignaturePolicy_NOutOf{
@@ -187,15 +187,15 @@ func secondPass(args ...interface{}) (interface{}, error) {
 			var r mb.MSPRole_MSPRoleType
 
 			switch subm[0][3] {
-			case RoleMember:
+			case rolemember:
 				r = mb.MSPRole_MEMBER
-			case RoleAdmin:
+			case roleadmin:
 				r = mb.MSPRole_ADMIN
-			case RoleClient:
+			case roleclient:
 				r = mb.MSPRole_CLIENT
-			case RolePeer:
+			case rolepeer:
 				r = mb.MSPRole_PEER
-			case RoleOrderer:
+			case roleorderer:
 				r = mb.MSPRole_ORDERER
 			default:
 				return nil, fmt.Errorf("error parsing role %s", t)
@@ -215,7 +215,7 @@ func secondPass(args ...interface{}) (interface{}, error) {
 
 			/* create a SignaturePolicy that requires a signature from
 			   the principal we've just built*/
-			dapolicy := SignedBy(int32(ctx.IDNum))
+			dapolicy := signedBy(int32(ctx.IDNum))
 			policies = append(policies, dapolicy)
 
 			/* increment the identity counter. Note that this is
@@ -234,7 +234,7 @@ func secondPass(args ...interface{}) (interface{}, error) {
 		}
 	}
 
-	return NOutOf(int32(t), policies), nil
+	return nOutOf(int32(t), policies), nil
 }
 
 type policyContext struct {
@@ -246,7 +246,7 @@ func newContext() *policyContext {
 	return &policyContext{IDNum: 0, principals: make([]*mb.MSPPrincipal, 0)}
 }
 
-func NewSignaturePolicyEnvelope(signaturePolicy, channelConfigPolicy string) (*peer.ApplicationPolicy, error) {
+func NewApplicationPolicy(signaturePolicy, channelConfigPolicy string) (*peer.ApplicationPolicy, error) {
 	signaturePolicyEnvelope, err := signaturePolicyEnvelopeFromString(signaturePolicy)
 	if err != nil {
 		return nil, err
@@ -288,15 +288,15 @@ func signaturePolicyEnvelopeFromString(policy string) (*cb.SignaturePolicyEnvelo
 	// first we translate the and/or business into outof gates
 	intermediate, err := govaluate.NewEvaluableExpressionWithFunctions(
 		policy, map[string]govaluate.ExpressionFunction{
-			GateAnd:                    and,
-			strings.ToLower(GateAnd):   and,
-			strings.ToUpper(GateAnd):   and,
-			GateOr:                     or,
-			strings.ToLower(GateOr):    or,
-			strings.ToUpper(GateOr):    or,
-			GateOutOf:                  outof,
-			strings.ToLower(GateOutOf): outof,
-			strings.ToUpper(GateOutOf): outof,
+			gateand:                    and,
+			strings.ToLower(gateand):   and,
+			strings.ToUpper(gateand):   and,
+			gateor:                     or,
+			strings.ToLower(gateor):    or,
+			strings.ToUpper(gateor):    or,
+			gateoutof:                  outof,
+			strings.ToLower(gateoutof): outof,
+			strings.ToUpper(gateoutof): outof,
 		},
 	)
 	if err != nil {

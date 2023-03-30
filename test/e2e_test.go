@@ -248,7 +248,7 @@ var _ = Describe("e2e", func() {
 
 			time.Sleep(time.Duration(20) * time.Second)
 			PolicyStr := "AND ('Org1MSP.peer','Org2MSP.peer')"
-			applicationPolicy, err := chaincode.NewSignaturePolicyEnvelope(PolicyStr, "")
+			applicationPolicy, err := chaincode.NewApplicationPolicy(PolicyStr, "")
 			Expect(err).NotTo(HaveOccurred())
 			AppPolicydata, err := proto.Marshal(applicationPolicy)
 			Expect(err).NotTo(HaveOccurred())
