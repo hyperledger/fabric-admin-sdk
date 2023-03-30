@@ -27,7 +27,6 @@ import (
 	. "github.com/onsi/gomega"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -250,19 +249,17 @@ var _ = Describe("e2e", func() {
 			PolicyStr := "AND ('Org1MSP.peer','Org2MSP.peer')"
 			applicationPolicy, err := chaincode.NewApplicationPolicy(PolicyStr, "")
 			Expect(err).NotTo(HaveOccurred())
-			AppPolicydata, err := proto.Marshal(applicationPolicy)
-			Expect(err).NotTo(HaveOccurred())
 			chaincodeDef := &chaincode.Definition{
-				ChannelName:         channelName,
-				PackageID:           "",
-				Name:                "basic",
-				Version:             "1.0",
-				EndorsementPlugin:   "",
-				ValidationPlugin:    "",
-				Sequence:            1,
-				ValidationParameter: AppPolicydata,
-				InitRequired:        false,
-				Collections:         nil,
+				ChannelName:       channelName,
+				PackageID:         "",
+				Name:              "basic",
+				Version:           "1.0",
+				EndorsementPlugin: "",
+				ValidationPlugin:  "",
+				Sequence:          1,
+				ApplicationPolicy: applicationPolicy,
+				InitRequired:      false,
+				Collections:       nil,
 			}
 			Expect(err).NotTo(HaveOccurred())
 			// Approve chaincode for each org

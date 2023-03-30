@@ -27,7 +27,7 @@ func CheckCommitReadiness(ctx context.Context, connection grpc.ClientConnInterfa
 		Sequence:            chaincodeDef.Sequence,
 		EndorsementPlugin:   chaincodeDef.EndorsementPlugin,
 		ValidationPlugin:    chaincodeDef.ValidationPlugin,
-		ValidationParameter: chaincodeDef.ValidationParameter,
+		ValidationParameter: chaincodeDef.validationParameter,
 		Collections:         chaincodeDef.Collections,
 		InitRequired:        chaincodeDef.InitRequired,
 	}

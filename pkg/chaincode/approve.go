@@ -31,7 +31,7 @@ func Approve(ctx context.Context, connection grpc.ClientConnInterface, id identi
 		Sequence:            chaincodeDef.Sequence,
 		EndorsementPlugin:   chaincodeDef.EndorsementPlugin,
 		ValidationPlugin:    chaincodeDef.ValidationPlugin,
-		ValidationParameter: chaincodeDef.ValidationParameter,
+		ValidationParameter: chaincodeDef.validationParameter,
 		Collections:         chaincodeDef.Collections,
 		InitRequired:        chaincodeDef.InitRequired,
 		Source:              newChaincodeSource(chaincodeDef.PackageID),
