@@ -15,6 +15,8 @@ import (
 
 	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
+	"github.com/hyperledger/fabric-gateway/pkg/client"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -29,6 +31,7 @@ func Example() {
 	// gRPC connection a target peer.
 	connection := newGrpcConnection()
 	defer connection.Close()
+	Endorser := peer.NewEndorserClient(connection)
 
 	// Client identity used to carry out deployment tasks.
 	id, err := identity.NewPrivateKeySigningIdentity(mspID, readCertificate(), readPrivateKey())
@@ -43,8 +46,12 @@ func Example() {
 	panicOnError(err)
 
 	// Install chaincode package. This must be performed for each peer on which the chaincode is to be installed.
-	err = chaincode.Install(ctx, connection, id, chaincodePackage)
+	err = chaincode.Install(ctx, Endorser, id, chaincodePackage)
 	panicOnError(err)
+
+	Gateway, err := newGateway(connection, id)
+	defer Gateway.Close()
+	network := Gateway.GetNetwork("mychannel")
 
 	// Definition of the chaincode as it should appear on the channel.
 	chaincodeDefinition := &chaincode.Definition{
@@ -56,12 +63,12 @@ func Example() {
 
 	// Approve chaincode definition. This must be performed using client identities from sufficient organizations to
 	// satisfy the approval policy.
-	err = chaincode.Approve(ctx, connection, id, chaincodeDefinition)
+	err = chaincode.Approve(ctx, *network, id, chaincodeDefinition)
 	panicOnError(err)
 
 	// Commit approved chaincode definition. This can be carried out by any organization once enough approvals have
 	// been recorded.
-	err = chaincode.Commit(ctx, connection, id, chaincodeDefinition)
+	err = chaincode.Commit(ctx, *network, chaincodeDefinition)
 	panicOnError(err)
 }
 
@@ -75,6 +82,14 @@ func newGrpcConnection() *grpc.ClientConn {
 	panicOnError(err)
 
 	return connection
+}
+
+func self[T any](v T) T {
+	return v
+}
+
+func newGateway(connection grpc.ClientConnInterface, id identity.SigningIdentity) (*client.Gateway, error) {
+	return client.Connect(id, client.WithClientConnection(connection), client.WithHash(self[[]byte]), client.WithSign(id.Sign))
 }
 
 func readCertificate() *x509.Certificate {

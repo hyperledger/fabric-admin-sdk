@@ -10,17 +10,15 @@ import (
 	"fmt"
 
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
-	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/gateway"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
 
 // QueryApproved chaincode definition for the user's own organization. The connection may be to any Gateway peer that is
 // a member of the channel.
-func QueryApproved(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, channelID string, chaincodeName string, sequence int64) (*lifecycle.QueryApprovedChaincodeDefinitionResult, error) {
+func QueryApproved(ctx context.Context, network client.Network, id identity.SigningIdentity, chaincodeName string, sequence int64) (*lifecycle.QueryApprovedChaincodeDefinitionResult, error) {
 	queryArgs := &lifecycle.QueryApprovedChaincodeDefinitionArgs{
 		Name:     chaincodeName,
 		Sequence: sequence,
@@ -30,14 +28,7 @@ func QueryApproved(ctx context.Context, connection grpc.ClientConnInterface, id 
 		return nil, err
 	}
 
-	gw, err := gateway.New(connection, id)
-	if err != nil {
-		return nil, err
-	}
-	defer gw.Close()
-
-	resultBytes, err := gw.GetNetwork(channelID).
-		GetContract(lifecycleChaincodeName).
+	resultBytes, err := network.GetContract(lifecycleChaincodeName).
 		EvaluateWithContext(
 			ctx,
 			queryApprovedTransactionName,

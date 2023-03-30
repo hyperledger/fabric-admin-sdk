@@ -9,18 +9,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
-	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/gateway"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
 
 // QueryCommittedWithName returns the definition of the named chaincode for a given channel. The connection may be to
 // any Gateway peer that is a member of the channel.
-func QueryCommittedWithName(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, channelID, chaincodeName string) (*lifecycle.QueryChaincodeDefinitionResult, error) {
+func QueryCommittedWithName(ctx context.Context, network client.Network, chaincodeName string) (*lifecycle.QueryChaincodeDefinitionResult, error) {
 	queryArgs := &lifecycle.QueryChaincodeDefinitionArgs{
 		Name: chaincodeName,
 	}
@@ -29,14 +26,7 @@ func QueryCommittedWithName(ctx context.Context, connection grpc.ClientConnInter
 		return nil, err
 	}
 
-	gw, err := gateway.New(connection, id)
-	if err != nil {
-		return nil, err
-	}
-	defer gw.Close()
-
-	resultBytes, err := gw.GetNetwork(channelID).
-		GetContract(lifecycleChaincodeName).
+	resultBytes, err := network.GetContract(lifecycleChaincodeName).
 		EvaluateWithContext(
 			ctx,
 			queryCommittedWithNameTransactionName,

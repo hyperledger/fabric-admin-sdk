@@ -9,18 +9,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
-	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/gateway"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
 
 // CheckCommitReadiness for a chaincode and return all approval records. The connection may be to any Gateway peer that
 // is a member of the channel.
-func CheckCommitReadiness(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, chaincodeDef *Definition) (*lifecycle.CheckCommitReadinessResult, error) {
+func CheckCommitReadiness(ctx context.Context, network client.Network, chaincodeDef *Definition) (*lifecycle.CheckCommitReadinessResult, error) {
 	args := &lifecycle.CheckCommitReadinessArgs{
 		Name:                chaincodeDef.Name,
 		Version:             chaincodeDef.Version,
@@ -36,14 +33,7 @@ func CheckCommitReadiness(ctx context.Context, connection grpc.ClientConnInterfa
 		return nil, err
 	}
 
-	gw, err := gateway.New(connection, id)
-	if err != nil {
-		return nil, err
-	}
-	defer gw.Close()
-
-	r, err := gw.GetNetwork(chaincodeDef.ChannelName).
-		GetContract(lifecycleChaincodeName).
+	r, err := network.GetContract(lifecycleChaincodeName).
 		EvaluateWithContext(
 			ctx,
 			checkCommitReadinessTransactionName,

@@ -14,13 +14,12 @@ import (
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
 
 // GetInstalled chaincode package from a specific peer. The connection must be to the specific peer where the chaincode
 // is installed.
-func GetInstalled(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, packageID string) ([]byte, error) {
+func GetInstalled(ctx context.Context, endorser peer.EndorserClient, id identity.SigningIdentity, packageID string) ([]byte, error) {
 	getInstalledArgs := &lifecycle.GetInstalledChaincodePackageArgs{
 		PackageId: packageID,
 	}
@@ -38,8 +37,6 @@ func GetInstalled(ctx context.Context, connection grpc.ClientConnInterface, id i
 	if err != nil {
 		return nil, err
 	}
-
-	endorser := peer.NewEndorserClient(connection)
 
 	proposalResponse, err := endorser.ProcessProposal(ctx, signedProposal)
 	if err != nil {

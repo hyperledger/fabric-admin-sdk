@@ -10,17 +10,15 @@ import (
 	"fmt"
 
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
-	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/gateway"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
 
 // Approve a chaincode package for the user's own organization. The connection may be to any Gateway peer that is a
 // member of the channel.
-func Approve(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, chaincodeDef *Definition) error {
+func Approve(ctx context.Context, network client.Network, id identity.SigningIdentity, chaincodeDef *Definition) error {
 	err := chaincodeDef.validate()
 	if err != nil {
 		return err
@@ -41,14 +39,7 @@ func Approve(ctx context.Context, connection grpc.ClientConnInterface, id identi
 		return err
 	}
 
-	gw, err := gateway.New(connection, id)
-	if err != nil {
-		return err
-	}
-	defer gw.Close()
-
-	_, err = gw.GetNetwork(chaincodeDef.ChannelName).
-		GetContract(lifecycleChaincodeName).
+	_, err = network.GetContract(lifecycleChaincodeName).
 		SubmitWithContext(
 			ctx,
 			approveTransactionName,
