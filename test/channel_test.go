@@ -115,6 +115,10 @@ var _ = Describe("channel", func() {
 			if err != nil {
 				Skip("skip for unit test")
 			}
+			createChannel, ok := os.LookupEnv("createChannel")
+			if createChannel != "true" || !ok {
+				Skip("skip for create channel testing")
+			}
 			var channelID = "mychannel"
 			// Orderer
 			var OrdererAddr = "localhost:7050"

@@ -194,7 +194,9 @@ var _ = Describe("e2e", func() {
 				defer cancel()
 				block_channel, err := blockEventRequest.Events(ctx)
 				Expect(err).NotTo(HaveOccurred())
+				fmt.Println("Channel creation")
 				<-block_channel
+				fmt.Println("Get 1 block after creation")
 				//join peer1
 				err = channel.JoinChannel(
 					block, org1MSP, peer1Endorser,
@@ -206,6 +208,7 @@ var _ = Describe("e2e", func() {
 					block, org2MSP, peer2Endorser,
 				)
 				Expect(err).NotTo(HaveOccurred())
+				fmt.Println("channel join successful")
 			}
 			// package chaincode as CCAAS
 			dummyConnection := chaincode.Connection{
