@@ -148,9 +148,22 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			org2MSP, err := CreateSigner(PrivKeyPath, SignCert, org2MspID)
 			Expect(err).NotTo(HaveOccurred())
-			//genesis block
+
+			peer1Gateway, err := NewGateway(peer1Connection, org1MSP)
+			Expect(err).NotTo(HaveOccurred())
+			defer peer1Gateway.Close()
+			peer1Network := peer1Gateway.GetNetwork(channelName)
+			Expect(err).NotTo(HaveOccurred())
+
+			peer2Gateway, err := NewGateway(peer2Connection, org2MSP)
+			Expect(err).NotTo(HaveOccurred())
+			defer peer1Gateway.Close()
+			peer2Network := peer2Gateway.GetNetwork(channelName)
+			Expect(err).NotTo(HaveOccurred())
+
 			createChannel, ok := os.LookupEnv("createChannel")
 			if createChannel == "true" && ok {
+				//genesis block
 				profile, err := genesisconfig.Load("TwoOrgsApplicationGenesis", "./")
 				Expect(err).NotTo(HaveOccurred())
 				Expect(profile).ToNot(BeNil())
@@ -174,7 +187,14 @@ var _ = Describe("e2e", func() {
 				resp, err := channel.CreateChannel(osnURL, block, caCertPool, tlsClientCert)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
-
+				//request, err := network.NewBlockEventsRequest()
+				blockEventRequest, err := peer1Network.NewBlockEventsRequest()
+				Expect(err).NotTo(HaveOccurred())
+				ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
+				defer cancel()
+				block_channel, err := blockEventRequest.Events(ctx)
+				Expect(err).NotTo(HaveOccurred())
+				<-block_channel
 				//join peer1
 				err = channel.JoinChannel(
 					block, org1MSP, peer1Endorser,
@@ -210,18 +230,6 @@ var _ = Describe("e2e", func() {
 			packageID, err := chaincode.PackageID(bytes.NewReader(chaincodePackage))
 			Expect(err).NotTo(HaveOccurred(), "get chaincode package ID")
 			fmt.Println(packageID)
-
-			peer1Gateway, err := NewGateway(peer1Connection, org1MSP)
-			Expect(err).NotTo(HaveOccurred())
-			defer peer1Gateway.Close()
-			peer1Network := peer1Gateway.GetNetwork(channelName)
-			Expect(err).NotTo(HaveOccurred())
-
-			peer2Gateway, err := NewGateway(peer2Connection, org2MSP)
-			Expect(err).NotTo(HaveOccurred())
-			defer peer1Gateway.Close()
-			peer2Network := peer2Gateway.GetNetwork(channelName)
-			Expect(err).NotTo(HaveOccurred())
 
 			peerConnections := []*ConnectionDetails{
 				{
