@@ -116,7 +116,7 @@ var _ = Describe("channel", func() {
 				Skip("skip for unit test")
 			}
 			createChannel, ok := os.LookupEnv("createChannel")
-			if createChannel != "true" || !ok {
+			if createChannel == "true" && ok {
 				Skip("skip for create channel testing")
 			}
 			var channelID = "mychannel"

@@ -161,6 +161,13 @@ var _ = Describe("e2e", func() {
 			peer2Network := peer2Gateway.GetNetwork(channelName)
 			Expect(err).NotTo(HaveOccurred())
 
+			blockEventRequest, err := peer1Network.NewBlockEventsRequest()
+			Expect(err).NotTo(HaveOccurred())
+			ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
+			defer cancel()
+			block_channel, err := blockEventRequest.Events(ctx)
+			Expect(err).NotTo(HaveOccurred())
+
 			createChannel, ok := os.LookupEnv("createChannel")
 			if createChannel == "true" && ok {
 				//genesis block
@@ -187,13 +194,6 @@ var _ = Describe("e2e", func() {
 				resp, err := channel.CreateChannel(osnURL, block, caCertPool, tlsClientCert)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
-				//request, err := network.NewBlockEventsRequest()
-				blockEventRequest, err := peer1Network.NewBlockEventsRequest()
-				Expect(err).NotTo(HaveOccurred())
-				ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
-				defer cancel()
-				block_channel, err := blockEventRequest.Events(ctx)
-				Expect(err).NotTo(HaveOccurred())
 				fmt.Println("Channel creation")
 				<-block_channel
 				fmt.Println("Get 1 block after creation")
@@ -202,7 +202,7 @@ var _ = Describe("e2e", func() {
 					block, org1MSP, peer1Endorser,
 				)
 				Expect(err).NotTo(HaveOccurred())
-
+				<-block_channel
 				//join peer2
 				err = channel.JoinChannel(
 					block, org2MSP, peer2Endorser,
@@ -300,6 +300,7 @@ var _ = Describe("e2e", func() {
 				printGrpcError(err)
 				Expect(err).NotTo(HaveOccurred(), "approve chaincode for org %s", target.id.MspID())
 			})
+			<-block_channel
 
 			// Query approved chaincode for each org
 			runParallel(peerConnections, func(target *ConnectionDetails) {
