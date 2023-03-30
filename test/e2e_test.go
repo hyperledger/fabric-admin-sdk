@@ -255,6 +255,7 @@ var _ = Describe("e2e", func() {
 				printGrpcError(err)
 				Expect(err).NotTo(HaveOccurred(), "chaincode install")
 			})
+			fmt.Println("completed chaincode install")
 
 			// Query installed chaincode on each peer
 			runParallel(peerConnections, func(target *ConnectionDetails) {
@@ -301,6 +302,7 @@ var _ = Describe("e2e", func() {
 				Expect(err).NotTo(HaveOccurred(), "approve chaincode for org %s", target.id.MspID())
 			})
 			<-block_channel
+			fmt.Println("completed chaincode approve")
 
 			// Query approved chaincode for each org
 			runParallel(peerConnections, func(target *ConnectionDetails) {
@@ -326,6 +328,7 @@ var _ = Describe("e2e", func() {
 			err = chaincode.Commit(commitCtx, *peer1Network, chaincodeDef)
 			printGrpcError(err)
 			Expect(err).NotTo(HaveOccurred(), "commit chaincode")
+			fmt.Println("completed chaincode commit")
 
 			// Query all committed chaincode
 			committedCtx, committedCancel := context.WithTimeout(specCtx, 30*time.Second)
