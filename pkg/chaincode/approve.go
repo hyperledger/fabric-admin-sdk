@@ -25,13 +25,17 @@ func Approve(ctx context.Context, connection grpc.ClientConnInterface, id identi
 	if err != nil {
 		return err
 	}
+	validationParameter, err := chaincodeDef.getApplicationPolicyBytes()
+	if err != nil {
+		return err
+	}
 	approveArgs := &lifecycle.ApproveChaincodeDefinitionForMyOrgArgs{
 		Name:                chaincodeDef.Name,
 		Version:             chaincodeDef.Version,
 		Sequence:            chaincodeDef.Sequence,
 		EndorsementPlugin:   chaincodeDef.EndorsementPlugin,
 		ValidationPlugin:    chaincodeDef.ValidationPlugin,
-		ValidationParameter: chaincodeDef.validationParameter,
+		ValidationParameter: validationParameter,
 		Collections:         chaincodeDef.Collections,
 		InitRequired:        chaincodeDef.InitRequired,
 		Source:              newChaincodeSource(chaincodeDef.PackageID),

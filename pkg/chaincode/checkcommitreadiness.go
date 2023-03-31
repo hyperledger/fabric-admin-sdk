@@ -21,13 +21,17 @@ import (
 // CheckCommitReadiness for a chaincode and return all approval records. The connection may be to any Gateway peer that
 // is a member of the channel.
 func CheckCommitReadiness(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, chaincodeDef *Definition) (*lifecycle.CheckCommitReadinessResult, error) {
+	validationParameter, err := chaincodeDef.getApplicationPolicyBytes()
+	if err != nil {
+		return nil, err
+	}
 	args := &lifecycle.CheckCommitReadinessArgs{
 		Name:                chaincodeDef.Name,
 		Version:             chaincodeDef.Version,
 		Sequence:            chaincodeDef.Sequence,
 		EndorsementPlugin:   chaincodeDef.EndorsementPlugin,
 		ValidationPlugin:    chaincodeDef.ValidationPlugin,
-		ValidationParameter: chaincodeDef.validationParameter,
+		ValidationParameter: validationParameter,
 		Collections:         chaincodeDef.Collections,
 		InitRequired:        chaincodeDef.InitRequired,
 	}

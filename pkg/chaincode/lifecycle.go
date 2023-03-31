@@ -62,10 +62,6 @@ type Definition struct {
 	// it follows fabric-protos-go-apiv2/peer format and it will convert to validationParameter during validation phase.
 	ApplicationPolicy *peer.ApplicationPolicy
 
-	// validationParameter defines the endorsement policy for the chaincode. This can be an explicit endorsement policy
-	// string or reference a policy in the channel configuration.
-	validationParameter []byte
-
 	// InitRequired is true only if the chaincode defines an Init function using the low-level shim API, which must be
 	// invoked before other transaction functions may be invoked; otherwise false. It is not recommended to rely on
 	// functionality.
@@ -88,12 +84,17 @@ func (d *Definition) validate() error {
 	if d.Sequence <= 0 {
 		return fmt.Errorf("chaincode sequence must be greater than 0 for channel approve/commit")
 	}
+	return nil
+}
+
+// getApplicationPolicyBytes is to convert ApplicationPolicy to Bytes for proto usage
+func (d *Definition) getApplicationPolicyBytes() ([]byte, error) {
 	if d.ApplicationPolicy != nil {
 		AppPolicydata, err := proto.Marshal(d.ApplicationPolicy)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		d.validationParameter = AppPolicydata
+		return AppPolicydata, nil
 	}
-	return nil
+	return nil, nil
 }
