@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        FABRIC_VERSION: ['2.4.8', '2.5.0-beta']
+        FABRIC_VERSION: ['2.4.8', '2.5.0']
         CREATE_CHANNEL: [create_channel, existing_channel]
     steps:
       - uses: actions/checkout@v3
