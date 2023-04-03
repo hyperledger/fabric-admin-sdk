@@ -1,6 +1,6 @@
 module github.com/hyperledger/fabric-admin-sdk
 
-go 1.19
+go 1.20
 
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible
