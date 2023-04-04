@@ -20,13 +20,17 @@ func Commit(ctx context.Context, connection grpc.ClientConnInterface, id identit
 	if err != nil {
 		return err
 	}
+	validationParameter, err := chaincodeDef.getApplicationPolicyBytes()
+	if err != nil {
+		return err
+	}
 	commitArgs := &lifecycle.CommitChaincodeDefinitionArgs{
 		Name:                chaincodeDef.Name,
 		Version:             chaincodeDef.Version,
 		Sequence:            chaincodeDef.Sequence,
 		EndorsementPlugin:   chaincodeDef.EndorsementPlugin,
 		ValidationPlugin:    chaincodeDef.ValidationPlugin,
-		ValidationParameter: chaincodeDef.ValidationParameter,
+		ValidationParameter: validationParameter,
 		Collections:         chaincodeDef.Collections,
 		InitRequired:        chaincodeDef.InitRequired,
 	}

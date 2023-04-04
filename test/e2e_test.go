@@ -246,20 +246,22 @@ var _ = Describe("e2e", func() {
 			})
 
 			time.Sleep(time.Duration(20) * time.Second)
-
+			PolicyStr := "AND ('Org1MSP.peer','Org2MSP.peer')"
+			applicationPolicy, err := chaincode.NewApplicationPolicy(PolicyStr, "")
+			Expect(err).NotTo(HaveOccurred())
 			chaincodeDef := &chaincode.Definition{
-				ChannelName:         channelName,
-				PackageID:           "",
-				Name:                "basic",
-				Version:             "1.0",
-				EndorsementPlugin:   "",
-				ValidationPlugin:    "",
-				Sequence:            1,
-				ValidationParameter: nil,
-				InitRequired:        false,
-				Collections:         nil,
+				ChannelName:       channelName,
+				PackageID:         "",
+				Name:              "basic",
+				Version:           "1.0",
+				EndorsementPlugin: "",
+				ValidationPlugin:  "",
+				Sequence:          1,
+				ApplicationPolicy: applicationPolicy,
+				InitRequired:      false,
+				Collections:       nil,
 			}
-
+			Expect(err).NotTo(HaveOccurred())
 			// Approve chaincode for each org
 			runParallel(peerConnections, func(target *ConnectionDetails) {
 				ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
