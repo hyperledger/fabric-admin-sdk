@@ -169,7 +169,7 @@ var _ = Describe("e2e", func() {
 
 				//osnURL
 				order := network.Node{
-					Addr:      "localhost:7053",
+					Addr:      "localhost:7050",
 					TLSCACert: clientCert,
 				}
 				err = order.LoadConfig()
