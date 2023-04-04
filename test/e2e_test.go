@@ -21,6 +21,7 @@ import (
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	gatewaypb "github.com/hyperledger/fabric-protos-go-apiv2/gateway"
+	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	. "github.com/onsi/ginkgo/v2"
@@ -166,6 +167,24 @@ var _ = Describe("e2e", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
 
+				//osnURL
+				order := network.Node{
+					Addr:      osnURL,
+					TLSCACert: clientCert,
+				}
+				err = order.LoadConfig()
+				Expect(err).NotTo(HaveOccurred())
+				ordererConnection, err := network.DialConnection(order)
+				Expect(err).NotTo(HaveOccurred())
+				AtomicBroadcastClient := orderer.NewAtomicBroadcastClient(ordererConnection)
+				ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
+				defer cancel()
+				DeliverClient, err := AtomicBroadcastClient.Deliver(ctx)
+				Expect(err).NotTo(HaveOccurred())
+				ordererBlock, err := channel.GetNewstBlock(DeliverClient, channelName, tlsClientCert, org1MSP, true)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(ordererBlock).NotTo(BeNil())
+
 				//join peer1
 				err = channel.JoinChannel(
 					block, org1MSP, peer1Endorser,
@@ -245,7 +264,7 @@ var _ = Describe("e2e", func() {
 				Expect(result).NotTo(BeEmpty())
 			})
 
-			time.Sleep(time.Duration(20) * time.Second)
+			//time.Sleep(time.Duration(20) * time.Second)
 			PolicyStr := "AND ('Org1MSP.peer','Org2MSP.peer')"
 			applicationPolicy, err := chaincode.NewApplicationPolicy(PolicyStr, "")
 			Expect(err).NotTo(HaveOccurred())
@@ -289,7 +308,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred(), "check commit readiness")
 			Expect(readinessResult.GetApprovals()).To(Equal((map[string]bool{org1MspID: true, org2MspID: true})))
 
-			time.Sleep(time.Duration(20) * time.Second)
+			//time.Sleep(time.Duration(20) * time.Second)
 
 			// Commit chaincode
 			commitCtx, commitCancel := context.WithTimeout(specCtx, 30*time.Second)
