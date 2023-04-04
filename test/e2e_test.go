@@ -264,7 +264,7 @@ var _ = Describe("e2e", func() {
 				Expect(result).NotTo(BeEmpty())
 			})
 
-			//time.Sleep(time.Duration(20) * time.Second)
+			time.Sleep(time.Duration(20) * time.Second)
 			PolicyStr := "AND ('Org1MSP.peer','Org2MSP.peer')"
 			applicationPolicy, err := chaincode.NewApplicationPolicy(PolicyStr, "")
 			Expect(err).NotTo(HaveOccurred())
@@ -308,7 +308,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred(), "check commit readiness")
 			Expect(readinessResult.GetApprovals()).To(Equal((map[string]bool{org1MspID: true, org2MspID: true})))
 
-			//time.Sleep(time.Duration(20) * time.Second)
+			time.Sleep(time.Duration(20) * time.Second)
 
 			// Commit chaincode
 			commitCtx, commitCancel := context.WithTimeout(specCtx, 30*time.Second)
