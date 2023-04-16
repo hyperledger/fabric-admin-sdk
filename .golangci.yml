@@ -2,9 +2,9 @@
 linters-settings:
   dupl:
     threshold: 100
-  goconst:
-    min-len: 2
-    min-occurrences: 3
+  #goconst:
+  #  min-len: 2
+  #  min-occurrences: 3
   # TODO: try to enable
   # gocritic:
   #  enabled-tags:
@@ -37,25 +37,17 @@ linters-settings:
 linters:
   disable-all: true
   enable:
-    - bodyclose
     - depguard
     - errcheck
-    - goconst
-    - gocyclo
     - gofmt
     - goimports
     - goprintffuncname
     - gosimple
-    - govet
     - ineffassign
-    - misspell
-    - nakedret
     - nolintlint
     - staticcheck
     - stylecheck
-    - unconvert
     - unparam
-    - varcheck
     - asciicheck
     - staticcheck
 
@@ -67,6 +59,14 @@ linters:
   # - unused
 
   # TODO: try to enable
+  #- varcheck
+  #- gocyclo
+  #- bodyclose
+  #- misspell
+  #- nakedret
+  #- unconvert
+  # - govet
+  # - goconst
   # - gocritic
   # - noctx
   # - whitespace

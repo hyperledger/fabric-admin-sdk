@@ -26,6 +26,7 @@ staticcheck:
 
 .PHONEY: golangci-lint
 golangci-lint:
+	go mod vendor
 	docker pull golangci/golangci-lint:latest
 	docker run --tty --rm \
 		--volume '$(base_dir)/.cache/golangci-lint:/root/.cache' \
