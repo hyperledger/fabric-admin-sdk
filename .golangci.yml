@@ -38,7 +38,6 @@ linters:
   enable:
     - bodyclose
     - depguard
-    - dupl
     - errcheck
     - goconst
     - gocritic
@@ -61,6 +60,7 @@ linters:
     - whitespace
     - varcheck
     - asciicheck
+    - staticcheck
 
   # don't enable:
   # - lll
@@ -70,6 +70,7 @@ linters:
   # - unused
 
   # TODO: try to enable
+  # - dupl
   # - scopelint
   # - gochecknoglobals
   # - gocognit
