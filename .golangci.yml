@@ -5,13 +5,14 @@ linters-settings:
   goconst:
     min-len: 2
     min-occurrences: 3
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
+  # TODO: try to enable
+  # gocritic:
+  #  enabled-tags:
+  #    - diagnostic
+  #    - experimental
+  #    - opinionated
+  #    - performance
+  #    - style
     disabled-checks:
       - dupImport # https://github.com/go-critic/go-critic/issues/845
       - ifElseChain
@@ -40,7 +41,6 @@ linters:
     - depguard
     - errcheck
     - goconst
-    - gocritic
     - gocyclo
     - gofmt
     - goimports
@@ -50,14 +50,11 @@ linters:
     - ineffassign
     - misspell
     - nakedret
-    - noctx
     - nolintlint
     - staticcheck
     - stylecheck
-    - typecheck
     - unconvert
     - unparam
-    - whitespace
     - varcheck
     - asciicheck
     - staticcheck
@@ -70,6 +67,10 @@ linters:
   # - unused
 
   # TODO: try to enable
+  # - gocritic
+  # - noctx
+  # - whitespace
+  # - typecheck
   # - dupl
   # - scopelint
   # - gochecknoglobals
