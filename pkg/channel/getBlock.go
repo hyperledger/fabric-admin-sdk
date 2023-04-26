@@ -30,7 +30,7 @@ func GetConfigBlockFromOrderer(Service ab.AtomicBroadcast_DeliverClient, channel
 	return GetSpecifiedBlock(Service, channelID, Certificate, signer, bestEffort, lc)
 }
 
-func GetSpecifiedBlock(Service ab.AtomicBroadcast_DeliverClient, channelID string, Certificate tls.Certificate, signer identity.SigningIdentity, bestEffort bool, num uint64) (*cb.Block, error) {
+func getSpecifiedBlock(Service ab.AtomicBroadcast_DeliverClient, channelID string, Certificate tls.Certificate, signer identity.SigningIdentity, bestEffort bool, num uint64) (*cb.Block, error) {
 	seekPosition := &ab.SeekPosition{
 		Type: &ab.SeekPosition_Specified{
 			Specified: &ab.SeekSpecified{
