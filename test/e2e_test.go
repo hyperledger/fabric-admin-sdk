@@ -176,12 +176,9 @@ var _ = Describe("e2e", func() {
 				Expect(err).NotTo(HaveOccurred())
 				ordererConnection, err := network.DialConnection(order)
 				Expect(err).NotTo(HaveOccurred())
-				AtomicBroadcastClient := orderer.NewAtomicBroadcastClient(ordererConnection)
 				ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
 				defer cancel()
-				DeliverClient, err := AtomicBroadcastClient.Deliver(ctx)
-				Expect(err).NotTo(HaveOccurred())
-				ordererBlock, err := channel.GetConfigBlockFromOrderer(DeliverClient, channelName, tlsClientCert, org1MSP, true)
+				ordererBlock, err := channel.GetConfigBlockFromOrderer(ctx, ordererConnection, org1MSP, channelName, tlsClientCert)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(ordererBlock).NotTo(BeNil())
 
