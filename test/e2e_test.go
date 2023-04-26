@@ -21,7 +21,6 @@ import (
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	gatewaypb "github.com/hyperledger/fabric-protos-go-apiv2/gateway"
-	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	. "github.com/onsi/ginkgo/v2"

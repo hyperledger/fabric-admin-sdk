@@ -1,6 +1,7 @@
 package channel
 
 import (
+	"context"
 	"crypto/sha256"
 	"crypto/tls"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
 	ab "github.com/hyperledger/fabric-protos-go-apiv2/orderer"
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -24,15 +26,15 @@ func GetConfigBlockFromOrderer(ctx context.Context, connection grpc.ClientConnIn
 	if err != nil {
 		return nil, err
 	}
-	iBlock, err := GetNewstBlock(Service, channelID, Certificate, signer, bestEffort)
+	iBlock, err := getNewestBlock(deliverClient, channelID, certificate, id, true)
 	if err != nil {
 		return nil, err
 	}
-	lc, err := GetLastConfigIndexFromBlock(iBlock)
+	lc, err := getLastConfigIndexFromBlock(iBlock)
 	if err != nil {
 		return nil, err
 	}
-	return GetSpecifiedBlock(Service, channelID, Certificate, signer, bestEffort, lc)
+	return getSpecifiedBlock(deliverClient, channelID, certificate, id, true, lc)
 }
 
 func getSpecifiedBlock(Service ab.AtomicBroadcast_DeliverClient, channelID string, Certificate tls.Certificate, signer identity.SigningIdentity, bestEffort bool, num uint64) (*cb.Block, error) {
@@ -123,14 +125,14 @@ func seekHelper(
 // GetLastConfigIndexFromBlock retrieves the index of the last config block as
 // encoded in the block metadata
 func getLastConfigIndexFromBlock(block *cb.Block) (uint64, error) {
-	m, err := GetMetadataFromBlock(block, cb.BlockMetadataIndex_SIGNATURES)
+	m, err := getMetadataFromBlock(block, cb.BlockMetadataIndex_SIGNATURES)
 	if err != nil {
 		return 0, fmt.Errorf("failed to retrieve metadata %w", err)
 	}
 	// TODO FAB-15864 Remove this fallback when we can stop supporting upgrade from pre-1.4.1 orderer
 	if len(m.Value) == 0 {
 		// TODO cb.BlockMetadataIndex_LAST_CONFIG
-		m, err := GetMetadataFromBlock(block, 1)
+		m, err := getMetadataFromBlock(block, 1)
 		if err != nil {
 			return 0, fmt.Errorf("failed to retrieve metadata %w", err)
 		}
