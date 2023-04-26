@@ -8,5 +8,6 @@ linters:
     - gofmt
     - goimports
     - gosec
+    - govet
   disable:
     - staticcheck
