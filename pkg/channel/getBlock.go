@@ -117,7 +117,7 @@ func seekHelper(
 
 // GetLastConfigIndexFromBlock retrieves the index of the last config block as
 // encoded in the block metadata
-func GetLastConfigIndexFromBlock(block *cb.Block) (uint64, error) {
+func getLastConfigIndexFromBlock(block *cb.Block) (uint64, error) {
 	m, err := GetMetadataFromBlock(block, cb.BlockMetadataIndex_SIGNATURES)
 	if err != nil {
 		return 0, fmt.Errorf("failed to retrieve metadata %w", err)
