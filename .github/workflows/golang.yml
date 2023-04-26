@@ -15,18 +15,23 @@ jobs:
         run: make generate
       - name: Unit test
         run: make unit-test-go
-        
+
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
         with:
           go-version: '1.20'
       - name: Generate test mocks
         run: make generate
-      - name: Lint
-        run: make lint
+      - name: Staticcheck
+        run: make staticcheck
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          skip-pkg-cache: true
 
   end-to-end:
     runs-on: ubuntu-latest
