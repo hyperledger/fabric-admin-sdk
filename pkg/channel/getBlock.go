@@ -18,7 +18,12 @@ var newest = &ab.SeekPosition{
 	},
 }
 
-func GetConfigBlockFromOrderer(Service ab.AtomicBroadcast_DeliverClient, channelID string, Certificate tls.Certificate, signer identity.SigningIdentity, bestEffort bool) (*cb.Block, error) {
+func GetConfigBlockFromOrderer(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, channelID string, certificate tls.Certificate) (*cb.Block, error) {
+	abClient := ab.NewAtomicBroadcastClient(connection)
+	deliverClient, err := abClient.Deliver(ctx)
+	if err != nil {
+		return nil, err
+	}
 	iBlock, err := GetNewstBlock(Service, channelID, Certificate, signer, bestEffort)
 	if err != nil {
 		return nil, err
