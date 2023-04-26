@@ -54,7 +54,7 @@ func getBlockBySeekPosition(Service ab.AtomicBroadcast_DeliverClient, channelID 
 	return readBlock(Service)
 }
 
-func GetNewstBlock(Service ab.AtomicBroadcast_DeliverClient, channelID string, Certificate tls.Certificate, signer identity.SigningIdentity, bestEffort bool) (*cb.Block, error) {
+func getNewestBlock(Service ab.AtomicBroadcast_DeliverClient, channelID string, Certificate tls.Certificate, signer identity.SigningIdentity, bestEffort bool) (*cb.Block, error) {
 	return getBlockBySeekPosition(Service, channelID, Certificate, signer, bestEffort, newest)
 }
 
