@@ -166,6 +166,21 @@ var _ = Describe("e2e", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
 
+				//osnURL
+				order := network.Node{
+					Addr:      "localhost:7050",
+					TLSCACert: clientCert,
+				}
+				err = order.LoadConfig()
+				Expect(err).NotTo(HaveOccurred())
+				ordererConnection, err := network.DialConnection(order)
+				Expect(err).NotTo(HaveOccurred())
+				ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
+				defer cancel()
+				ordererBlock, err := channel.GetConfigBlockFromOrderer(ctx, ordererConnection, org1MSP, channelName, tlsClientCert)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(ordererBlock).NotTo(BeNil())
+
 				//join peer1
 				err = channel.JoinChannel(
 					block, org1MSP, peer1Endorser,
