@@ -3,6 +3,8 @@ base_dir := $(patsubst %/,%,$(dir $(realpath $(lastword $(MAKEFILE_LIST)))))
 go_dir := $(base_dir)/pkg
 node_dir := $(base_dir)/node
 
+go_bin_dir := $(shell go env GOPATH)/bin
+
 .PHONY: unit-test
 unit-test: unit-test-go unit-test-node
 
@@ -24,15 +26,16 @@ staticcheck:
 	go install honnef.co/go/tools/cmd/staticcheck@latest
 	staticcheck -f stylish '$(base_dir)/...'
 
+.PHONEY: install-golangci-lint
+install-golangci-lint:
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go_bin_dir)
+
+$(go_bin_dir)/golangci-lint:
+	$(MAKE) install-golangci-lint
+
 .PHONEY: golangci-lint
-golangci-lint:
-	docker pull golangci/golangci-lint:latest
-	docker run --tty --rm \
-		--volume '$(base_dir)/.cache/golangci-lint:/root/.cache' \
-		--volume '$(base_dir):/app' \
-		--workdir /app \
-		golangci/golangci-lint \
-		golangci-lint run --verbose
+golangci-lint: $(go_bin_dir)/golangci-lint
+	golangci-lint run
 
 .PHONEY: scan
 scan: scan-go scan-node
