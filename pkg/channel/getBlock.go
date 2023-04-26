@@ -151,7 +151,7 @@ func getLastConfigIndexFromBlock(block *cb.Block) (uint64, error) {
 }
 
 // GetMetadataFromBlock retrieves metadata at the specified index.
-func GetMetadataFromBlock(block *cb.Block, index cb.BlockMetadataIndex) (*cb.Metadata, error) {
+func getMetadataFromBlock(block *cb.Block, index cb.BlockMetadataIndex) (*cb.Metadata, error) {
 	if block.Metadata == nil {
 		return nil, fmt.Errorf("no metadata in block")
 	}
