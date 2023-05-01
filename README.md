@@ -3,10 +3,10 @@ Fabric SDK for Admin Capability services
 
 [![Go doc](https://img.shields.io/badge/go.dev-reference-brightgreen?logo=go&logoColor=white&style=flat)](https://pkg.go.dev/github.com/hyperledger/fabric-admin-sdk)
 
-## [motivation](https://github.com/hyperledger/fabric-rfcs/pull/55)
+## [Motivation](https://github.com/hyperledger/fabric-rfcs/pull/55)
 As gateway sdk will drop off admin capacity, we plan to recover admin capacity related things with this project proposal.
 
-## identified [features](https://github.com/Hyperledger-TWGC/fabric-admin-sdk/issues/15)
+## [Identified features](https://github.com/Hyperledger-TWGC/fabric-admin-sdk/issues/15)
 
 ### channel
 - new channel
@@ -25,7 +25,11 @@ As gateway sdk will drop off admin capacity, we plan to recover admin capacity r
 - peer discovery(optional, as ping test among peer networks when gateway disabled or fabric version below 2.5)
 - base on peer discovery result, generate connection profile for sdk if possible?(optional)
 
-## init by 
+### Scenario tests and example
+- [Scenario tests](./test/e2e_test.go)
+- [channel example](./pkg/chaincode/example_test.go)
+
+## Init by 
 - [davidkhala](https://github.com/davidkhala)
 - [SamYuan1990](https://github.com/SamYuan1990)
 - [xiaohui249](https://github.com/xiaohui249)
@@ -35,10 +39,6 @@ As gateway sdk will drop off admin capacity, we plan to recover admin capacity r
 <a href="https://github.com/Hyperledger/fabric-admin-sdk/graphs/contributors">
   <img src="https://contributors-img.web.app/image?repo=Hyperledger/fabric-admin-sdk" />
 </a>
-
-### [Scenario tests and example]
-- [Scenario tests](./test/e2e_test.go)
-- [channel example](./pkg/chaincode/example_test.go)
 
 ## Contribute
 Here is steps in short for any contribution. 
