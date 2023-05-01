@@ -25,9 +25,6 @@ As gateway sdk will drop off admin capacity, we plan to recover admin capacity r
 - peer discovery(optional, as ping test among peer networks when gateway disabled or fabric version below 2.5)
 - base on peer discovery result, generate connection profile for sdk if possible?(optional)
 
-## languages: go, java, nodejs, typescript
-### [golang Documentation](https://pkg.go.dev/github.com/hyperledger/fabric-admin-sdk)
-
 ## init by 
 - [davidkhala](https://github.com/davidkhala)
 - [SamYuan1990](https://github.com/SamYuan1990)
@@ -39,7 +36,9 @@ As gateway sdk will drop off admin capacity, we plan to recover admin capacity r
   <img src="https://contributors-img.web.app/image?repo=Hyperledger/fabric-admin-sdk" />
 </a>
 
-### [Scenario tests and example](./test/e2e_test.go)
+### [Scenario tests and example]
+- [Scenario tests](./test/e2e_test.go)
+- [channel example](./pkg/chaincode/example_test.go)
 
 ## Contribute
 Here is steps in short for any contribution. 
