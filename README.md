@@ -1,6 +1,8 @@
 # fabric-admin-sdk
 Fabric SDK for Admin Capability services 
 
+[![Go doc](https://img.shields.io/badge/go.dev-reference-brightgreen?logo=go&logoColor=white&style=flat)](https://pkg.go.dev/github.com/hyperledger/fabric-admin-sdk)
+
 ## [motivation](https://github.com/hyperledger/fabric-rfcs/pull/55)
 As gateway sdk will drop off admin capacity, we plan to recover admin capacity related things with this project proposal.
 
