@@ -35,11 +35,22 @@ func NewMockSigner(controller *gomock.Controller, mspID string, credentials []by
 	return id
 }
 
-func NewProposalResponse(status common.Status, message string) *peer.ProposalResponse {
+func NewErrorProposalResponse(status common.Status, message string) *peer.ProposalResponse {
 	return &peer.ProposalResponse{
 		Response: &peer.Response{
 			Status:  int32(status),
 			Message: message,
+		},
+	}
+}
+
+func NewSuccessfulProposalResponse(result []byte) *peer.ProposalResponse {
+	// Note that the lifecycle chaincode only populates the Response.Payload field. There is no payload embedded within
+	// the top-level Payload field, as you find in a normal transaction endorsement.
+	return &peer.ProposalResponse{
+		Response: &peer.Response{
+			Status:  int32(common.Status_SUCCESS),
+			Payload: result,
 		},
 	}
 }
@@ -115,7 +126,7 @@ var _ = Describe("Install", func() {
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) error {
-				CopyProto(NewProposalResponse(common.Status_SUCCESS, ""), out)
+				CopyProto(NewSuccessfulProposalResponse(nil), out)
 				return ctx.Err()
 			})
 
@@ -124,7 +135,7 @@ var _ = Describe("Install", func() {
 		ctx, cancel := context.WithCancel(specCtx)
 		cancel()
 
-		err := Install(ctx, mockConnection, mockSigner, packageReader)
+		_, err := Install(ctx, mockConnection, mockSigner, packageReader)
 
 		Expect(err).To(MatchError(context.Canceled))
 	})
@@ -142,7 +153,7 @@ var _ = Describe("Install", func() {
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
-		err := Install(specCtx, mockConnection, mockSigner, packageReader)
+		_, err := Install(specCtx, mockConnection, mockSigner, packageReader)
 
 		Expect(err).To(MatchError(expectedErr))
 	})
@@ -158,12 +169,12 @@ var _ = Describe("Install", func() {
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
-				CopyProto(NewProposalResponse(expectedStatus, expectedMessage), out)
+				CopyProto(NewErrorProposalResponse(expectedStatus, expectedMessage), out)
 			})
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 
-		err := Install(specCtx, mockConnection, mockSigner, packageReader)
+		_, err := Install(specCtx, mockConnection, mockSigner, packageReader)
 
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(And(
@@ -185,13 +196,13 @@ var _ = Describe("Install", func() {
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
 				signedProposal = in
-				CopyProto(NewProposalResponse(common.Status_SUCCESS, ""), out)
+				CopyProto(NewSuccessfulProposalResponse(nil), out)
 			}).
 			Times(1)
 
 		mockSigner := NewMockSigner(controller, "", nil, expected)
 
-		err := Install(specCtx, mockConnection, mockSigner, packageReader)
+		_, err := Install(specCtx, mockConnection, mockSigner, packageReader)
 		Expect(err).NotTo(HaveOccurred())
 
 		actual := signedProposal.GetSignature()
@@ -210,14 +221,14 @@ var _ = Describe("Install", func() {
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
 				signedProposal = in
-				CopyProto(NewProposalResponse(common.Status_SUCCESS, ""), out)
+				CopyProto(NewSuccessfulProposalResponse(nil), out)
 			}).
 			Times(1)
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
 		packageReader = bytes.NewReader(expected)
 
-		err := Install(specCtx, mockConnection, mockSigner, packageReader)
+		_, err := Install(specCtx, mockConnection, mockSigner, packageReader)
 		Expect(err).NotTo(HaveOccurred())
 
 		invocationSpec := AssertUnmarshalInvocationSpec(signedProposal)
@@ -246,19 +257,43 @@ var _ = Describe("Install", func() {
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
 				signedProposal = in
-				CopyProto(NewProposalResponse(common.Status_SUCCESS, ""), out)
+				CopyProto(NewSuccessfulProposalResponse(nil), out)
 			}).
 			Times(1)
 
 		mockSigner := NewMockSigner(controller, expected.Mspid, expected.IdBytes, nil)
 
-		err := Install(specCtx, mockConnection, mockSigner, packageReader)
+		_, err := Install(specCtx, mockConnection, mockSigner, packageReader)
 		Expect(err).NotTo(HaveOccurred())
 
 		signatureHeader := AssertUnmarshalSignatureHeader(signedProposal)
 
 		actual := &msp.SerializedIdentity{}
 		AssertUnmarshal(signatureHeader.GetCreator(), actual)
+
+		AssertProtoEqual(expected, actual)
+	})
+
+	It("Install result returned on successful proposal response", func(specCtx SpecContext) {
+		expected := &lifecycle.InstallChaincodeResult{
+			PackageId: "PACKAGE_ID",
+			Label:     "LABEL",
+		}
+
+		controller := gomock.NewController(GinkgoT())
+		defer controller.Finish()
+
+		mockConnection := NewMockClientConnInterface(controller)
+		mockConnection.EXPECT().
+			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
+				CopyProto(NewSuccessfulProposalResponse(AssertMarshal(expected)), out)
+			})
+
+		mockSigner := NewMockSigner(controller, "", nil, nil)
+
+		actual, err := Install(specCtx, mockConnection, mockSigner, packageReader)
+		Expect(err).NotTo(HaveOccurred())
 
 		AssertProtoEqual(expected, actual)
 	})

@@ -43,7 +43,7 @@ func Example() {
 	panicOnError(err)
 
 	// Install chaincode package. This must be performed for each peer on which the chaincode is to be installed.
-	err = chaincode.Install(ctx, connection, id, chaincodePackage)
+	_, err = chaincode.Install(ctx, connection, id, chaincodePackage)
 	panicOnError(err)
 
 	// Definition of the chaincode as it should appear on the channel.

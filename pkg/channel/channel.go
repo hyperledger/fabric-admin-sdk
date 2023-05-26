@@ -53,7 +53,7 @@ func JoinChannel(block *cb.Block, id identity.SigningIdentity, connection pb.End
 		return err
 	}
 
-	if err = proposal.CheckSuccessfulResponse(proposalResp); err != nil {
+	if err := proposal.CheckSuccessfulResponse(proposalResp); err != nil {
 		return err
 	}
 
