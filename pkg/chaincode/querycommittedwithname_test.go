@@ -7,7 +7,6 @@ package chaincode
 
 import (
 	"context"
-	"errors"
 
 	"github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
@@ -15,6 +14,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var _ = Describe("QueryCommittedWithName", func() {
@@ -51,7 +52,7 @@ var _ = Describe("QueryCommittedWithName", func() {
 	})
 
 	It("Endorse errors returned", func(specCtx SpecContext) {
-		expectedErr := errors.New("EXPECTED_ERROR")
+		expectedErr := status.Error(codes.Unavailable, "EXPECTED_ERROR")
 
 		controller := gomock.NewController(GinkgoT())
 		defer controller.Finish()
@@ -66,6 +67,7 @@ var _ = Describe("QueryCommittedWithName", func() {
 		_, err := QueryCommittedWithName(specCtx, mockConnection, mockSigner, channelName, chaincodeName)
 
 		Expect(err).To(MatchError(expectedErr))
+		AssertEqualStatus(expectedErr, err)
 	})
 
 	It("Proposal content", func(specCtx SpecContext) {
