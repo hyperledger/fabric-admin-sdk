@@ -40,7 +40,7 @@ var _ = Describe("QueryInstalled", func() {
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) error {
-				CopyProto(NewProposalResponse(common.Status_SUCCESS, ""), out)
+				CopyProto(NewSuccessfulProposalResponse(nil), out)
 				return ctx.Err()
 			})
 
@@ -83,7 +83,7 @@ var _ = Describe("QueryInstalled", func() {
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
-				CopyProto(NewProposalResponse(expectedStatus, expectedMessage), out)
+				CopyProto(NewErrorProposalResponse(expectedStatus, expectedMessage), out)
 			})
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
@@ -110,7 +110,7 @@ var _ = Describe("QueryInstalled", func() {
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
 				signedProposal = in
-				CopyProto(NewProposalResponse(common.Status_SUCCESS, ""), out)
+				CopyProto(NewSuccessfulProposalResponse(nil), out)
 			}).
 			Times(1)
 
@@ -138,7 +138,7 @@ var _ = Describe("QueryInstalled", func() {
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
 				signedProposal = in
-				CopyProto(NewProposalResponse(common.Status_SUCCESS, ""), out)
+				CopyProto(NewSuccessfulProposalResponse(nil), out)
 			}).
 			Times(1)
 
@@ -165,8 +165,7 @@ var _ = Describe("QueryInstalled", func() {
 			},
 		}
 
-		response := NewProposalResponse(common.Status_SUCCESS, "")
-		response.Response.Payload = AssertMarshal(expected)
+		response := NewSuccessfulProposalResponse(AssertMarshal(expected))
 
 		controller := gomock.NewController(GinkgoT())
 		defer controller.Finish()

@@ -232,9 +232,11 @@ var _ = Describe("e2e", func() {
 			runParallel(peerConnections, func(target *ConnectionDetails) {
 				ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
 				defer cancel()
-				err = chaincode.Install(ctx, target.connection, target.id, bytes.NewReader(chaincodePackage))
+				result, err := chaincode.Install(ctx, target.connection, target.id, bytes.NewReader(chaincodePackage))
 				printGrpcError(err)
 				Expect(err).NotTo(HaveOccurred(), "chaincode install")
+				Expect(result.GetPackageId()).To(Equal(packageID), "install chaincode package ID")
+				Expect(result.GetLabel()).To(Equal(dummyMeta.Label), "install chaincode label")
 			})
 
 			// Query installed chaincode on each peer

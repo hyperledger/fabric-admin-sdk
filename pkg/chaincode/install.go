@@ -21,10 +21,10 @@ import (
 
 // Install a chaincode package to specific peer. The connection must be to the specific peer where the chaincode is to
 // be installed.
-func Install(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, packageReader io.Reader) error {
+func Install(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, packageReader io.Reader) (*lifecycle.InstallChaincodeResult, error) {
 	packageBytes, err := io.ReadAll(packageReader)
 	if err != nil {
-		return fmt.Errorf("failed to read chaincode package: %w", err)
+		return nil, fmt.Errorf("failed to read chaincode package: %w", err)
 	}
 
 	installArgs := &lifecycle.InstallChaincodeArgs{
@@ -32,25 +32,34 @@ func Install(ctx context.Context, connection grpc.ClientConnInterface, id identi
 	}
 	installArgsBytes, err := proto.Marshal(installArgs)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	proposalProto, err := proposal.NewProposal(id, lifecycleChaincodeName, installTransactionName, proposal.WithArguments(installArgsBytes))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	signedProposal, err := proposal.NewSignedProposal(proposalProto, id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	endorser := peer.NewEndorserClient(connection)
 
 	proposalResponse, err := endorser.ProcessProposal(ctx, signedProposal)
 	if err != nil {
-		return fmt.Errorf("failed to install chaincode: %w", err)
+		return nil, fmt.Errorf("failed to install chaincode: %w", err)
 	}
 
-	return proposal.CheckSuccessfulResponse(proposalResponse)
+	if err := proposal.CheckSuccessfulResponse(proposalResponse); err != nil {
+		return nil, err
+	}
+
+	result := &lifecycle.InstallChaincodeResult{}
+	if err := proto.Unmarshal(proposalResponse.GetResponse().GetPayload(), result); err != nil {
+		return nil, fmt.Errorf("failed to deserialize install chaincode result: %w", err)
+	}
+
+	return result, nil
 }
