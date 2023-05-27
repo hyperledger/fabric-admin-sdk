@@ -7,7 +7,6 @@ package chaincode
 
 import (
 	"context"
-	"errors"
 
 	"github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
@@ -17,6 +16,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const gatewayEndorseMethod = "/gateway.Gateway/Endorse"
@@ -74,6 +75,13 @@ func NewCommitStatusResponse(result peer.TxValidationCode, blockNumber uint64) *
 	}
 }
 
+func AssertEqualStatus(expected error, actual error) {
+	actualStatus := status.Convert(actual)
+	expectedStatus := status.Convert(expected)
+	Expect(actualStatus.Code()).To(Equal(expectedStatus.Code()))
+	Expect(actualStatus.Message()).To(ContainSubstring(expectedStatus.Message()))
+}
+
 var _ = Describe("Approve", func() {
 	var channelName string
 	var chaincodeDefinition *Definition
@@ -128,7 +136,7 @@ var _ = Describe("Approve", func() {
 	})
 
 	It("Endorse errors returned", func(specCtx SpecContext) {
-		expectedErr := errors.New("EXPECTED_ERROR")
+		expectedErr := status.Error(codes.Unavailable, "EXPECTED_ERROR")
 
 		controller := gomock.NewController(GinkgoT())
 		defer controller.Finish()
@@ -143,10 +151,11 @@ var _ = Describe("Approve", func() {
 		err := Approve(specCtx, mockConnection, mockSigner, chaincodeDefinition)
 
 		Expect(err).To(MatchError(expectedErr))
+		AssertEqualStatus(expectedErr, err)
 	})
 
 	It("Submit errors returned", func(specCtx SpecContext) {
-		expectedErr := errors.New("EXPECTED_ERROR")
+		expectedErr := status.Error(codes.Unavailable, "EXPECTED_ERROR")
 
 		controller := gomock.NewController(GinkgoT())
 		defer controller.Finish()
@@ -171,10 +180,11 @@ var _ = Describe("Approve", func() {
 		err := Approve(specCtx, mockConnection, mockSigner, chaincodeDefinition)
 
 		Expect(err).To(MatchError(expectedErr))
+		AssertEqualStatus(expectedErr, err)
 	})
 
 	It("CommitStatus errors returned", func(specCtx SpecContext) {
-		expectedErr := errors.New("EXPECTED_ERROR")
+		expectedErr := status.Error(codes.Unavailable, "EXPECTED_ERROR")
 
 		controller := gomock.NewController(GinkgoT())
 		defer controller.Finish()
@@ -194,6 +204,7 @@ var _ = Describe("Approve", func() {
 		err := Approve(specCtx, mockConnection, mockSigner, chaincodeDefinition)
 
 		Expect(err).To(MatchError(expectedErr))
+		AssertEqualStatus(expectedErr, err)
 	})
 
 	DescribeTable("Proposal content",
