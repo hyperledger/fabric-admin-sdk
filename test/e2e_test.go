@@ -184,6 +184,10 @@ var _ = Describe("e2e", func() {
 				err = channel.JoinChannel(specCtx, peer2Connection, org2MSP, block)
 				Expect(err).NotTo(HaveOccurred())
 			}
+			// check peer join channel
+			peerChannelInfo, err := channel.ListChannelOnPeer(specCtx, peer1Connection, org1MSP)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(peerChannelInfo[0].ChannelId).To(Equal(channelName))
 			// package chaincode as CCAAS
 			dummyConnection := chaincode.Connection{
 				Address:     "{{.peername}}_basic:9999",

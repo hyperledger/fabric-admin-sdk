@@ -13,9 +13,9 @@ import (
 	"github.com/hyperledger/fabric-admin-sdk/internal/protoutil"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/proposal"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 
 	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
-	pb "github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
@@ -49,7 +49,7 @@ func JoinChannel(ctx context.Context, connection grpc.ClientConnInterface, id id
 		return err
 	}
 
-	endorser := pb.NewEndorserClient(connection)
+	endorser := peer.NewEndorserClient(connection)
 	proposalResp, err := endorser.ProcessProposal(ctx, signedProp)
 	if err != nil {
 		return err
@@ -79,4 +79,34 @@ func ListChannel(osnURL string, caCertPool *x509.CertPool, tlsClientCert tls.Cer
 	}
 
 	return channels, nil
+}
+
+func ListChannelOnPeer(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity) ([]*peer.ChannelInfo, error) {
+	prop, err := proposal.NewProposal(id, "cscc", "GetChannels", proposal.WithType(cb.HeaderType_ENDORSER_TRANSACTION))
+	if err != nil {
+		return nil, err
+	}
+
+	signedProp, err := proposal.NewSignedProposal(prop, id)
+	if err != nil {
+		return nil, err
+	}
+
+	endorser := peer.NewEndorserClient(connection)
+
+	proposalResp, err := endorser.ProcessProposal(ctx, signedProp)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := proposal.CheckSuccessfulResponse(proposalResp); err != nil {
+		return nil, err
+	}
+
+	var channelQueryResponse peer.ChannelQueryResponse
+	err = proto.Unmarshal(proposalResp.Response.Payload, &channelQueryResponse)
+	if err != nil {
+		return nil, err
+	}
+	return channelQueryResponse.Channels, nil
 }
