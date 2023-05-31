@@ -22,7 +22,6 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	gatewaypb "github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 
-	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"google.golang.org/grpc"
@@ -117,9 +116,6 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			peer1Connection, err := network.DialConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
-
-			peer1Endorser := peer.NewEndorserClient(peer1Connection)
-			Expect(err).NotTo(HaveOccurred())
 			org1MSP, err := CreateSigner(PrivKeyPath, SignCert, org1MspID)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -135,10 +131,9 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			peer2Connection, err := network.DialConnection(peer2)
 			Expect(err).NotTo(HaveOccurred())
-			peer2Endorser := peer.NewEndorserClient(peer2Connection)
-			Expect(err).NotTo(HaveOccurred())
 			org2MSP, err := CreateSigner(PrivKeyPath, SignCert, org2MspID)
 			Expect(err).NotTo(HaveOccurred())
+
 			//genesis block
 			createChannel, ok := os.LookupEnv("createChannel")
 			if createChannel == "true" && ok {
@@ -182,15 +177,11 @@ var _ = Describe("e2e", func() {
 				Expect(ordererBlock).NotTo(BeNil())
 
 				//join peer1
-				err = channel.JoinChannel(
-					block, org1MSP, peer1Endorser,
-				)
+				err = channel.JoinChannel(specCtx, peer1Connection, org1MSP, block)
 				Expect(err).NotTo(HaveOccurred())
 
 				//join peer2
-				err = channel.JoinChannel(
-					block, org2MSP, peer2Endorser,
-				)
+				err = channel.JoinChannel(specCtx, peer2Connection, org2MSP, block)
 				Expect(err).NotTo(HaveOccurred())
 			}
 			// package chaincode as CCAAS

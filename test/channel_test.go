@@ -14,7 +14,6 @@ import (
 	"github.com/hyperledger/fabric-admin-sdk/internal/network"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/channel"
 
-	npb "github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -46,7 +45,7 @@ var _ = Describe("channel", func() {
 	})
 
 	Context("get config block", func() {
-		It("should work", func() {
+		It("should work", func(specCtx SpecContext) {
 			_, err := os.Stat("../fabric-samples/test-network")
 			if err != nil {
 				Skip("skip for unit test")
@@ -66,19 +65,18 @@ var _ = Describe("channel", func() {
 			Expect(err).NotTo(HaveOccurred())
 			peerConnection, err := network.DialConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
-			endorser := npb.NewEndorserClient(peerConnection)
 
 			id, err := CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
 
-			configBlock, err := channel.GetConfigBlock(id, channelID, endorser)
+			configBlock, err := channel.GetConfigBlock(specCtx, peerConnection, id, channelID)
 			Expect(err).NotTo(HaveOccurred())
 			fmt.Println("config block", configBlock)
 		})
 	})
 
 	Context("get block chain info", func() {
-		It("should work", func() {
+		It("should work", func(specCtx SpecContext) {
 			_, err := os.Stat("../fabric-samples/test-network")
 			if err != nil {
 				Skip("skip for unit test")
@@ -98,12 +96,11 @@ var _ = Describe("channel", func() {
 			Expect(err).NotTo(HaveOccurred())
 			peerConnection, err := network.DialConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
-			endorser := npb.NewEndorserClient(peerConnection)
 
 			id, err := CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
 
-			blockChainInfo, err := channel.GetBlockChainInfo(id, channelID, endorser)
+			blockChainInfo, err := channel.GetBlockChainInfo(specCtx, peerConnection, id, channelID)
 			Expect(err).NotTo(HaveOccurred())
 			fmt.Println("blockchain info", blockChainInfo)
 		})

@@ -16,6 +16,7 @@ import (
 
 	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
 	pb "github.com/hyperledger/fabric-protos-go-apiv2/peer"
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -32,7 +33,7 @@ func CreateChannel(osnURL string, block *cb.Block, caCertPool *x509.CertPool, tl
 	return osnadmin.Join(osnURL, blockBytes, caCertPool, tlsClientCert)
 }
 
-func JoinChannel(block *cb.Block, id identity.SigningIdentity, connection pb.EndorserClient) error {
+func JoinChannel(ctx context.Context, connection grpc.ClientConnInterface, id identity.SigningIdentity, block *cb.Block) error {
 	blockBytes, err := proto.Marshal(block)
 	if err != nil {
 		return fmt.Errorf("failed to marshal block: %w", err)
@@ -48,7 +49,8 @@ func JoinChannel(block *cb.Block, id identity.SigningIdentity, connection pb.End
 		return err
 	}
 
-	proposalResp, err := connection.ProcessProposal(context.Background(), signedProp)
+	endorser := pb.NewEndorserClient(connection)
+	proposalResp, err := endorser.ProcessProposal(ctx, signedProp)
 	if err != nil {
 		return err
 	}
