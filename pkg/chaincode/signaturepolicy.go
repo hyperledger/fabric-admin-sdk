@@ -15,7 +15,6 @@ import (
 
 	"github.com/Knetic/govaluate"
 	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
-	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
 	mb "github.com/hyperledger/fabric-protos-go-apiv2/msp"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"google.golang.org/protobuf/proto"
@@ -412,9 +411,9 @@ func signaturePolicyEnvelopeFromString(policy string) (*cb.SignaturePolicyEnvelo
 func SignaturePolicyEnvelopeToString(policy *cb.SignaturePolicyEnvelope) string {
 	ids := []string{}
 	for _, id := range policy.Identities {
-		var mspRole msp.MSPRole
+		var mspRole mb.MSPRole
 		proto.Unmarshal(id.Principal, &mspRole)
-		mspid := mspRole.MspIdentifier + "." + strings.ToLower(msp.MSPRole_MSPRoleType_name[int32(mspRole.Role)])
+		mspid := mspRole.MspIdentifier + "." + strings.ToLower(mb.MSPRole_MSPRoleType_name[int32(mspRole.Role)])
 		ids = append(ids, mspid)
 	}
 
