@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 package chaincode
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/Knetic/govaluate"
 	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
 	mb "github.com/hyperledger/fabric-protos-go-apiv2/msp"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"google.golang.org/protobuf/proto"
@@ -390,4 +392,68 @@ func signaturePolicyEnvelopeFromString(policy string) (*cb.SignaturePolicyEnvelo
 	}
 
 	return p, nil
+}
+
+// SignaturePolicyEnvelopeToString parse a SignaturePolicyEnvelope to human readable expression
+// the returned expression is GATE(P[, P])
+//
+// where:
+//   - GATE is either "and" or "or" or "outof"
+//   - P is either a principal or another nested call to GATE
+//
+// A principal is defined as:
+//
+// # ORG.ROLE
+//
+// where:
+//   - ORG is a string (representing the MSP identifier)
+//   - ROLE takes the value of any of the RoleXXX constants representing
+//     the required role
+func SignaturePolicyEnvelopeToString(policy *cb.SignaturePolicyEnvelope) string {
+	ids := []string{}
+	for _, id := range policy.Identities {
+		var mspRole msp.MSPRole
+		proto.Unmarshal(id.Principal, &mspRole)
+		mspid := mspRole.MspIdentifier + "." + strings.ToLower(msp.MSPRole_MSPRoleType_name[int32(mspRole.Role)])
+		ids = append(ids, mspid)
+	}
+
+	var buf bytes.Buffer
+	policyParse(policy.Rule.Type, ids, &buf)
+	return buf.String()
+}
+
+//recursive parse
+func policyParse(t any, ids []string, buf *bytes.Buffer) {
+	p1, ok := t.(*cb.SignaturePolicy_SignedBy)
+	if ok {
+		buf.WriteString("'")
+		buf.WriteString(ids[p1.SignedBy])
+		buf.WriteString("'")
+		return
+	}
+
+	p2, ok := t.(*cb.SignaturePolicy_NOutOf_)
+	if ok {
+		l := len(p2.NOutOf.Rules)
+		n := int32(l)
+
+		if p2.NOutOf.N == n {
+			buf.WriteString("AND(")
+		} else if p2.NOutOf.N == 1 {
+			buf.WriteString("OR(")
+		} else {
+			buf.WriteString("OutOf(")
+			buf.WriteString(fmt.Sprint(p2.NOutOf.N))
+			buf.WriteString(",")
+		}
+		for i, r := range p2.NOutOf.Rules {
+			policyParse(r.Type, ids, buf)
+			if i == len(p2.NOutOf.Rules)-1 {
+				buf.WriteString(")")
+			} else {
+				buf.WriteString(",")
+			}
+		}
+	}
 }
