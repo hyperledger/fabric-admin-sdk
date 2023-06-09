@@ -2,7 +2,6 @@ package chaincode
 
 import (
 	"fmt"
-
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
