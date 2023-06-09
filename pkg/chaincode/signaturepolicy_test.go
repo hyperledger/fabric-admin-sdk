@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -21,12 +20,12 @@ var _ = Describe("signaturepolicy", func() {
 
 			for _, expression := range expressions {
 				//gen a SignaturePolicyEnvelope
-				applicationPolicy, err := chaincode.NewApplicationPolicy(expression, "")
+				applicationPolicy, err := NewApplicationPolicy(expression, "")
 				Expect(err).NotTo(HaveOccurred())
 				policy := applicationPolicy.GetSignaturePolicy()
 
 				//parse the SignaturePolicyEnvelope back to expression
-				dstExpression := chaincode.SignaturePolicyEnvelopeToString(policy)
+				dstExpression := SignaturePolicyEnvelopeToString(policy)
 
 				fmt.Println("src Expression", expression)
 				fmt.Println("dst Expression", dstExpression)
