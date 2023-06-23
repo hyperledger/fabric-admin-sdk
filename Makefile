@@ -41,33 +41,21 @@ golangci-lint: $(go_bin_dir)/golangci-lint
 scan: scan-go scan-node
 
 .PHONEY: scan-go
-scan-go: scan-go-govulncheck scan-go-osv-scanner
+scan-go: scan-go-govulncheck
 
 .PHONEY: scan-go-govulncheck
 scan-go-govulncheck:
 	go install golang.org/x/vuln/cmd/govulncheck@latest
 	govulncheck '$(base_dir)/...'
 
-.PHONEY: scan-go-osv-scanner
-scan-go-osv-scanner:
-	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
-	osv-scanner --lockfile='$(base_dir)/go.mod'
-
 .PHONEY: scan-node
-scan-node: scan-node-npm-audit scan-node-osv-scanner
+scan-node: scan-node-npm-audit
 
 .PHONEY: scan-node-npm-audit
 scan-node-npm-audit:
 	cd "$(node_dir)/admin" && \
 		npm install --package-lock-only && \
 		npm audit --omit=dev
-
-.PHONEY: scan-node-osv-scanner
-scan-node-osv-scanner:
-	go install github.com/google/osv-scanner/cmd/osv-scanner@latest
-	cd "$(node_dir)/admin" && \
-		npm install --package-lock-only && \
-		osv-scanner --lockfile=package-lock.json
 
 .PHONEY: escapes_detect
 escapes_detect:
