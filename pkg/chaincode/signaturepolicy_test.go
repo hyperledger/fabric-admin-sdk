@@ -2,7 +2,6 @@ package chaincode
 
 import (
 	"fmt"
-	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -36,8 +35,3 @@ var _ = Describe("signaturepolicy", func() {
 		})
 	})
 })
-
-func TestSignaturePolicy(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "signaturepolicy")
-}
