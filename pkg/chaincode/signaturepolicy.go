@@ -408,18 +408,21 @@ func signaturePolicyEnvelopeFromString(policy string) (*cb.SignaturePolicyEnvelo
 //   - ORG is a string (representing the MSP identifier)
 //   - ROLE takes the value of any of the RoleXXX constants representing
 //     the required role
-func SignaturePolicyEnvelopeToString(policy *cb.SignaturePolicyEnvelope) string {
+func SignaturePolicyEnvelopeToString(policy *cb.SignaturePolicyEnvelope) (string, error) {
 	ids := []string{}
 	for _, id := range policy.Identities {
 		var mspRole mb.MSPRole
-		proto.Unmarshal(id.Principal, &mspRole)
+		err := proto.Unmarshal(id.Principal, &mspRole)
+		if err != nil {
+			return "", err
+		}
 		mspid := mspRole.MspIdentifier + "." + strings.ToLower(mb.MSPRole_MSPRoleType_name[int32(mspRole.Role)])
 		ids = append(ids, mspid)
 	}
 
 	var buf bytes.Buffer
 	policyParse(policy.Rule.Type, ids, &buf)
-	return buf.String()
+	return buf.String(), nil
 }
 
 //recursive parse

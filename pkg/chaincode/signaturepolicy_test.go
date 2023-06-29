@@ -24,7 +24,8 @@ var _ = Describe("signaturepolicy", func() {
 				policy := applicationPolicy.GetSignaturePolicy()
 
 				//parse the SignaturePolicyEnvelope back to expression
-				dstExpression := SignaturePolicyEnvelopeToString(policy)
+				dstExpression, err := SignaturePolicyEnvelopeToString(policy)
+				Expect(err).NotTo(HaveOccurred())
 
 				fmt.Println("src Expression", expression)
 				fmt.Println("dst Expression", dstExpression)
