@@ -410,52 +410,50 @@ func signaturePolicyEnvelopeFromString(policy string) (*cb.SignaturePolicyEnvelo
 //     the required role
 func SignaturePolicyEnvelopeToString(policy *cb.SignaturePolicyEnvelope) (string, error) {
 	ids := []string{}
-	for _, id := range policy.Identities {
+	for _, id := range policy.GetIdentities() {
 		var mspRole mb.MSPRole
-		err := proto.Unmarshal(id.Principal, &mspRole)
-		if err != nil {
+		if err := proto.Unmarshal(id.GetPrincipal(), &mspRole); err != nil {
 			return "", err
 		}
-		mspid := mspRole.MspIdentifier + "." + strings.ToLower(mb.MSPRole_MSPRoleType_name[int32(mspRole.Role)])
-		ids = append(ids, mspid)
+
+		mspID := mspRole.GetMspIdentifier() + "." + strings.ToLower(mb.MSPRole_MSPRoleType_name[int32(mspRole.GetRole())])
+		ids = append(ids, mspID)
 	}
 
 	var buf bytes.Buffer
-	policyParse(policy.Rule.Type, ids, &buf)
+	policyParse(policy.GetRule(), ids, &buf)
 	return buf.String(), nil
 }
 
-//recursive parse
-func policyParse(t any, ids []string, buf *bytes.Buffer) {
-	p1, ok := t.(*cb.SignaturePolicy_SignedBy)
-	if ok {
+// recursive parse
+func policyParse(rule *cb.SignaturePolicy, ids []string, buf *bytes.Buffer) {
+	switch p := rule.GetType().(type) {
+	case *cb.SignaturePolicy_SignedBy:
 		buf.WriteString("'")
-		buf.WriteString(ids[p1.SignedBy])
+		buf.WriteString(ids[p.SignedBy])
 		buf.WriteString("'")
-		return
-	}
 
-	p2, ok := t.(*cb.SignaturePolicy_NOutOf_)
-	if ok {
-		l := len(p2.NOutOf.Rules)
-		n := int32(l)
+	case *cb.SignaturePolicy_NOutOf_:
+		n := p.NOutOf.GetN()
+		rules := p.NOutOf.GetRules()
 
-		if p2.NOutOf.N == n {
+		switch n {
+		case int32(len(rules)):
 			buf.WriteString("AND(")
-		} else if p2.NOutOf.N == 1 {
+		case 1:
 			buf.WriteString("OR(")
-		} else {
+		default:
 			buf.WriteString("OutOf(")
-			buf.WriteString(fmt.Sprint(p2.NOutOf.N))
+			buf.WriteString(strconv.Itoa(int(n)))
 			buf.WriteString(",")
 		}
-		for i, r := range p2.NOutOf.Rules {
-			policyParse(r.Type, ids, buf)
-			if i == len(p2.NOutOf.Rules)-1 {
-				buf.WriteString(")")
-			} else {
+
+		for i, r := range rules {
+			if i > 0 {
 				buf.WriteString(",")
 			}
+			policyParse(r, ids, buf)
 		}
+		buf.WriteString(")")
 	}
 }
