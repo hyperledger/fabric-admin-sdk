@@ -23,7 +23,7 @@ func PeerMembershipQuery(ctx context.Context, conn *grpc.ClientConn, signer iden
 	}
 
 	querys := []*discovery.Query{
-		&discovery.Query{
+		{
 			Channel: channel,
 			Query: &discovery.Query_PeerQuery{
 				PeerQuery: &discovery.PeerMembershipQuery{
