@@ -7,32 +7,24 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("signaturepolicy", func() {
-	Context("signaturepolicyenvelope to string", func() {
-		It("should equal", func(specCtx SpecContext) {
-			expression1 := `OR('Org3MSP.peer','Org1MSP.admin','Org2MSP.member')`
-			expression2 := `AND('Org3MSP.peer','Org1MSP.admin','Org2MSP.member')`
-			expression3 := `AND('Org3MSP.peer',OR('Org1MSP.admin','Org2MSP.member'))`
-			expression4 := `OutOf(2,'Org1MSP.peer','Org2MSP.peer','Org3MSP.peer')`
+var _ = DescribeTable("signaturepolicyenvelope to string",
+	func(expression string) {
+		//gen a SignaturePolicyEnvelope from expression
+		applicationPolicy, err := NewApplicationPolicy(expression, "")
+		Expect(err).NotTo(HaveOccurred())
+		policy := applicationPolicy.GetSignaturePolicy()
 
-			expressions := []string{expression1, expression2, expression3, expression4}
+		//parse the SignaturePolicyEnvelope back to expression
+		dstExpression, err := SignaturePolicyEnvelopeToString(policy)
+		Expect(err).NotTo(HaveOccurred())
 
-			for _, expression := range expressions {
-				//gen a SignaturePolicyEnvelope
-				applicationPolicy, err := NewApplicationPolicy(expression, "")
-				Expect(err).NotTo(HaveOccurred())
-				policy := applicationPolicy.GetSignaturePolicy()
+		fmt.Println("src Expression:", expression)
+		fmt.Println("dst Expression:", dstExpression)
 
-				//parse the SignaturePolicyEnvelope back to expression
-				dstExpression, err := SignaturePolicyEnvelopeToString(policy)
-				Expect(err).NotTo(HaveOccurred())
-
-				fmt.Println("src Expression", expression)
-				fmt.Println("dst Expression", dstExpression)
-
-				Expect(dstExpression).To(Equal(expression))
-
-			}
-		})
-	})
-})
+		Expect(dstExpression).To(Equal(expression))
+	},
+	Entry("When keyword has OR", `OR('Org3MSP.peer','Org1MSP.admin','Org2MSP.member')`),
+	Entry("When keyword has AND", `AND('Org3MSP.peer','Org1MSP.admin','Org2MSP.member')`),
+	Entry("When keyword has AND,OR", `AND('Org3MSP.peer',OR('Org1MSP.admin','Org2MSP.member'))`),
+	Entry("When keyword has OutOf", `OutOf(2,'Org1MSP.peer','Org2MSP.peer','Org3MSP.peer')`),
+)
