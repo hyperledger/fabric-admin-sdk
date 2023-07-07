@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 package chaincode
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -390,4 +391,69 @@ func signaturePolicyEnvelopeFromString(policy string) (*cb.SignaturePolicyEnvelo
 	}
 
 	return p, nil
+}
+
+// SignaturePolicyEnvelopeToString parse a SignaturePolicyEnvelope to human readable expression
+// the returned expression is GATE(P[, P])
+//
+// where:
+//   - GATE is either "and" or "or" or "outof"
+//   - P is either a principal or another nested call to GATE
+//
+// A principal is defined as:
+//
+// # ORG.ROLE
+//
+// where:
+//   - ORG is a string (representing the MSP identifier)
+//   - ROLE takes the value of any of the RoleXXX constants representing
+//     the required role
+func SignaturePolicyEnvelopeToString(policy *cb.SignaturePolicyEnvelope) (string, error) {
+	ids := []string{}
+	for _, id := range policy.GetIdentities() {
+		var mspRole mb.MSPRole
+		if err := proto.Unmarshal(id.GetPrincipal(), &mspRole); err != nil {
+			return "", err
+		}
+
+		mspID := mspRole.GetMspIdentifier() + "." + strings.ToLower(mb.MSPRole_MSPRoleType_name[int32(mspRole.GetRole())])
+		ids = append(ids, mspID)
+	}
+
+	var buf bytes.Buffer
+	policyParse(policy.GetRule(), ids, &buf)
+	return buf.String(), nil
+}
+
+// recursive parse
+func policyParse(rule *cb.SignaturePolicy, ids []string, buf *bytes.Buffer) {
+	switch p := rule.GetType().(type) {
+	case *cb.SignaturePolicy_SignedBy:
+		buf.WriteString("'")
+		buf.WriteString(ids[p.SignedBy])
+		buf.WriteString("'")
+
+	case *cb.SignaturePolicy_NOutOf_:
+		n := p.NOutOf.GetN()
+		rules := p.NOutOf.GetRules()
+
+		switch n {
+		case int32(len(rules)):
+			buf.WriteString("AND(")
+		case 1:
+			buf.WriteString("OR(")
+		default:
+			buf.WriteString("OutOf(")
+			buf.WriteString(strconv.Itoa(int(n)))
+			buf.WriteString(",")
+		}
+
+		for i, r := range rules {
+			if i > 0 {
+				buf.WriteString(",")
+			}
+			policyParse(r, ids, buf)
+		}
+		buf.WriteString(")")
+	}
 }
