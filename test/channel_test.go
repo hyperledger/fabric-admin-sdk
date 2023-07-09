@@ -11,8 +11,9 @@ import (
 	"github.com/hyperledger/fabric-admin-sdk/internal/protoutil"
 	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
 
-	"github.com/hyperledger/fabric-admin-sdk/internal/network"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/channel"
+	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
+	"github.com/hyperledger/fabric-admin-sdk/pkg/network"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -66,7 +67,7 @@ var _ = Describe("channel", func() {
 			peerConnection, err := network.DialConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
 
-			id, err := CreateSigner(PrivKeyPath, SignCert, MSPID)
+			id, err := identity.CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
 
 			configBlock, err := channel.GetConfigBlock(specCtx, peerConnection, id, channelID)
@@ -97,7 +98,7 @@ var _ = Describe("channel", func() {
 			peerConnection, err := network.DialConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
 
-			id, err := CreateSigner(PrivKeyPath, SignCert, MSPID)
+			id, err := identity.CreateSigner(PrivKeyPath, SignCert, MSPID)
 			Expect(err).NotTo(HaveOccurred())
 
 			blockChainInfo, err := channel.GetBlockChainInfo(specCtx, peerConnection, id, channelID)
@@ -127,9 +128,9 @@ var _ = Describe("channel", func() {
 			var PrivKeyPath2 = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/priv_sk"
 			var SignCertPath2 = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem"
 
-			signer, err := CreateSigner(PrivKeyPath, SignCertPath, MSPID)
+			signer, err := identity.CreateSigner(PrivKeyPath, SignCertPath, MSPID)
 			Expect(err).NotTo(HaveOccurred())
-			signer2, err := CreateSigner(PrivKeyPath2, SignCertPath2, MSPID2)
+			signer2, err := identity.CreateSigner(PrivKeyPath2, SignCertPath2, MSPID2)
 			Expect(err).NotTo(HaveOccurred())
 
 			// get update config file, see https://hyperledger-fabric.readthedocs.io/en/release-2.4/channel_update_tutorial.html#add-the-org3-crypto-material
