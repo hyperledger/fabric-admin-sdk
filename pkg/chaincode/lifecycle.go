@@ -14,16 +14,16 @@ import (
 )
 
 const (
-	lifecycleChaincodeName                = "_lifecycle"
-	approveTransactionName                = "ApproveChaincodeDefinitionForMyOrg"
-	commitTransactionName                 = "CommitChaincodeDefinition"
-	queryInstalledTransactionName         = "QueryInstalledChaincodes"
-	queryApprovedTransactionName          = "QueryApprovedChaincodeDefinition"
-	queryCommittedTransactionName         = "QueryChaincodeDefinitions"
-	queryCommittedWithNameTransactionName = "QueryChaincodeDefinition"
-	checkCommitReadinessTransactionName   = "CheckCommitReadiness"
-	installTransactionName                = "InstallChaincode"
-	getInstalledTransactionName           = "GetInstalledChaincodePackage"
+	lifecycleChaincodeName                = "_lifecycle"                         // #nosec G101
+	approveTransactionName                = "ApproveChaincodeDefinitionForMyOrg" // #nosec G101
+	commitTransactionName                 = "CommitChaincodeDefinition"          // #nosec G101
+	queryInstalledTransactionName         = "QueryInstalledChaincodes"           // #nosec G101
+	queryApprovedTransactionName          = "QueryApprovedChaincodeDefinition"   // #nosec G101
+	queryCommittedTransactionName         = "QueryChaincodeDefinitions"          // #nosec G101
+	queryCommittedWithNameTransactionName = "QueryChaincodeDefinition"           // #nosec G101
+	checkCommitReadinessTransactionName   = "CheckCommitReadiness"               // #nosec G101
+	installTransactionName                = "InstallChaincode"                   // #nosec G101
+	getInstalledTransactionName           = "GetInstalledChaincodePackage"       // #nosec G101
 
 	// metadataFile is the expected location of the metadata json document
 	// in the top level of the chaincode package.
