@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 var _ = Describe("QueryCommittedWithName", func() {
@@ -38,7 +39,7 @@ var _ = Describe("QueryCommittedWithName", func() {
 			Invoke(gomock.Any(), gomock.Eq(gatewayEvaluateMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *gateway.EvaluateRequest, out *gateway.EvaluateResponse, opts ...grpc.CallOption) {
 				evaluateCtxErr = ctx.Err()
-				CopyProto(NewEvaluateResponse(""), out)
+				proto.Merge(out, NewEvaluateResponse(""))
 			})
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
@@ -84,7 +85,7 @@ var _ = Describe("QueryCommittedWithName", func() {
 			Invoke(gomock.Any(), gomock.Eq(gatewayEvaluateMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *gateway.EvaluateRequest, out *gateway.EvaluateResponse, opts ...grpc.CallOption) {
 				evaluateRequest = in
-				CopyProto(NewEvaluateResponse(""), out)
+				proto.Merge(out, NewEvaluateResponse(""))
 			}).
 			Times(1)
 		mockSigner := NewMockSigner(controller, "", nil, nil)
