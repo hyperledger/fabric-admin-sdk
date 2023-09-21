@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 const gatewayEndorseMethod = "/gateway.Gateway/Endorse"
@@ -108,18 +109,18 @@ var _ = Describe("Approve", func() {
 			Invoke(gomock.Any(), gomock.Eq(gatewayEndorseMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *gateway.EndorseRequest, out *gateway.EndorseResponse, opts ...grpc.CallOption) {
 				endorseCtxErr = ctx.Err()
-				CopyProto(NewEndorseResponse(channelName, ""), out)
+				proto.Merge(out, NewEndorseResponse(channelName, ""))
 			})
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(gatewaySubmitMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *gateway.SubmitRequest, out *gateway.SubmitResponse, opts ...grpc.CallOption) {
 				submitCtxErr = ctx.Err()
-				CopyProto(NewSubmitResponse(), out)
+				proto.Merge(out, NewSubmitResponse())
 			})
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(gatewayCommitStatusMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, method string, in *gateway.SignedCommitStatusRequest, out *gateway.CommitStatusResponse, opts ...grpc.CallOption) error {
-				CopyProto(NewCommitStatusResponse(peer.TxValidationCode_VALID, 0), out)
+				proto.Merge(out, NewCommitStatusResponse(peer.TxValidationCode_VALID, 0))
 				return ctx.Err()
 			})
 
@@ -164,12 +165,12 @@ var _ = Describe("Approve", func() {
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(gatewayEndorseMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *gateway.EndorseRequest, out *gateway.EndorseResponse, opts ...grpc.CallOption) {
-				CopyProto(NewEndorseResponse(channelName, ""), out)
+				proto.Merge(out, NewEndorseResponse(channelName, ""))
 			})
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(gatewaySubmitMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *gateway.SubmitRequest, out *gateway.SubmitResponse, opts ...grpc.CallOption) {
-				CopyProto(NewSubmitResponse(), out)
+				proto.Merge(out, NewSubmitResponse())
 			})
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(gatewayCommitStatusMethod), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -193,7 +194,7 @@ var _ = Describe("Approve", func() {
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(gatewayEndorseMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *gateway.EndorseRequest, out *gateway.EndorseResponse, opts ...grpc.CallOption) {
-				CopyProto(NewEndorseResponse(channelName, ""), out)
+				proto.Merge(out, NewEndorseResponse(channelName, ""))
 			})
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(gatewaySubmitMethod), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -226,18 +227,18 @@ var _ = Describe("Approve", func() {
 				Invoke(gomock.Any(), gomock.Eq(gatewayEndorseMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 				Do(func(ctx context.Context, method string, in *gateway.EndorseRequest, out *gateway.EndorseResponse, opts ...grpc.CallOption) {
 					endorseRequest = in
-					CopyProto(NewEndorseResponse(channelName, ""), out)
+					proto.Merge(out, NewEndorseResponse(channelName, ""))
 				}).
 				Times(1)
 			mockConnection.EXPECT().
 				Invoke(gomock.Any(), gomock.Eq(gatewaySubmitMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 				Do(func(ctx context.Context, method string, in *gateway.SubmitRequest, out *gateway.SubmitResponse, opts ...grpc.CallOption) {
-					CopyProto(NewSubmitResponse(), out)
+					proto.Merge(out, NewSubmitResponse())
 				})
 			mockConnection.EXPECT().
 				Invoke(gomock.Any(), gomock.Eq(gatewayCommitStatusMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 				Do(func(ctx context.Context, method string, in *gateway.SignedCommitStatusRequest, out *gateway.CommitStatusResponse, opts ...grpc.CallOption) {
-					CopyProto(NewCommitStatusResponse(peer.TxValidationCode_VALID, 0), out)
+					proto.Merge(out, NewCommitStatusResponse(peer.TxValidationCode_VALID, 0))
 				})
 
 			mockSigner := NewMockSigner(controller, "", nil, nil)

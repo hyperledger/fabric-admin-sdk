@@ -17,6 +17,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 )
 
 var _ = Describe("GetInstalled", func() {
@@ -28,7 +29,7 @@ var _ = Describe("GetInstalled", func() {
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) error {
-				CopyProto(NewSuccessfulProposalResponse(nil), out)
+				proto.Merge(out, NewSuccessfulProposalResponse(nil))
 				return ctx.Err()
 			})
 
@@ -71,7 +72,7 @@ var _ = Describe("GetInstalled", func() {
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
-				CopyProto(NewErrorProposalResponse(expectedStatus, expectedMessage), out)
+				proto.Merge(out, NewErrorProposalResponse(expectedStatus, expectedMessage))
 			})
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
@@ -98,7 +99,7 @@ var _ = Describe("GetInstalled", func() {
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
 				signedProposal = in
-				CopyProto(NewSuccessfulProposalResponse(nil), out)
+				proto.Merge(out, NewSuccessfulProposalResponse(nil))
 			}).
 			Times(1)
 
@@ -126,7 +127,7 @@ var _ = Describe("GetInstalled", func() {
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
 				signedProposal = in
-				CopyProto(NewSuccessfulProposalResponse(nil), out)
+				proto.Merge(out, NewSuccessfulProposalResponse(nil))
 			}).
 			Times(1)
 
@@ -155,7 +156,7 @@ var _ = Describe("GetInstalled", func() {
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
 				signedProposal = in
-				CopyProto(NewSuccessfulProposalResponse(nil), out)
+				proto.Merge(out, NewSuccessfulProposalResponse(nil))
 			}).
 			Times(1)
 
@@ -189,7 +190,7 @@ var _ = Describe("GetInstalled", func() {
 		mockConnection.EXPECT().
 			Invoke(gomock.Any(), gomock.Eq(processProposalMethod), gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, method string, in *peer.SignedProposal, out *peer.ProposalResponse, opts ...grpc.CallOption) {
-				CopyProto(response, out)
+				proto.Merge(out, response)
 			})
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
