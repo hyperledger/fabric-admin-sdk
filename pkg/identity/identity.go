@@ -79,7 +79,7 @@ func (id *signingIdentity) Sign(message []byte) ([]byte, error) {
 	return id.sign(message)
 }
 
-func GetCertificate(f string) (*x509.Certificate, []byte, error) {
+func ReadCertificate(f string) (*x509.Certificate, []byte, error) {
 	in, err := os.ReadFile(f)
 	if err != nil {
 		return nil, nil, err

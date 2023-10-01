@@ -55,7 +55,7 @@ func asn1ECDSASignature(r, s *big.Int) ([]byte, error) {
 	})
 }
 
-func GetecdsaPrivateKey(f string) (*ecdsa.PrivateKey, error) {
+func ReadECDSAPrivateKey(f string) (*ecdsa.PrivateKey, error) {
 	in, err := os.ReadFile(f)
 	if err != nil {
 		return nil, err

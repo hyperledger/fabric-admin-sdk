@@ -67,10 +67,10 @@ var _ = Describe("channel", func() {
 			peerConnection, err := network.DialConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
 
-			cert, _, err := identity.GetCertificate(SignCert)
+			cert, _, err := identity.ReadCertificate(SignCert)
 			Expect(err).NotTo(HaveOccurred())
 
-			priv, err := identity.GetecdsaPrivateKey(PrivKeyPath)
+			priv, err := identity.ReadECDSAPrivateKey(PrivKeyPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			id, err := identity.NewPrivateKeySigningIdentity(MSPID, cert, priv)
@@ -104,10 +104,10 @@ var _ = Describe("channel", func() {
 			peerConnection, err := network.DialConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
 
-			cert, _, err := identity.GetCertificate(SignCert)
+			cert, _, err := identity.ReadCertificate(SignCert)
 			Expect(err).NotTo(HaveOccurred())
 
-			priv, err := identity.GetecdsaPrivateKey(PrivKeyPath)
+			priv, err := identity.ReadECDSAPrivateKey(PrivKeyPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			id, err := identity.NewPrivateKeySigningIdentity(MSPID, cert, priv)
@@ -140,19 +140,19 @@ var _ = Describe("channel", func() {
 			var PrivKeyPath2 = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/priv_sk"
 			var SignCertPath2 = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem"
 
-			cert, _, err := identity.GetCertificate(SignCertPath)
+			cert, _, err := identity.ReadCertificate(SignCertPath)
 			Expect(err).NotTo(HaveOccurred())
 
-			priv, err := identity.GetecdsaPrivateKey(PrivKeyPath)
+			priv, err := identity.ReadECDSAPrivateKey(PrivKeyPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			signer, err := identity.NewPrivateKeySigningIdentity(MSPID, cert, priv)
 			Expect(err).NotTo(HaveOccurred())
 
-			cert2, _, err := identity.GetCertificate(SignCertPath2)
+			cert2, _, err := identity.ReadCertificate(SignCertPath2)
 			Expect(err).NotTo(HaveOccurred())
 
-			priv2, err := identity.GetecdsaPrivateKey(PrivKeyPath2)
+			priv2, err := identity.ReadECDSAPrivateKey(PrivKeyPath2)
 			Expect(err).NotTo(HaveOccurred())
 
 			signer2, err := identity.NewPrivateKeySigningIdentity(MSPID2, cert2, priv2)

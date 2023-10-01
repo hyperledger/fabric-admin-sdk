@@ -32,10 +32,10 @@ var _ = Describe("discovery", func() {
 			peerConnection, err := network.DialConnection(peer0)
 			Expect(err).NotTo(HaveOccurred())
 
-			cert, _, err := identity.GetCertificate(SignCert)
+			cert, _, err := identity.ReadCertificate(SignCert)
 			Expect(err).NotTo(HaveOccurred())
 
-			priv, err := identity.GetecdsaPrivateKey(PrivKeyPath)
+			priv, err := identity.ReadECDSAPrivateKey(PrivKeyPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			id, err := identity.NewPrivateKeySigningIdentity(MSPID, cert, priv)
