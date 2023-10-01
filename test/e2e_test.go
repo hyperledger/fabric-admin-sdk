@@ -116,7 +116,14 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			peer1Connection, err := network.DialConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
-			org1MSP, err := identity.CreateSigner(PrivKeyPath, SignCert, org1MspID)
+
+			cert, _, err := identity.GetCertificate(SignCert)
+			Expect(err).NotTo(HaveOccurred())
+
+			priv, err := identity.GetecdsaPrivateKey(PrivKeyPath)
+			Expect(err).NotTo(HaveOccurred())
+
+			org1MSP, err := identity.NewPrivateKeySigningIdentity(org1MspID, cert, priv)
 			Expect(err).NotTo(HaveOccurred())
 
 			TLSCACert = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt"
@@ -131,7 +138,14 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			peer2Connection, err := network.DialConnection(peer2)
 			Expect(err).NotTo(HaveOccurred())
-			org2MSP, err := identity.CreateSigner(PrivKeyPath, SignCert, org2MspID)
+
+			cert2, _, err := identity.GetCertificate(SignCert)
+			Expect(err).NotTo(HaveOccurred())
+
+			priv2, err := identity.GetecdsaPrivateKey(PrivKeyPath)
+			Expect(err).NotTo(HaveOccurred())
+
+			org2MSP, err := identity.NewPrivateKeySigningIdentity(org2MspID, cert2, priv2)
 			Expect(err).NotTo(HaveOccurred())
 
 			//genesis block

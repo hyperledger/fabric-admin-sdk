@@ -32,7 +32,13 @@ var _ = Describe("discovery", func() {
 			peerConnection, err := network.DialConnection(peer0)
 			Expect(err).NotTo(HaveOccurred())
 
-			id, err := identity.CreateSigner(PrivKeyPath, SignCert, MSPID)
+			cert, _, err := identity.GetCertificate(SignCert)
+			Expect(err).NotTo(HaveOccurred())
+
+			priv, err := identity.GetecdsaPrivateKey(PrivKeyPath)
+			Expect(err).NotTo(HaveOccurred())
+
+			id, err := identity.NewPrivateKeySigningIdentity(MSPID, cert, priv)
 			Expect(err).NotTo(HaveOccurred())
 
 			ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
