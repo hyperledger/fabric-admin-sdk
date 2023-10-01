@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hyperledger/fabric-admin-sdk/internal/network"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/discovery"
+	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
+	"github.com/hyperledger/fabric-admin-sdk/pkg/network"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -31,7 +32,13 @@ var _ = Describe("discovery", func() {
 			peerConnection, err := network.DialConnection(peer0)
 			Expect(err).NotTo(HaveOccurred())
 
-			id, err := CreateSigner(PrivKeyPath, SignCert, MSPID)
+			cert, _, err := identity.ReadCertificate(SignCert)
+			Expect(err).NotTo(HaveOccurred())
+
+			priv, err := identity.ReadECDSAPrivateKey(PrivKeyPath)
+			Expect(err).NotTo(HaveOccurred())
+
+			id, err := identity.NewPrivateKeySigningIdentity(MSPID, cert, priv)
 			Expect(err).NotTo(HaveOccurred())
 
 			ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)

@@ -9,7 +9,9 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
+	"os"
 )
 
 // Identity used to interact with a Fabric network.
@@ -75,4 +77,16 @@ func (id *signingIdentity) Credentials() []byte {
 
 func (id *signingIdentity) Sign(message []byte) ([]byte, error) {
 	return id.sign(message)
+}
+
+func ReadCertificate(f string) (*x509.Certificate, []byte, error) {
+	in, err := os.ReadFile(f)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	block, _ := pem.Decode(in)
+
+	c, err := x509.ParseCertificate(block.Bytes)
+	return c, in, err
 }

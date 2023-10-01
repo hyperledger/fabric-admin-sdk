@@ -15,10 +15,10 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric-admin-sdk/internal/configtxgen/genesisconfig"
-	"github.com/hyperledger/fabric-admin-sdk/internal/network"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/channel"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
+	"github.com/hyperledger/fabric-admin-sdk/pkg/network"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	gatewaypb "github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 
@@ -116,7 +116,14 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			peer1Connection, err := network.DialConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
-			org1MSP, err := CreateSigner(PrivKeyPath, SignCert, org1MspID)
+
+			cert, _, err := identity.ReadCertificate(SignCert)
+			Expect(err).NotTo(HaveOccurred())
+
+			priv, err := identity.ReadECDSAPrivateKey(PrivKeyPath)
+			Expect(err).NotTo(HaveOccurred())
+
+			org1MSP, err := identity.NewPrivateKeySigningIdentity(org1MspID, cert, priv)
 			Expect(err).NotTo(HaveOccurred())
 
 			TLSCACert = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt"
@@ -131,7 +138,14 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			peer2Connection, err := network.DialConnection(peer2)
 			Expect(err).NotTo(HaveOccurred())
-			org2MSP, err := CreateSigner(PrivKeyPath, SignCert, org2MspID)
+
+			cert2, _, err := identity.ReadCertificate(SignCert)
+			Expect(err).NotTo(HaveOccurred())
+
+			priv2, err := identity.ReadECDSAPrivateKey(PrivKeyPath)
+			Expect(err).NotTo(HaveOccurred())
+
+			org2MSP, err := identity.NewPrivateKeySigningIdentity(org2MspID, cert2, priv2)
 			Expect(err).NotTo(HaveOccurred())
 
 			//genesis block
