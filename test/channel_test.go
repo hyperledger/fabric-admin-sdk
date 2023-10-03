@@ -78,6 +78,7 @@ var _ = Describe("channel", func() {
 
 			configBlock, err := channel.GetConfigBlock(specCtx, peerConnection, id, channelID)
 			Expect(err).NotTo(HaveOccurred())
+			Expect(configBlock).ShouldNot(BeNil())
 			fmt.Println("config block", configBlock)
 		})
 	})
@@ -115,6 +116,7 @@ var _ = Describe("channel", func() {
 
 			blockChainInfo, err := channel.GetBlockChainInfo(specCtx, peerConnection, id, channelID)
 			Expect(err).NotTo(HaveOccurred())
+			Expect(blockChainInfo).ShouldNot(BeNil())
 			fmt.Println("blockchain info", blockChainInfo)
 		})
 	})
