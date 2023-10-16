@@ -14,7 +14,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.8.2
 	github.com/onsi/gomega v1.27.0
 	github.com/opentracing/opentracing-go v1.2.0
-	google.golang.org/grpc v1.57.0
+	google.golang.org/grpc v1.58.3
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v2 v2.4.0
 )
