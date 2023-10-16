@@ -64,8 +64,8 @@ github.com/hashicorp/go-uuid v1.0.3 h1:2gKiV6YVmrJ1i2CKKa9obLvRieoRGviZFL26PcT/C
 github.com/hashicorp/go-uuid v1.0.3/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
 github.com/hashicorp/go-version v1.6.0 h1:feTTfFNnjP967rlCxM/I9g701jU+RN74YKx2mOkIeek=
 github.com/hashicorp/go-version v1.6.0/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09ZGVZPK5anwXA=
-github.com/hyperledger/fabric-gateway v1.3.1 h1:jFuwsqwMI4R5gtpzous8atkl81GvZPQ7A+NMBoxqvWk=
-github.com/hyperledger/fabric-gateway v1.3.1/go.mod h1:TWRlsfMRv3DRQDRPbmgsxJFGaqPI4OloOyk5MKwk51g=
+github.com/hyperledger/fabric-gateway v1.3.2 h1:TKBoL69CLTxOEwg0s3GDqR9QjLaK9RxQ7CHUjksO0Cg=
+github.com/hyperledger/fabric-gateway v1.3.2/go.mod h1:ut3TCui98PIS08fwWJa+bfYvJvQf/rNlc0QtZZuY9/o=
 github.com/hyperledger/fabric-protos-go-apiv2 v0.2.1 h1:iuCabkxwT1WZ06uREDjYPrtLsGFX05hwbpERYfmcatM=
 github.com/hyperledger/fabric-protos-go-apiv2 v0.2.1/go.mod h1:2pq0ui6ZWA0cC8J+eCErgnMDCS1kPOEYVY+06ZAK0qE=
 github.com/jcmturner/aescts/v2 v2.0.0 h1:9YKLH6ey7H4eDBXW8khjYslgyqG2xZikXP0EQFKrle8=

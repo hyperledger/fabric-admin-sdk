@@ -8,7 +8,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/hashicorp/go-version v1.6.0
-	github.com/hyperledger/fabric-gateway v1.3.1
+	github.com/hyperledger/fabric-gateway v1.3.2
 	github.com/hyperledger/fabric-protos-go-apiv2 v0.2.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.8.2
