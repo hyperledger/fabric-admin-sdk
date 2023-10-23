@@ -80,8 +80,8 @@ func Untar(buffer io.Reader, dst string) error {
 			}
 
 			// copy over contents
-			//#nosec G110 - Leave to the user to check for decompression bomb?
-			if _, err := io.Copy(f, tr); err != nil {
+			_, err = io.Copy(f, tr) // #nosec G110 -- Only used on test input we provide
+			if err != nil {
 				return err
 			}
 
