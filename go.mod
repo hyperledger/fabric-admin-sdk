@@ -8,7 +8,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/hashicorp/go-version v1.6.0
-	github.com/hyperledger/fabric-gateway v1.3.2
+	github.com/hyperledger/fabric-gateway v1.4.0
 	github.com/hyperledger/fabric-protos-go-apiv2 v0.2.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.13.0
@@ -48,6 +48,6 @@ require (
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.12.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20231016165738-49dd2c1f3d0b // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
