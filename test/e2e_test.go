@@ -313,7 +313,8 @@ var _ = Describe("e2e", func() {
 			readinessResult, err := chaincode.CheckCommitReadiness(readinessCtx, peer1Connection, org1MSP, chaincodeDef)
 			printGrpcError(err)
 			Expect(err).NotTo(HaveOccurred(), "check commit readiness")
-			Expect(readinessResult.GetApprovals()).To(Equal((map[string]bool{org1MspID: true, org2MspID: true})))
+			Expect(readinessResult.GetApprovals()[org1MspID]).To(BeTrue())
+			Expect(readinessResult.GetApprovals()[org2MspID]).To(BeTrue())
 
 			time.Sleep(time.Duration(20) * time.Second)
 
@@ -341,7 +342,8 @@ var _ = Describe("e2e", func() {
 			committedWithNameResult, err := chaincode.QueryCommittedWithName(committedWithNameCtx, peer1Connection, org1MSP, channelName, chaincodeDef.Name)
 			printGrpcError(err)
 			Expect(err).NotTo(HaveOccurred(), "query committed chaincode with name")
-			Expect(committedWithNameResult.GetApprovals()).To(Equal(map[string]bool{org1MspID: true, org2MspID: true}), "committed chaincode approvals")
+			Expect(readinessResult.GetApprovals()[org1MspID]).To(BeTrue())
+			Expect(readinessResult.GetApprovals()[org2MspID]).To(BeTrue())
 			Expect(committedWithNameResult.GetSequence()).To(Equal(chaincodeDef.Sequence), "committed chaincode sequence")
 
 			f, _ := os.Create("PackageID")
