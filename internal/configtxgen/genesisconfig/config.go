@@ -17,6 +17,7 @@ import (
 
 	"github.com/hyperledger/fabric-admin-sdk/internal/configtxgen/viperutil"
 	"github.com/hyperledger/fabric-admin-sdk/internal/msp"
+	"github.com/hyperledger/fabric-protos-go-apiv2/orderer/smartbft"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/orderer/etcdraft"
 )
@@ -24,6 +25,7 @@ import (
 const (
 	// The type key for etcd based RAFT consensus.
 	EtcdRaft = "etcdraft"
+	BFT      = "BFT"
 )
 
 const (
@@ -149,16 +151,28 @@ type AnchorPeer struct {
 
 // Orderer contains configuration associated to a channel.
 type Orderer struct {
-	OrdererType   string                   `yaml:"OrdererType"`
-	Addresses     []string                 `yaml:"Addresses"`
-	BatchTimeout  time.Duration            `yaml:"BatchTimeout"`
-	BatchSize     BatchSize                `yaml:"BatchSize"`
-	Kafka         Kafka                    `yaml:"Kafka"`
-	EtcdRaft      *etcdraft.ConfigMetadata `yaml:"EtcdRaft"`
-	Organizations []*Organization          `yaml:"Organizations"`
-	MaxChannels   uint64                   `yaml:"MaxChannels"`
-	Capabilities  map[string]bool          `yaml:"Capabilities"`
-	Policies      map[string]*Policy       `yaml:"Policies"`
+	OrdererType      string                   `yaml:"OrdererType"`
+	Addresses        []string                 `yaml:"Addresses"`
+	BatchTimeout     time.Duration            `yaml:"BatchTimeout"`
+	BatchSize        BatchSize                `yaml:"BatchSize"`
+	Kafka            Kafka                    `yaml:"Kafka"`
+	ConsenterMapping []*Consenter             `yaml:"ConsenterMapping"`
+	EtcdRaft         *etcdraft.ConfigMetadata `yaml:"EtcdRaft"`
+	SmartBFT         *smartbft.Options        `yaml:"SmartBFT"`
+	Organizations    []*Organization          `yaml:"Organizations"`
+	MaxChannels      uint64                   `yaml:"MaxChannels"`
+	Capabilities     map[string]bool          `yaml:"Capabilities"`
+	Policies         map[string]*Policy       `yaml:"Policies"`
+}
+
+type Consenter struct {
+	ID            uint32 `yaml:"ID"`
+	Host          string `yaml:"Host"`
+	Port          uint32 `yaml:"Port"`
+	MSPID         string `yaml:"MSPID"`
+	Identity      string `yaml:"Identity"`
+	ClientTLSCert string `yaml:"ClientTLSCert"`
+	ServerTLSCert string `yaml:"ServerTLSCert"`
 }
 
 // BatchSize contains configuration affecting the size of batches.
@@ -404,6 +418,40 @@ loop:
 			serverCertPath := string(c.GetServerTlsCert())
 			TranslatePathInPlace(configDir, &serverCertPath)
 			c.ServerTlsCert = []byte(serverCertPath)
+		}
+	case BFT:
+		if ord.SmartBFT == nil {
+			log.Printf("Orderer.SmartBFT.Options unset, setting to %v", genesisDefaults.Orderer.SmartBFT)
+			ord.SmartBFT = genesisDefaults.Orderer.SmartBFT
+		}
+
+		if len(ord.ConsenterMapping) == 0 {
+			log.Panicf("%s configuration did not specify any consenter", BFT)
+		}
+
+		for _, c := range ord.ConsenterMapping {
+			if c.Host == "" {
+				log.Panicf("consenter info in %s configuration did not specify host", BFT)
+			}
+			if c.Port == 0 {
+				log.Panicf("consenter info in %s configuration did not specify port", BFT)
+			}
+			if c.ClientTLSCert == "" {
+				log.Panicf("consenter info in %s configuration did not specify client TLS cert", BFT)
+			}
+			if c.ServerTLSCert == "" {
+				log.Panicf("consenter info in %s configuration did not specify server TLS cert", BFT)
+			}
+			if len(c.MSPID) == 0 {
+				log.Panicf("consenter info in %s configuration did not specify MSP ID", BFT)
+			}
+			if len(c.Identity) == 0 {
+				log.Panicf("consenter info in %s configuration did not specify identity certificate", BFT)
+			}
+
+			TranslatePathInPlace(configDir, &c.ClientTLSCert)
+			TranslatePathInPlace(configDir, &c.ServerTLSCert)
+			TranslatePathInPlace(configDir, &c.Identity)
 		}
 	default:
 		log.Panicf("unknown orderer type: %s", ord.OrdererType)

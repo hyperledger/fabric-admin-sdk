@@ -5,22 +5,32 @@ set -eu -o pipefail
 
 DIR="${PWD}"
 
-curl --silent --show-error --location https://raw.githubusercontent.com/hyperledger/fabric/main/scripts/install-fabric.sh | bash -s -- --fabric-version "$1"
-
+curl --silent --show-error --location https://raw.githubusercontent.com/hyperledger/fabric/main/scripts/install-fabric.sh | bash -s -- --fabric-version "$FABRIC_VERSION"
 cd fabric-samples/test-network
-if [[ $2 == 'create_channel' ]]; then
-    ./network.sh up
-else    
-    ./network.sh up createChannel -c mychannel
+
+echo $FABRIC_VERSION
+echo $CONSENSUS
+
+if [[ $CONSENSUS == 'BFT' ]]; then 
+    echo start 3.0.0 preview BFT processing
+    if [[ $CREATE_CHANNEL == 'create_channel' ]]; then
+        ./network.sh up -bft
+    else    
+        echo y | ./network.sh up createChannel -bft -c mychannel
+    fi
+else
+    if [[ $CREATE_CHANNEL == 'create_channel' ]]; then
+        ./network.sh up
+    else    
+        ./network.sh up createChannel -c mychannel
+    fi
 fi
 
 cd "${DIR}/test"
 mkdir -p ../organizations
 cp -r ../fabric-samples/test-network/organizations/* ../organizations/
 ls ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
-if [[ $2 == 'create_channel' ]]; then
-    export createChannel=true
-fi
+
 go test -v ./...
 docker network ls
 docker ps -a

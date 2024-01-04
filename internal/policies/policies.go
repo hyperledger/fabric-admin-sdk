@@ -2,11 +2,18 @@ package policies
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
+	"github.com/hyperledger/fabric-admin-sdk/internal/policydsl"
 	"github.com/hyperledger/fabric-admin-sdk/internal/protoutil"
+	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
 
 	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
+)
+
+const (
+	BlockValidationPolicyKey = "BlockValidation"
 )
 
 // ConfigPolicy defines a common representation for different *cb.ConfigPolicy values.
@@ -101,4 +108,41 @@ func ImplicitMetaFromString(input string) (*cb.ImplicitMetaPolicy, error) {
 	}
 
 	return res, nil
+}
+
+func EncodeBFTBlockVerificationPolicy(consenterProtos []*cb.Consenter, ordererGroup *cb.ConfigGroup) {
+	n := len(consenterProtos)
+	f := (n - 1) / 3
+
+	var identities []*msp.MSPPrincipal
+	var pols []*cb.SignaturePolicy
+	for i, consenter := range consenterProtos {
+		pols = append(pols, &cb.SignaturePolicy{
+			Type: &cb.SignaturePolicy_SignedBy{
+				SignedBy: int32(i),
+			},
+		})
+		identities = append(identities, &msp.MSPPrincipal{
+			PrincipalClassification: msp.MSPPrincipal_IDENTITY,
+			Principal:               protoutil.MarshalOrPanic(&msp.SerializedIdentity{Mspid: consenter.MspId, IdBytes: consenter.Identity}),
+		})
+	}
+
+	quorumSize := ComputeBFTQuorum(n, f)
+	sp := &cb.SignaturePolicyEnvelope{
+		Rule:       policydsl.NOutOf(int32(quorumSize), pols),
+		Identities: identities,
+	}
+	ordererGroup.Policies[BlockValidationPolicyKey] = &cb.ConfigPolicy{
+		// Inherit modification policy
+		ModPolicy: ordererGroup.Policies[BlockValidationPolicyKey].ModPolicy,
+		Policy: &cb.Policy{
+			Type:  int32(cb.Policy_SIGNATURE),
+			Value: protoutil.MarshalOrPanic(sp),
+		},
+	}
+}
+
+func ComputeBFTQuorum(totalNodes, faultyNodes int) int {
+	return int(math.Ceil(float64(totalNodes+faultyNodes+1) / 2))
 }

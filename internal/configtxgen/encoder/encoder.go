@@ -9,6 +9,7 @@ package encoder
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	icc "github.com/hyperledger/fabric-admin-sdk/internal/channelconfig"
 	"github.com/hyperledger/fabric-admin-sdk/internal/configtxgen/genesisconfig"
@@ -34,6 +35,7 @@ const (
 	ConsensusTypeKafka = "kafka"
 	// ConsensusTypeKafka identifies the Kafka-based consensus implementation.
 	ConsensusTypeEtcdRaft = "etcdraft"
+	ConsensusTypeBFT      = "BFT"
 
 	// BlockValidationPolicyKey TODO
 	BlockValidationPolicyKey = "BlockValidation"
@@ -202,12 +204,21 @@ func NewOrdererGroup(conf *genesisconfig.Orderer) (*cb.ConfigGroup, error) {
 
 	switch conf.OrdererType {
 	case ConsensusTypeSolo:
-	case ConsensusTypeKafka:
-		addValue(ordererGroup, icc.KafkaBrokersValue(conf.Kafka.Brokers), icc.AdminsPolicyKey)
 	case ConsensusTypeEtcdRaft:
 		if consensusMetadata, err = icc.MarshalEtcdRaftMetadata(conf.EtcdRaft); err != nil {
 			return nil, fmt.Errorf("cannot marshal metadata for orderer type %s: %s", ConsensusTypeEtcdRaft, err)
 		}
+	case ConsensusTypeBFT:
+		consenterProtos, err := consenterProtosFromConfig(conf.ConsenterMapping)
+		if err != nil {
+			return nil, fmt.Errorf("cannot load consenter config for orderer type %s: %s", ConsensusTypeBFT, err)
+		}
+		addValue(ordererGroup, icc.OrderersValue(consenterProtos), icc.AdminsPolicyKey)
+		if consensusMetadata, err = icc.MarshalBFTOptions(conf.SmartBFT); err != nil {
+			return nil, fmt.Errorf("consenter options read failed with error %s for orderer type %s", err, ConsensusTypeBFT)
+		}
+		// Overwrite policy manually by computing it from the consenters
+		ipc.EncodeBFTBlockVerificationPolicy(consenterProtos, ordererGroup)
 	default:
 		return nil, fmt.Errorf("unknown orderer type: %s", conf.OrdererType)
 	}
@@ -542,4 +553,44 @@ func New(config *genesisconfig.Profile) *Bootstrapper {
 // GenesisBlockForChannel produces a genesis block for a given channel ID
 func (bs *Bootstrapper) GenesisBlockForChannel(channelID string) *cb.Block {
 	return genesis.NewFactoryImpl(bs.channelGroup).Block(channelID)
+}
+
+func consenterProtosFromConfig(consenterMapping []*genesisconfig.Consenter) ([]*cb.Consenter, error) {
+	var consenterProtos []*cb.Consenter
+	for _, consenter := range consenterMapping {
+		c := &cb.Consenter{
+			Id:    consenter.ID,
+			Host:  consenter.Host,
+			Port:  consenter.Port,
+			MspId: consenter.MSPID,
+		}
+		// Expect the user to set the config value for client/server certs or identity to the
+		// path where they are persisted locally, then load these files to memory.
+		if consenter.ClientTLSCert != "" {
+			clientCert, err := os.ReadFile(consenter.ClientTLSCert)
+			if err != nil {
+				return nil, fmt.Errorf("cannot load client cert for consenter %s:%d: %s", c.GetHost(), c.GetPort(), err)
+			}
+			c.ClientTlsCert = clientCert
+		}
+
+		if consenter.ServerTLSCert != "" {
+			serverCert, err := os.ReadFile(consenter.ServerTLSCert)
+			if err != nil {
+				return nil, fmt.Errorf("cannot load server cert for consenter %s:%d: %s", c.GetHost(), c.GetPort(), err)
+			}
+			c.ServerTlsCert = serverCert
+		}
+
+		if consenter.Identity != "" {
+			identity, err := os.ReadFile(consenter.Identity)
+			if err != nil {
+				return nil, fmt.Errorf("cannot load identity for consenter %s:%d: %s", c.GetHost(), c.GetPort(), err)
+			}
+			c.Identity = identity
+		}
+
+		consenterProtos = append(consenterProtos, c)
+	}
+	return consenterProtos, nil
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/hyperledger/fabric-admin-sdk/internal/configtxgen/genesisconfig"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/channel"
+	"github.com/hyperledger/fabric-admin-sdk/pkg/discovery"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/network"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
@@ -149,12 +150,23 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			//genesis block
-			createChannel, ok := os.LookupEnv("createChannel")
-			if createChannel == "true" && ok {
-				profile, err := genesisconfig.Load("TwoOrgsApplicationGenesis", "./")
+			createChannel, ok := os.LookupEnv("CREATE_CHANNEL")
+			if createChannel == "create_channel" && ok {
+				var profile *genesisconfig.Profile
+				var err error
+				profile, err = genesisconfig.Load("ChannelUsingRaft", "./")
 				Expect(err).NotTo(HaveOccurred())
 				Expect(profile).ToNot(BeNil())
 				Expect(profile.Orderer.BatchSize.MaxMessageCount).To(Equal(uint32(10)))
+
+				IsBFT, check := os.LookupEnv("CONSENSUS")
+				if IsBFT == "BFT" && check {
+					profile, err = genesisconfig.Load("ChannelUsingBFT", "./bft")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(profile).ToNot(BeNil())
+					Expect(profile.Orderer.BatchSize.MaxMessageCount).To(Equal(uint32(10)))
+				}
+
 				block, err := ConfigTxGen(profile, channelName)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(block).ToNot(BeNil())
@@ -174,7 +186,34 @@ var _ = Describe("e2e", func() {
 				resp, err := channel.CreateChannel(osnURL, block, caCertPool, tlsClientCert)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
-
+				if IsBFT == "BFT" && check {
+					osnURLs := []string{"https://localhost:7055", "https://localhost:7057", "https://localhost:7059"}
+					clientCerts := []string{
+						"../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/tls/server.crt",
+						"../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/tls/server.crt",
+						"../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer4.example.com/tls/server.crt",
+					}
+					clientKeys := []string{
+						"../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/tls/server.key",
+						"../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/tls/server.key",
+						"../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer4.example.com/tls/server.key",
+					}
+					for i := 0; i < 3; i++ {
+						osnURL = osnURLs[i]
+						caFile = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
+						clientCert = clientCerts[i]
+						clientKey = clientKeys[i]
+						caCertPool := x509.NewCertPool()
+						caFilePEM, err := os.ReadFile(caFile)
+						caCertPool.AppendCertsFromPEM(caFilePEM)
+						Expect(err).NotTo(HaveOccurred())
+						tlsClientCert, err := tls.LoadX509KeyPair(clientCert, clientKey)
+						Expect(err).NotTo(HaveOccurred())
+						resp, err := channel.CreateChannel(osnURL, block, caCertPool, tlsClientCert)
+						Expect(err).NotTo(HaveOccurred())
+						Expect(resp.StatusCode).Should(Equal(http.StatusCreated))
+					}
+				}
 				//osnURL
 				order := network.Node{
 					Addr:      "localhost:7050",
@@ -349,6 +388,13 @@ var _ = Describe("e2e", func() {
 			f, _ := os.Create("PackageID")
 			_, err = io.WriteString(f, packageID)
 			Expect(err).NotTo(HaveOccurred())
+
+			// check discovery as query peer membership
+			queryPeerMembershipctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
+			defer cancel()
+			peerMembershipResult, err := discovery.PeerMembershipQuery(queryPeerMembershipctx, peer1Connection, org1MSP, channelName, nil)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(peerMembershipResult).ShouldNot(BeNil())
 		})
 	})
 })

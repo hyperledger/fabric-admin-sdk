@@ -1,6 +1,7 @@
 package channelconfig
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -9,6 +10,7 @@ import (
 	mspprotos "github.com/hyperledger/fabric-protos-go-apiv2/msp"
 	ab "github.com/hyperledger/fabric-protos-go-apiv2/orderer"
 	"github.com/hyperledger/fabric-protos-go-apiv2/orderer/etcdraft"
+	"github.com/hyperledger/fabric-protos-go-apiv2/orderer/smartbft"
 	pb "github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"google.golang.org/protobuf/proto"
 )
@@ -37,6 +39,7 @@ const (
 	ACLsKey                               = "ACLs"
 	AnchorPeersKey                        = "AnchorPeers"
 	ChannelCreationPolicyKey              = "ChannelCreationPolicy"
+	OrderersKey                           = "Orderers"
 )
 
 // ConfigValue defines a common representation for different *cb.ConfigValue values.
@@ -163,17 +166,6 @@ func ChannelRestrictionsValue(maxChannelCount uint64) *StandardConfigValue {
 	}
 }
 
-// KafkaBrokersValue returns the config definition for the addresses of the ordering service's Kafka brokers.
-// It is a value for the /Channel/Orderer group.
-func KafkaBrokersValue(brokers []string) *StandardConfigValue {
-	return &StandardConfigValue{
-		key: KafkaBrokersKey,
-		value: &ab.KafkaBrokers{
-			Brokers: brokers,
-		},
-	}
-}
-
 // ConsensusTypeValue returns the config definition for the orderer consensus type.
 // It is a value for the /Channel/Orderer group.
 func ConsensusTypeValue(consensusType string, consensusMetadata []byte) *StandardConfigValue {
@@ -192,6 +184,25 @@ func MSPValue(mspDef *mspprotos.MSPConfig) *StandardConfigValue {
 	return &StandardConfigValue{
 		key:   MSPKey,
 		value: mspDef,
+	}
+}
+
+func OrderersValue(consenters []*common.Consenter) *StandardConfigValue {
+	o := &common.Orderers{
+		ConsenterMapping: consenters,
+	}
+	return &StandardConfigValue{
+		key:   OrderersKey,
+		value: o,
+	}
+}
+
+// MarshalBFTOptions serializes smartbft options.
+func MarshalBFTOptions(op *smartbft.Options) ([]byte, error) {
+	if copyMd, ok := proto.Clone(op).(*smartbft.Options); ok {
+		return proto.Marshal(copyMd)
+	} else {
+		return nil, errors.New("consenter options type mismatch")
 	}
 }
 
