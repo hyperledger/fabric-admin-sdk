@@ -1,7 +1,7 @@
 export type ValueOf<T> = T[keyof T];
 export type IndexDigit = number
 export namespace IndexDigit {
-    export function isIndex(num): num is IndexDigit {
+    export function isIndex(num: number): num is IndexDigit {
         return Number.isInteger(num) && num >= 0
     }
 }

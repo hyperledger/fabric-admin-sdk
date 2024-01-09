@@ -1,6 +1,7 @@
 import {common, msp} from "@hyperledger/fabric-protos";
 import * as MSPPrincipalNS from './msp-principal'
 import * as SignaturePolicyNS from './signature-policy'
+
 const {MSPRole} = msp
 const {MSPRoleType} = MSPRole;
 const {
@@ -10,9 +11,12 @@ const {
     StaticCollectionConfig,
     ApplicationPolicy
 } = common
-export const implicitCollection = (mspid) => `_implicit_org_${mspid}`;
 
-export const buildCollectionConfig = ({
+export function implicitCollection(mspid) {
+    return `_implicit_org_${mspid}`
+}
+
+export function buildCollectionConfig({
                                           name,
                                           requiredPeerCount,
                                           maxPeerCount = requiredPeerCount,
@@ -21,7 +25,7 @@ export const buildCollectionConfig = ({
                                           memberOnlyRead = true,
                                           memberOnlyWrite = true,
                                           member_orgs
-                                      }) => {
+                                      }) {
 
 
     const collectionConfig = new CollectionConfig();
@@ -71,4 +75,5 @@ export const buildCollectionConfig = ({
 
     collectionConfig.setStaticCollectionConfig(staticCollectionConfig);
     return collectionConfig;
-};
+}
+

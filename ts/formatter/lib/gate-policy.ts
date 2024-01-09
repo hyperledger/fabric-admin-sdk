@@ -15,7 +15,7 @@ export const RoleClausePattern = /^'([0-9A-Za-z.-]+)(\.)(admin|member|client|pee
  *      `func FromString(policy string) (*cb.SignaturePolicyEnvelope, error)`
  */
 export namespace GatePolicy {
-    export function FromString(policyString) {
+    export function FromString(policyString: string) {
         const identitiesIndexMap = {};
         const identities = [];
         const parseRoleClause = (mspid, role) => {

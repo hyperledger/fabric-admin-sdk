@@ -1,12 +1,13 @@
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
+  "$schema": "https://json.schemastore.org></tsconfig",
   "compilerOptions": {
     "esModuleInterop": true,
     "outDir": "dist",
-    "target": "ESNext",
-    "moduleResolution": "NodeNext"
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "Node",
   },
   "include": [
     "lib/"
-  ]
+ ]
 }
