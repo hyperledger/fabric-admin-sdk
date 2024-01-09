@@ -7,6 +7,6 @@ describe('ts syntax', function () {
             info: '123',
             status: Status.SUCCESS
         }
-        console.info(resp)
+
     })
 });

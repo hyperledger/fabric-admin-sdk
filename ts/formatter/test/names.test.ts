@@ -1,5 +1,5 @@
 import {Name} from '../lib/names'
-
+import {Name as LegacyName} from '../lib/compatible/names'
 describe('name match tests', function () {
 
     it('couch db name', () => {
@@ -9,11 +9,11 @@ describe('name match tests', function () {
 
     describe('@deprecated', ()=>{
         it('chaincode name/version', () => {
-            expect(new Name('_test').isChaincode()).toBe(false)
-            expect(new Name('123').isChaincode()).toBe(true)
+            expect(new LegacyName('_test').isChaincode()).toBe(false)
+            expect(new LegacyName('123').isChaincode()).toBe(true)
 
-            expect(new Name('123').isChaincodeVersion()).toBe(true)
-            expect(new Name('1.1.*').isChaincodeVersion()).toBe(false)
+            expect(new LegacyName('123').isChaincodeVersion()).toBe(true)
+            expect(new LegacyName('1.1.*').isChaincodeVersion()).toBe(false)
         })
     })
     it('collection name', () => {

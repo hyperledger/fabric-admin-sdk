@@ -1,14 +1,15 @@
 import {BinaryToTextEncoding, createHash, randomBytes} from 'crypto';
-import {buildSerializedIdentity} from './proto/common-builder'
 import {IndexDigit, MspId, TxId} from "./index";
 import {BinaryLike} from "node:crypto";
+import {buildSerializedIdentity} from "./proto/common-builder";
 
 export function sha2_256(data: BinaryLike, encoding: BinaryToTextEncoding = 'hex') {
     return createHash('sha256').update(data).digest(encoding);
 }
 
-export function calculateTransactionId(mspid: MspId, idBytes: Uint8Array, nonce: Uint8Array): TxId {
-    const creator_bytes = buildSerializedIdentity({mspid, idBytes}).serializeBinary();
+export function calculateTransactionId(signature_header): TxId {
+    const {creator: {mspid, id_bytes}, nonce} = signature_header;
+    const creator_bytes = buildSerializedIdentity({mspid, idBytes: id_bytes}).serializeBinary();
     const trans_bytes = Buffer.concat([nonce, creator_bytes]);
     return sha2_256(trans_bytes);
 }
@@ -23,7 +24,7 @@ export function getNonce(length: IndexDigit = 24): Buffer {
  * and end line with '-----END CERTIFICATE-----', so as to be compliant
  * with x509 parsers
  */
-export function normalizeX509(raw:string) {
+export function normalizeX509(raw: string) {
     const regex = /(-----\s*BEGIN ?[^-]+?-----)([\s\S]*)(-----\s*END ?[^-]+?-----)/;
     const matches = raw.match(regex);
     if (!matches || matches.length !== 4) {

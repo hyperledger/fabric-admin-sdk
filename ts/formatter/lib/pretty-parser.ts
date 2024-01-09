@@ -30,7 +30,7 @@ export class BlockDecoder {
         const {data: {data: data}} = this.block;
         for (const entry of data) {
             const {channel_header, signature_header} = entry.payload.header;
-            // assert.strictEqual(calculateTransactionId(signature_header), channel_header.tx_id);
+            assert.strictEqual(calculateTransactionId(signature_header), channel_header.tx_id);
 
             const {config, actions} = entry.payload.data;
             if (config) {

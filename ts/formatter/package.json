@@ -4,7 +4,7 @@
   "description": "Hyperledger Fabric formatter",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Hyperledger-TWGC/fabric-admin-sdk"
+    "url": "https://github.com/Hyperledger/fabric-admin-sdk"
   },
   "author": {
     "name": "hyperledger-twgc",
@@ -27,8 +27,8 @@
     "typescript": "latest",
     "jest": "latest",
     "ts-jest": "latest",
-    "@davidkhala/logger": "latest",
     "@types/jest": "latest",
-    "@types/node": "latest"
+    "@types/node": "latest",
+    "log4js": "latest"
   }
 }

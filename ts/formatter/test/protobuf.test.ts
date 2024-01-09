@@ -3,6 +3,7 @@ import {buildHeader, buildChannelHeader} from '../lib/proto/channel-builder'
 import {buildSerializedIdentity, buildSignatureHeader,} from "../lib/proto/common-builder";
 import {ChannelHeader, HeaderType} from "@hyperledger/fabric-protos/lib/common/common_pb";
 import {decode} from '../lib/proto/common-parser'
+
 const certificate = `
         -----BEGIN CERTIFICATE-----
 MIICmDCCAj+gAwIBAgIUIJvfcIDuIjyq/ugxhJuplP6QBN0wCgYIKoZIzj0EAwIw
@@ -25,15 +26,15 @@ describe('type test', () => {
     const mspid = 'org1.msp'
     const nonce = getNonce()
     it('buildSignatureHeader', () => {
-        const creator = buildSerializedIdentity({mspid,idBytes:Buffer.from(certificate)}).serializeBinary()
-        const signatureHeader = buildSignatureHeader({creator,nonce})
+        const creator = buildSerializedIdentity({mspid, idBytes: Buffer.from(certificate)}).serializeBinary()
+        const signatureHeader = buildSignatureHeader({creator, nonce})
 
     })
     it('buildChannelHeader', () => {
 
         const type = HeaderType.CONFIG
         const channel = 'mychannel'
-        const txid = calculateTransactionId(mspid,Buffer.from(certificate), nonce)
+        const txid = calculateTransactionId({creator: {mspid, id_bytes: Buffer.from(certificate)}, nonce})
         const channelHeader = buildChannelHeader(type, channel, txid)
         const bytes = channelHeader.serializeBinary()
         const obj = decode(bytes, ChannelHeader)
