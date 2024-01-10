@@ -16,6 +16,13 @@ export function implicitCollection(mspid) {
     return `_implicit_org_${mspid}`
 }
 
+
+export enum ImplicitMetaPolicyRule {
+    ANY,
+    ALL,
+    MAJORITY
+}
+
 export function buildCollectionConfig({
                                           name,
                                           requiredPeerCount,

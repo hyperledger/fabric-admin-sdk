@@ -103,7 +103,7 @@
  * @property {string} tx_id
  * @property {intString} epoch
  * @property {Buffer} extension
- * @property {TransactionType} typeString
+ * @property {HeaderType} typeString
  */
 
 

@@ -1,4 +1,4 @@
-import {msp, common} from '@hyperledger/fabric-protos';
+import {common} from '@hyperledger/fabric-protos';
 import assert from 'assert';
 import {calculateTransactionId} from './helper';
 import {BlockMetadataIndex} from './constants';

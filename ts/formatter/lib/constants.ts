@@ -1,36 +1,35 @@
-
-export enum ChannelGroupType {
+export const ChannelGroupType = {
     /**
      * @deprecated used for system channel
      */
-    system = 'Orderer',
-    application = 'Application'
+    system: 'Orderer',
+    application: 'Application'
 }
 
-export enum PolicyName {
-    Readers = 'Readers',
-    Writers = 'Writers',
-    Admins = 'Admins',
-    BlockValidation = 'BlockValidation'
+export const PolicyName = {
+    Readers: 'Readers',
+    Writers: 'Writers',
+    Admins: 'Admins',
+    BlockValidation: 'BlockValidation'
 }
 
-export const MSPRoleType = [
-    'MEMBER', // Represents an MSP Member
-    'ADMIN', // Represents an MSP Admin
-    'CLIENT', // Represents an MSP Client
-    'PEER', // Represents an MSP Peer
-    'ORDERER', // Represents an MSP Orderer
-];
-
-export enum DiscoveryResultType {
-    config_result = 'config_result',
-    error = 'error',
-    cc_query_res = 'cc_query_res',
-    members = 'members'
+export enum MSPRoleType {
+    MEMBER, // Represents an MSP Member
+    ADMIN, // Represents an MSP Admin
+    CLIENT, // Represents an MSP Client
+    PEER, // Represents an MSP Peer
+    ORDERER, // Represents an MSP Orderer
 }
 
-export enum OrdererType {
-    etcdraft = 'etcdraft'
+export const DiscoveryResultType = {
+    config_result: 'config_result',
+    error: 'error',
+    cc_query_res: 'cc_query_res',
+    members: 'members'
+}
+
+export const OrdererType = {
+    etcdraft: 'etcdraft'
 }
 
 export enum MetricsProvider {
@@ -46,10 +45,15 @@ namespace ImplicitMetaPolicy {
     export const Rule = ['ANY', 'ALL', 'MAJORITY']
 }
 
-export const TransactionType = {
-    ENDORSER_TRANSACTION: 'ENDORSER_TRANSACTION',
-    CONFIG: 'CONFIG'
-};
+export enum HeaderType {
+    MESSAGE,
+    CONFIG,
+    CONFIG_UPDATE,
+    ENDORSER_TRANSACTION,
+    ORDERER_TRANSACTION,
+    DELIVER_SEEK_INFO,
+    CHAINCODE_PACKAGE,
+}
 
 /**
  * @enum

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-#
 
 set -eu -o pipefail
 
@@ -11,17 +10,17 @@ cd fabric-samples/test-network
 echo $FABRIC_VERSION
 echo $CONSENSUS
 
-if [[ $CONSENSUS == 'BFT' ]]; then 
+if [[ $CONSENSUS == 'BFT' ]]; then
     echo start 3.0.0 preview BFT processing
     if [[ $CREATE_CHANNEL == 'create_channel' ]]; then
         ./network.sh up -bft
-    else    
+    else
         echo y | ./network.sh up createChannel -bft -c mychannel
     fi
 else
     if [[ $CREATE_CHANNEL == 'create_channel' ]]; then
         ./network.sh up
-    else    
+    else
         ./network.sh up createChannel -c mychannel
     fi
 fi

@@ -1,6 +1,6 @@
 {
   "name": "@hyperledger-twgc/fabric-formatter",
-  "version": "0.0.0-dev.2",
+  "version": "0.0.0-dev.3",
   "description": "Hyperledger Fabric formatter",
   "repository": {
     "type": "git",

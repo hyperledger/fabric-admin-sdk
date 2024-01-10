@@ -1,7 +1,7 @@
 import {common} from '@hyperledger/fabric-protos';
 import SignaturePolicy = common.SignaturePolicy
 import NOutOf = SignaturePolicy.NOutOf;
-import {IndexDigit} from "./index";
+import {IndexDigit, isIndex} from "./index";
 import assert from 'assert'
 
 const {SignaturePolicyEnvelope} = common
@@ -20,7 +20,7 @@ export function build({n_out_of, signed_by}: { n_out_of?: NOutOf; signed_by?: In
     const signaturePolicy = new SignaturePolicy();
     if (n_out_of) {
         signaturePolicy.setNOutOf(n_out_of)
-    } else if (IndexDigit.isIndex(signed_by)) {
+    } else if (isIndex(signed_by)) {
         signaturePolicy.setSignedBy(signed_by)
     }
     return signaturePolicy;
@@ -34,7 +34,7 @@ export function build({n_out_of, signed_by}: { n_out_of?: NOutOf; signed_by?: In
  */
 export function buildNOutOf({n, rules}: { n: IndexDigit, rules: SignaturePolicy[] }) {
     const nOutOf = new SignaturePolicy.NOutOf()
-    assert.ok(IndexDigit.isIndex(n))
+    assert.ok(isIndex(n))
     nOutOf.setN(n)
     nOutOf.setRulesList(rules)
     return nOutOf

@@ -2,6 +2,7 @@ import {BinaryToTextEncoding, createHash, randomBytes} from 'crypto';
 import {IndexDigit, MspId, TxId} from "./index";
 import {BinaryLike} from "node:crypto";
 import {buildSerializedIdentity} from "./proto/common-builder";
+import {msp} from "@hyperledger/fabric-protos";
 
 export function sha2_256(data: BinaryLike, encoding: BinaryToTextEncoding = 'hex') {
     return createHash('sha256').update(data).digest(encoding);
@@ -12,6 +13,15 @@ export function calculateTransactionId(signature_header): TxId {
     const creator_bytes = buildSerializedIdentity({mspid, idBytes: id_bytes}).serializeBinary();
     const trans_bytes = Buffer.concat([nonce, creator_bytes]);
     return sha2_256(trans_bytes);
+}
+
+/**
+ * pki_id is a digest(sha256) of [mspID, IdBytes] from a peer.
+ * See in Fabric core code `GetPKIidOfCert(peerIdentity api.PeerIdentityType) common.PKIidType`
+ * @param identity
+ */
+export function calculatePKI_ID(identity: msp.SerializedIdentity){
+    return sha2_256(Buffer.concat([Buffer.from(identity.getMspid()), identity.getIdBytes_asU8()]))
 }
 
 // utility function to create a random number of the specified length.

@@ -88,3 +88,11 @@ export namespace SystemChaincode {
         }
     }
 }
+
+export enum ChaincodeSpecType {
+    UNDEFINED,
+    GOLANG,
+    NODE,
+    CAR,
+    JAVA,
+}

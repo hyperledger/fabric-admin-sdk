@@ -16,10 +16,9 @@ export function buildSignatureHeader(params: SignatureHeader.AsObject) {
 }
 
 export function buildSerializedIdentity(params:SerializedIdentity.AsObject): SerializedIdentity {
-    const {mspid, idBytes} = params
     const serializedIdentity = new SerializedIdentity()
-    serializedIdentity.setMspid(mspid)
-    serializedIdentity.setIdBytes(idBytes)
+    serializedIdentity.setMspid(params.mspid)
+    serializedIdentity.setIdBytes(params.idBytes)
     return serializedIdentity
 }
 
