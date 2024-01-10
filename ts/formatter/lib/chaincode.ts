@@ -1,4 +1,4 @@
-import {ValueOf, WithConnectionInfo} from "./index";
+import {ValueOf, WithConnectionInfo} from "./types";
 import {Status} from './constants'
 
 /**

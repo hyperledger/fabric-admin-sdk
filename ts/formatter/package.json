@@ -6,6 +6,7 @@
     "type": "git",
     "url": "https://github.com/Hyperledger/fabric-admin-sdk"
   },
+  "types": "lib/index.d.ts",
   "author": {
     "name": "hyperledger-twgc",
     "url": "https://github.com/Hyperledger-TWGC/Hyperledger-TWGC"

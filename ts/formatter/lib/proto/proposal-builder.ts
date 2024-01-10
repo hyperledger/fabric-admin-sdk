@@ -8,7 +8,7 @@ import {
     ChaincodeSpec, Proposal,
 } from "@hyperledger/fabric-protos/lib/peer";
 import {buildChannelHeader, buildHeader} from "./channel-builder";
-import {ChannelName, TxId} from "../index";
+import {ChannelName, TxId} from "../types";
 import {SerializedIdentity} from "@hyperledger/fabric-protos/lib/msp/identities_pb";
 import {TransientMap} from "../chaincode";
 

@@ -4,31 +4,16 @@ on:
   workflow_call:
 
 jobs:
-  unit-test:
+  formatter:
+    defaults:
+      run:
+        working-directory: ts/formatter
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@main
+      - uses: actions/setup-node@main
         with:
-          node-version: 16
-      - run: npm install
-        working-directory: node/formatter
-      # - run: npm test
-      #   working-directory: node/formatter
-      - run: npm install
-        working-directory: node/admin
-      # - run: npm test
-      #   working-directory: node/admin
-  #ts-test:
-  #  defaults:
-  #    run:
-  #      working-directory: ts
-  #  runs-on: ubuntu-latest
-  #  steps:
-  #    - uses: actions/checkout@v4
-  #    - run: npm i
-  #      working-directory: ts/formatter
-  #    - run: npm test
-  #      working-directory: ts/formatter
-  #    - run: npm run compile
-  #      working-directory: ts/formatter
+          node-version: 18
+      - run: npm i
+      - run: npm test
+      - run: npm run compile

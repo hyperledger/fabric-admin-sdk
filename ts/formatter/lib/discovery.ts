@@ -1,5 +1,4 @@
-import {DiscoveryResultType} from './constants.js';
-import {msp, peer, orderer, gossip} from '@hyperledger/fabric-protos'
+import {msp, gossip} from '@hyperledger/fabric-protos'
 import assert from 'assert';
 import {calculatePKI_ID} from "./helper";
 
@@ -14,7 +13,7 @@ interface PeerResult {
         logical_time: number
     }
     ledger_height?: number,
-    chaincodes?: { name:string, version:string }[]
+    chaincodes?: { name: string, version: string }[]
 
 }
 
@@ -66,12 +65,13 @@ export const ParsePeerResult = ({identity, membership_info, state_info}) => {
     return peer;
 };
 
-interface DiscoveryResult{
+interface DiscoveryResult {
     error?,
     cc_query_res?,
     config_result?,
     members?
 }
+
 // TODO WIP
 // export const ParseResult = ({results}) => {
 //     const returned:DiscoveryResult= {};

@@ -2,12 +2,11 @@
   "$schema": "https://json.schemastore.org></tsconfig",
   "compilerOptions": {
     "esModuleInterop": true,
-    "outDir": "dist",
     "target": "esnext",
     "module": "esnext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Node"
   },
   "include": [
     "lib/"
- ]
+  ]
 }

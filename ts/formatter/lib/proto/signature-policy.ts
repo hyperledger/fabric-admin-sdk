@@ -1,13 +1,16 @@
 import {common} from '@hyperledger/fabric-protos';
 import SignaturePolicy = common.SignaturePolicy
 import NOutOf = SignaturePolicy.NOutOf;
-import {IndexDigit, isIndex} from "./index";
+import {IndexDigit, isIndex} from "../types";
 import assert from 'assert'
 
 const {SignaturePolicyEnvelope} = common
 
-// SignaturePolicyType is the 'Type' string for signature policies
-export const type = "Signature"
+
+/**
+ * SignaturePolicyType is the 'Type' string for signature policies
+ */
+export const SignaturePolicyType = "Signature"
 export const TypeCase = ['TYPE_NOT_SET', 'SIGNED_BY', 'N_OUT_OF']
 
 /**

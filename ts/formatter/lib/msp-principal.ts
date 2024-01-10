@@ -1,7 +1,9 @@
 import {msp} from '@hyperledger/fabric-protos';
-import {MspId} from "./index";
+import {MspId} from "./types";
+import MSPRoleTypeMap = msp.MSPRole.MSPRoleTypeMap;
 
-const {MSPPrincipal, MSPRole} = msp
+const {MSPRole, MSPPrincipal} = msp
+
 
 export const Classification = [
     'ROLE',  // Represents the one of the dedicated MSP roles, the one of a member of MSP network, and the one of an administrator of an MSP network
@@ -11,19 +13,13 @@ export const Classification = [
     'COMBINED' // Denotes a combined principal
 ]
 
-/**
- *
- * @param {MSPRoleTypeMap[keyof MSPRoleTypeMap]} MSPRoleType
- * @param {MspId} mspid
- * @param {ClassificationMap} [classification]
- * @return {MSPPrincipal}
- */
-export function build(MSPRoleType, mspid:MspId, classification = MSPPrincipal.Classification.ROLE) {
+
+export function build(role: MSPRoleTypeMap[keyof MSPRoleTypeMap], mspId: MspId, classification = MSPPrincipal.Classification.ROLE) {
     const newPrincipal = new MSPPrincipal();
     newPrincipal.setPrincipalClassification(classification);
     const newRole = new MSPRole()
-    newRole.setRole(MSPRoleType)
-    newRole.setMspIdentifier(mspid)
+    newRole.setRole(role)
+    newRole.setMspIdentifier(mspId)
     newPrincipal.setPrincipal(newRole.serializeBinary());
     return newPrincipal;
 }
