@@ -1,4 +1,4 @@
-import {Status} from '../lib/constants'
+import {HeaderType, Status} from '../lib/constants'
 import {CommitResponse} from '../lib/chaincode'
 
 describe('ts syntax', function () {
@@ -7,5 +7,8 @@ describe('ts syntax', function () {
             info: '123',
             status: Status.SUCCESS
         }
+    })
+    it('enum: getName', () => {
+        expect(HeaderType[0]).toBe('MESSAGE')
     })
 });

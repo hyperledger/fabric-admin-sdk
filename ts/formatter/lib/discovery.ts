@@ -2,7 +2,7 @@ import {msp, gossip} from '@hyperledger/fabric-protos'
 import assert from 'assert';
 import {calculatePKI_ID} from "./helper";
 
-interface PeerResult {
+export interface PeerResult {
     identity: msp.SerializedIdentity.AsObject,
     membership_info: {
         endpoint: string
@@ -17,7 +17,7 @@ interface PeerResult {
 
 }
 
-export const ParsePeerResult = ({identity, membership_info, state_info}) => {
+export function ParsePeerResult ({identity, membership_info, state_info}) :PeerResult {
 
 
     // MEMBERSHIP - Peer.membership_info
@@ -63,14 +63,8 @@ export const ParsePeerResult = ({identity, membership_info, state_info}) => {
         peer.chaincodes = chaincodesList.map(({name, version}) => ({name, version}));
     }
     return peer;
-};
-
-interface DiscoveryResult {
-    error?,
-    cc_query_res?,
-    config_result?,
-    members?
 }
+
 
 // TODO WIP
 // export const ParseResult = ({results}) => {

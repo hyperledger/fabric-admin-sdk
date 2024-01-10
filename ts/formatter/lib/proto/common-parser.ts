@@ -7,7 +7,7 @@ const {SerializedIdentity} = msp
  * @param binary
  * @param asType The class of protobuf.
  */
-export function decode(binary: Uint8Array, asType: typeof Message): object {
+export function decode(binary: Uint8Array|string, asType: typeof Message){
     const message = asType.deserializeBinary(binary);
     return message.toObject()
 }

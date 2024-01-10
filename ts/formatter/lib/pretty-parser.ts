@@ -1,90 +1,66 @@
 import {common} from '@hyperledger/fabric-protos';
 import assert from 'assert';
 import {calculateTransactionId} from './helper';
-import {BlockMetadataIndex} from './constants';
-import LastConfig = common.LastConfig
-import Metadata = common.Metadata
+import {BlockMetadataIndex, HeaderType} from './constants';
+import {decode} from "./proto/common-parser";
 
-const {SIGNATURES, TRANSACTIONS_FILTER, LAST_CONFIG, ORDERER, COMMIT_HASH} = BlockMetadataIndex;
+const {SIGNATURES, TRANSACTIONS_FILTER, COMMIT_HASH} = BlockMetadataIndex;
 
-/**
- * TODO not completed yet
- */
+
 export class BlockDecoder {
-    block;
-    logger = console;
+    block: common.Block;
+    logger: Console;
+
+    constructor(block, logger = console) {
+        this.block = block
+        this.logger = logger
+    }
 
     header() {
-        const {header} = this.block;
-        const {number, previous_hash, data_hash} = header;
+        const {header} = this.block.toObject();
+        const {number, previousHash, dataHash} = header;
 
         return {
-            number: number.toInt(),
-            previous_hash: previous_hash.toString('hex'),
-            data_hash: data_hash.toString('hex')
+            number,
+            previousHash: Buffer.from(previousHash).toString('hex'),
+            dataHash: Buffer.from(dataHash).toString('hex')
         };
     }
 
     data() {
-        const txs = [];
-        const {data: {data: data}} = this.block;
-        for (const entry of data) {
-            const {channel_header, signature_header} = entry.payload.header;
-            assert.strictEqual(calculateTransactionId(signature_header), channel_header.tx_id);
-
-            const {config, actions} = entry.payload.data;
-            if (config) {
-                this.logger.info('a config transaction');
-            } else if (actions) {
-                assert.strictEqual(actions.length, 1);
-
-                const {payload, header} = actions[0];
-                const {creator: {mspid, id_bytes}, nonce} = header;
-                const {chaincode_proposal_payload, action} = payload;
-                const {proposal_response_payload, endorsements} = action;
-                for (const {endorser, signature} of endorsements) {
-                    const {mspid, id_bytes} = endorser;
-                }
-                const {proposal_hash, extension} = proposal_response_payload;
-                const {results, events, response, chaincode_id} = extension;
-                const {chaincode_spec} = chaincode_proposal_payload.input;
-                const {chaincode_id: {name}, type, typeString, input: {args, decorations, is_init}} = chaincode_spec;
-                if (name === '_lifecycle') {
-                    this.logger.info('a chaincode lifecycle transaction');
-                } else {
-                    this.logger.info(`a application transaction on [${name}]`);
-                }
-                txs.push(Object.assign({
-                    tx_id: channel_header.tx_id, args, is_init, chaincode_id: name
-                }, signature_header));
-
-            } else {
-                assert.fail('unknown transaction type found');
-            }
+        const transactions = [];
+        const dataListAsU8 = this.block.getData().getDataList_asU8();
+        for (const envelope of dataListAsU8) {
+            const {payload} = decode(envelope, common.Envelope)
+            const payloadObject: common.Payload.AsObject = decode(payload, common.Payload);
+            const {channelHeader, signatureHeader} = payloadObject.header
+            const channelHeaderObject: common.ChannelHeader.AsObject = decode(channelHeader, common.ChannelHeader)
+            assert.strictEqual(calculateTransactionId(decode(signatureHeader, common.SignatureHeader)), channelHeaderObject.txId);
+            // TODO parse data according to type
+            transactions.push({type: HeaderType[channelHeaderObject.type], data: payloadObject.data})
         }
-        return [data, txs];
+        return transactions;
     }
 
     metadata() {
-        const {metadata: {metadata}} = this.block;
-        assert.strictEqual(metadata.length, 5);
-        const {value, signatures} = metadata[SIGNATURES];
-
-        for (const {signature_header, signature} of signatures) {
-            this.logger.info({signature_header, signature});
+        const metadatas = this.block.getMetadata().getMetadataList();
+        assert.strictEqual(metadatas.length, 5);
+        const result: Record<string, any> = {}
+        for (let i = 0; i < metadatas.length; i++) {
+            const metadata: common.Metadata.AsObject = decode(metadatas[i], common.Metadata);
+            // TODO further parser
+            switch (i) {
+                case SIGNATURES:
+                    result.SIGNATURES = metadata
+                    break;
+                case TRANSACTIONS_FILTER:
+                    result.TRANSACTIONS_FILTER = metadata
+                    break;
+                case COMMIT_HASH:
+                    result.COMMIT_HASH = metadata.value
+                    break;
+            }
         }
-        metadata[SIGNATURES] = {value: {index: LastConfig.deserializeBinary(value).getIndex()}, signatures};
-        const [flag] = metadata[TRANSACTIONS_FILTER];
-        const buf = metadata[COMMIT_HASH];
-
-        const _metadata = Metadata.deserializeBinary(buf);
-        const _signatures = _metadata.getSignaturesList()
-        assert.ok(Array.isArray(_signatures) && _signatures.length === 0);
-        _metadata[COMMIT_HASH] = {commitHash: _metadata.getValue_asB64()};
-
-        assert.deepStrictEqual(_metadata[LAST_CONFIG], {});
-        assert.deepStrictEqual(_metadata[ORDERER], {});
-        assert.strictEqual(flag, 0);
-        return _metadata;
+        return result;
     }
 }

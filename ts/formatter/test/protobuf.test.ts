@@ -34,7 +34,8 @@ describe('type test', () => {
 
         const type = HeaderType.CONFIG
         const channel = 'mychannel'
-        const txid = calculateTransactionId({creator: {mspid, id_bytes: Buffer.from(certificate)}, nonce})
+        const creator = buildSerializedIdentity({mspid,idBytes:Buffer.from(certificate)}).serializeBinary()
+        const txid = calculateTransactionId({creator, nonce})
         const channelHeader = buildChannelHeader(type, channel, txid)
         const bytes = channelHeader.serializeBinary()
         const obj = decode(bytes, ChannelHeader)

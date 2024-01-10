@@ -1,17 +1,16 @@
 import {BinaryToTextEncoding, createHash, randomBytes} from 'crypto';
 import {IndexDigit, TxId} from "./types";
 import {BinaryLike} from "node:crypto";
-import {buildSerializedIdentity} from "./proto/common-builder";
-import {msp} from "@hyperledger/fabric-protos";
+import {common, msp} from "@hyperledger/fabric-protos";
 
 export function sha2_256(data: BinaryLike, encoding: BinaryToTextEncoding = 'hex') {
     return createHash('sha256').update(data).digest(encoding);
 }
 
-export function calculateTransactionId(signature_header): TxId {
-    const {creator: {mspid, id_bytes}, nonce} = signature_header;
-    const creator_bytes = buildSerializedIdentity({mspid, idBytes: id_bytes}).serializeBinary();
-    const trans_bytes = Buffer.concat([nonce, creator_bytes]);
+export function calculateTransactionId(signature_header: common.SignatureHeader.AsObject): TxId {
+    const {creator: creator_bytes, nonce} = signature_header;
+
+    const trans_bytes = Buffer.concat([<Uint8Array>nonce, <Uint8Array>creator_bytes]);
     return sha2_256(trans_bytes);
 }
 
@@ -20,7 +19,7 @@ export function calculateTransactionId(signature_header): TxId {
  * See in Fabric core code `GetPKIidOfCert(peerIdentity api.PeerIdentityType) common.PKIidType`
  * @param identity
  */
-export function calculatePKI_ID(identity: msp.SerializedIdentity){
+export function calculatePKI_ID(identity: msp.SerializedIdentity) {
     return sha2_256(Buffer.concat([Buffer.from(identity.getMspid()), identity.getIdBytes_asU8()]))
 }
 
