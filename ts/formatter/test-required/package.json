@@ -1,10 +1,13 @@
 {
   "scripts": {
-    "test": "node index.js"
+    "test": "mocha index.js"
   },
   "dependencies": {
-    "@hyperledger-twgc/fabric-formatter": "unstable",
+    "@hyperledger-twgc/fabric-formatter": "^0.0.0-dev.11",
     "@hyperledger/fabric-protos": "latest"
+  },
+  "devDependencies": {
+    "mocha": "latest"
   },
   "private": true,
   "type": "module"

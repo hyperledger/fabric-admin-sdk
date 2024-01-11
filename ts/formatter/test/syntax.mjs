@@ -10,6 +10,9 @@ import "../dist/msp-principal.js"
 import "../dist/policy.js"
 import "../dist/pretty-parser.js"
 import "../dist/side-db.js"
-it('OK', ()=>{
+import "../dist/proto/index.js"
+import "../dist/index.js"
+
+it('OK', () => {
 
 })

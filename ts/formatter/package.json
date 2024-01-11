@@ -1,12 +1,13 @@
 {
   "name": "@hyperledger-twgc/fabric-formatter",
-  "version": "0.0.0-dev.9",
+  "version": "0.0.0-dev.11",
   "description": "Hyperledger Fabric formatter",
   "repository": {
     "type": "git",
     "url": "https://github.com/Hyperledger/fabric-admin-sdk"
   },
   "main": "dist/index.js",
+  "module": "dist/index.js",
   "author": {
     "name": "hyperledger-twgc",
     "url": "https://github.com/Hyperledger-TWGC/Hyperledger-TWGC"
