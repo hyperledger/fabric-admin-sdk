@@ -19,7 +19,7 @@
     "compile": "tsc --project tsconfig.json",
     "pretest": "npm run compile",
     "test": "jest",
-    "posttest": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config=jest.config.esm.json"
+    "posttest": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config=jest.config.esm.json"
   },
   "license": "Apache-2.0",
   "dependencies": {
@@ -33,7 +33,6 @@
     "ts-jest": "latest",
     "@types/jest": "latest",
     "@types/node": "latest",
-    "cross-env": "latest",
     "jest-ts-webcompat-resolver": "latest"
   },
   "type": "module"
