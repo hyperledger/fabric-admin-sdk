@@ -1,5 +1,5 @@
-import {SerializedIdentity} from "@hyperledger/fabric-protos/lib/msp/identities_pb";
+import {msp} from "@hyperledger/fabric-protos";
 
-export interface IdentityContext extends SerializedIdentity.AsObject{
+export interface IdentityContext extends msp.SerializedIdentity.AsObject{
     sign(payload: Uint8Array): Promise<Uint8Array>;
 }

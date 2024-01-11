@@ -1,6 +1,6 @@
 import {common, msp} from "@hyperledger/fabric-protos";
-import * as MSPPrincipalNS from './msp-principal'
-import * as SignaturePolicyNS from './proto/signature-policy'
+import * as MSPPrincipalNS from './msp-principal.js'
+import * as SignaturePolicyNS from './proto/signature-policy.js'
 
 const {MSPRole} = msp
 const {MSPRoleType} = MSPRole;

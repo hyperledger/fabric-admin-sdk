@@ -1,5 +1,5 @@
 import {msp} from '@hyperledger/fabric-protos';
-import {MspId} from "./types";
+import {MspId} from "./types.js";
 import MSPRoleTypeMap = msp.MSPRole.MSPRoleTypeMap;
 
 const {MSPRole, MSPPrincipal} = msp

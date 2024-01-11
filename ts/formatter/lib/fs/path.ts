@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import {normalizeX509} from '../helper'
+import {normalizeX509} from '../helper.js'
 
 export type PathString = string
 

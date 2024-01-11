@@ -1,10 +1,10 @@
-import {Timestamp} from 'google-protobuf/google/protobuf/timestamp_pb';
+import timestamp_pb from 'google-protobuf/google/protobuf/timestamp_pb.js';
 import {common, msp} from '@hyperledger/fabric-protos'
 import SignatureHeader = common.SignatureHeader
 import SerializedIdentity = msp.SerializedIdentity
 
-export function currentTimestamp(): Timestamp {
-    return Timestamp.fromDate(new Date())
+export function currentTimestamp(): timestamp_pb.Timestamp {
+    return timestamp_pb.Timestamp.fromDate(new Date())
 }
 
 export function buildSignatureHeader(params: SignatureHeader.AsObject) {

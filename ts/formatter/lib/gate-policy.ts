@@ -1,6 +1,6 @@
 import {common, msp} from '@hyperledger/fabric-protos';
-import * as SignaturePolicyNS from './proto/signature-policy'
-import * as MSPPrincipalNS from './msp-principal'
+import * as SignaturePolicyNS from './proto/signature-policy.js'
+import * as MSPPrincipalNS from './msp-principal.js'
 import SignaturePolicy = common.SignaturePolicy
 import NOutOf = SignaturePolicy.NOutOf;
 

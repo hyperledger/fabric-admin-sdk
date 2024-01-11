@@ -1,6 +1,6 @@
 import {msp, gossip} from '@hyperledger/fabric-protos'
 import assert from 'assert';
-import {calculatePKI_ID} from "./helper";
+import {calculatePKI_ID} from "./helper.js";
 
 export interface PeerResult {
     identity: msp.SerializedIdentity.AsObject,

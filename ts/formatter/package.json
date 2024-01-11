@@ -1,12 +1,12 @@
 {
   "name": "@hyperledger-twgc/fabric-formatter",
-  "version": "0.0.0-dev.3",
+  "version": "0.0.0-dev.9",
   "description": "Hyperledger Fabric formatter",
   "repository": {
     "type": "git",
     "url": "https://github.com/Hyperledger/fabric-admin-sdk"
   },
-  "types": "lib/index.d.ts",
+  "main": "dist/index.js",
   "author": {
     "name": "hyperledger-twgc",
     "url": "https://github.com/Hyperledger-TWGC/Hyperledger-TWGC"
@@ -17,12 +17,15 @@
   },
   "scripts": {
     "compile": "tsc --project tsconfig.json",
-    "test": "jest"
+    "pretest": "npm run compile",
+    "test": "jest",
+    "posttest": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config=jest.config.esm.json"
   },
   "license": "Apache-2.0",
   "dependencies": {
     "@hyperledger/fabric-protos": "latest",
-    "google-protobuf": "latest"
+    "google-protobuf": "latest",
+    "@types/google-protobuf": "latest"
   },
   "devDependencies": {
     "typescript": "latest",
@@ -30,6 +33,8 @@
     "ts-jest": "latest",
     "@types/jest": "latest",
     "@types/node": "latest",
-    "log4js": "latest"
-  }
+    "cross-env": "latest",
+    "jest-ts-webcompat-resolver": "latest"
+  },
+  "type": "module"
 }

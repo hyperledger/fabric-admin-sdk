@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "test": "node index.js"
+  },
+  "dependencies": {
+    "@hyperledger-twgc/fabric-formatter": "unstable",
+    "@hyperledger/fabric-protos": "latest"
+  },
+  "private": true,
+  "type": "module"
+}

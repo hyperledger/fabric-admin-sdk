@@ -1,8 +1,8 @@
 import {common} from '@hyperledger/fabric-protos';
 import assert from 'assert';
-import {calculateTransactionId} from './helper';
-import {BlockMetadataIndex, HeaderType} from './constants';
-import {decode} from "./proto/common-parser";
+import {calculateTransactionId} from './helper.js';
+import {BlockMetadataIndex, HeaderType} from './constants.js';
+import {decode} from "./proto/common-parser.js";
 
 const {SIGNATURES, TRANSACTIONS_FILTER, COMMIT_HASH} = BlockMetadataIndex;
 

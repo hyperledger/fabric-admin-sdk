@@ -1,5 +1,5 @@
 import {BinaryToTextEncoding, createHash, randomBytes} from 'crypto';
-import {IndexDigit, TxId} from "./types";
+import {IndexDigit, TxId} from "./types.js";
 import {BinaryLike} from "node:crypto";
 import {common, msp} from "@hyperledger/fabric-protos";
 

@@ -1,4 +1,5 @@
 {
   "preset": "ts-jest",
-  "testRegex": "test/*"
+  "resolver": "jest-ts-webcompat-resolver",
+  "testRegex": "(/test/.*|(\\.|/)(test|spec))\\.ts?$"
 }

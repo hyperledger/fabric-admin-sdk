@@ -1,4 +1,4 @@
-import {Name} from '../lib/names'
+import {Name} from '../lib'
 import {Name as LegacyName} from '../lib/compatible/names'
 describe('name match tests', function () {
 

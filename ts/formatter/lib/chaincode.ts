@@ -1,4 +1,4 @@
-import {ValueOf, WithConnectionInfo} from "./types";
+import {ValueOf, WithConnectionInfo} from "./types.js";
 import {Status} from './constants'
 
 /**

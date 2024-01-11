@@ -1,3 +1,4 @@
 test
-jest.config.js
+jest.config.*
 tsconfig.json
+test-required

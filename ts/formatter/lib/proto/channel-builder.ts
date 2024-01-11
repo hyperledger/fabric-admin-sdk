@@ -2,8 +2,8 @@ import {common, peer} from '@hyperledger/fabric-protos'
 import HeaderType = common.HeaderType
 import ChannelHeader = common.ChannelHeader
 import Header = common.Header;
-import {CertificatePEM, MspId, ValueOf, IndexDigit, ChannelName, ChaincodeLabel, TxId} from "../types";
-import {currentTimestamp, buildSignatureHeader, buildSerializedIdentity} from './common-builder'
+import {CertificatePEM, MspId, ValueOf, IndexDigit, ChannelName, ChaincodeLabel, TxId} from "../types.js";
+import {currentTimestamp, buildSignatureHeader, buildSerializedIdentity} from './common-builder.js'
 
 const {ChaincodeID, ChaincodeHeaderExtension} = peer
 
