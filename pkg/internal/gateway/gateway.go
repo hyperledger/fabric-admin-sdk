@@ -8,13 +8,10 @@ package gateway
 import (
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
+	"github.com/hyperledger/fabric-gateway/pkg/hash"
 	"google.golang.org/grpc"
 )
 
-func self[T any](v T) T {
-	return v
-}
-
 func New(connection grpc.ClientConnInterface, id identity.SigningIdentity) (*client.Gateway, error) {
-	return client.Connect(id, client.WithClientConnection(connection), client.WithHash(self[[]byte]), client.WithSign(id.Sign))
+	return client.Connect(id, client.WithClientConnection(connection), client.WithHash(hash.NONE), client.WithSign(id.Sign))
 }
