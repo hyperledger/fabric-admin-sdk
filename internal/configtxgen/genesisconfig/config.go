@@ -449,9 +449,9 @@ loop:
 				log.Panicf("consenter info in %s configuration did not specify identity certificate", BFT)
 			}
 
-			TranslatePathInPlace(configDir, &c.ClientTLSCert)
-			TranslatePathInPlace(configDir, &c.ServerTLSCert)
-			TranslatePathInPlace(configDir, &c.Identity)
+			c.ClientTLSCert = TranslatePath(configDir, c.ClientTLSCert)
+			c.ServerTLSCert = TranslatePath(configDir, c.ServerTLSCert)
+			c.Identity = TranslatePath(configDir, c.Identity)
 		}
 	default:
 		log.Panicf("unknown orderer type: %s", ord.OrdererType)

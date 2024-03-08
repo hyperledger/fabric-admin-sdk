@@ -63,5 +63,5 @@ escapes_detect:
 
 .PHONEY: generate
 generate:
-	go install github.com/golang/mock/mockgen@v1.6
+	go install go.uber.org/mock/mockgen@latest
 	go generate ./pkg/...
