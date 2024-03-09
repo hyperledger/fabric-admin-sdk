@@ -19,7 +19,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	version "github.com/hashicorp/go-version"
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v2"

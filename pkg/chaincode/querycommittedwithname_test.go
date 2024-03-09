@@ -8,11 +8,11 @@ package chaincode
 import (
 	"context"
 
-	"github.com/golang/mock/gomock"
 	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
