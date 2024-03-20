@@ -11,7 +11,7 @@ require (
 	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.3
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.16.0
-	github.com/onsi/gomega v1.31.1
+	github.com/onsi/gomega v1.32.0
 	github.com/opentracing/opentracing-go v1.2.0
 	go.uber.org/mock v0.4.0
 	google.golang.org/grpc v1.62.1
