@@ -14,8 +14,8 @@
     "test": "mocha test"
   },
   "dependencies": {
-    "fabric-ca-client": "latest",
-    "fabric-common": "latest",
+    "fabric-ca-client": "unstable",
+    "fabric-common": "unstable",
     "@hyperledger-twgc/fabric-formatter": "file:../formatter",
     "form-data": "latest",
     "@davidkhala/crypto": "latest"
