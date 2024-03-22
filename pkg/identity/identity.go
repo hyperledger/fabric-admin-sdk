@@ -9,9 +9,10 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"os"
+
+	"github.com/hyperledger/fabric-gateway/pkg/identity"
 )
 
 // Identity used to interact with a Fabric network.
@@ -32,7 +33,7 @@ type SigningIdentity interface {
 }
 
 func NewPrivateKeySigningIdentity(mspID string, certificate *x509.Certificate, privateKey crypto.PrivateKey) (SigningIdentity, error) {
-	credentials, err := certificateToPEM(certificate)
+	credentials, err := identity.CertificateToPEM(certificate)
 	if err != nil {
 		return nil, err
 	}
@@ -50,12 +51,12 @@ func NewPrivateKeySigningIdentity(mspID string, certificate *x509.Certificate, p
 	return id, nil
 }
 
-type signFn func([]byte) ([]byte, error)
+type signFn func(message []byte) ([]byte, error)
 
 func newPrivateKeySign(privateKey crypto.PrivateKey) (signFn, error) {
 	switch key := privateKey.(type) {
 	case *ecdsa.PrivateKey:
-		return ecdsaPrivateKeySign(key), nil
+		return ecdsaPrivateKeySign(key)
 	default:
 		return nil, fmt.Errorf("unsupported key type: %T", privateKey)
 	}
@@ -79,14 +80,20 @@ func (id *signingIdentity) Sign(message []byte) ([]byte, error) {
 	return id.sign(message)
 }
 
-func ReadCertificate(f string) (*x509.Certificate, []byte, error) {
+func ReadCertificate(f string) (*x509.Certificate, error) {
 	in, err := os.ReadFile(f)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	block, _ := pem.Decode(in)
+	return identity.CertificateFromPEM(in)
+}
 
-	c, err := x509.ParseCertificate(block.Bytes)
-	return c, in, err
+func ReadPrivateKey(f string) (crypto.PrivateKey, error) {
+	in, err := os.ReadFile(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return identity.PrivateKeyFromPEM(in)
 }
