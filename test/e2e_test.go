@@ -118,10 +118,10 @@ var _ = Describe("e2e", func() {
 			peer1Connection, err := network.DialConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
 
-			cert, _, err := identity.ReadCertificate(SignCert)
+			cert, err := identity.ReadCertificate(SignCert)
 			Expect(err).NotTo(HaveOccurred())
 
-			priv, err := identity.ReadECDSAPrivateKey(PrivKeyPath)
+			priv, err := identity.ReadPrivateKey(PrivKeyPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			org1MSP, err := identity.NewPrivateKeySigningIdentity(org1MspID, cert, priv)
@@ -140,10 +140,10 @@ var _ = Describe("e2e", func() {
 			peer2Connection, err := network.DialConnection(peer2)
 			Expect(err).NotTo(HaveOccurred())
 
-			cert2, _, err := identity.ReadCertificate(SignCert)
+			cert2, err := identity.ReadCertificate(SignCert)
 			Expect(err).NotTo(HaveOccurred())
 
-			priv2, err := identity.ReadECDSAPrivateKey(PrivKeyPath)
+			priv2, err := identity.ReadPrivateKey(PrivKeyPath)
 			Expect(err).NotTo(HaveOccurred())
 
 			org2MSP, err := identity.NewPrivateKeySigningIdentity(org2MspID, cert2, priv2)
