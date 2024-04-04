@@ -71,7 +71,7 @@ func newGrpcConnection() *grpc.ClientConn {
 	certPool.AddCert(caCertificate)
 	transportCredentials := credentials.NewClientTLSFromCert(certPool, "")
 
-	connection, err := grpc.Dial(peerEndpoint, grpc.WithTransportCredentials(transportCredentials))
+	connection, err := grpc.NewClient(peerEndpoint, grpc.WithTransportCredentials(transportCredentials))
 	panicOnError(err)
 
 	return connection
