@@ -353,8 +353,7 @@ type TLSOption func(tlsConfig *tls.Config)
 // certificate returned by a server when using TLS
 func (client *GRPCClient) NewConnection(address string, tlsOptions ...TLSOption) (*grpc.ClientConn, error) {
 
-	var dialOpts []grpc.DialOption
-	dialOpts = append(dialOpts, client.dialOpts...)
+	dialOpts := client.dialOpts
 
 	// set transport credentials and max send/recv message sizes
 	// immediately before creating a connection in order to allow
@@ -386,9 +385,7 @@ func (client *GRPCClient) NewConnection(address string, tlsOptions ...TLSOption)
 		grpc.WithStreamInterceptor(grpc_opentracing.StreamClientInterceptor(opts...)),
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), client.timeout)
-	defer cancel()
-	conn, err := grpc.DialContext(ctx, address, dialOpts...)
+	conn, err := grpc.NewClient(address, dialOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new connection: %w", err)
 	}
