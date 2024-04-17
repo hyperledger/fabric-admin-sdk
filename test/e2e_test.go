@@ -14,10 +14,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hyperledger/fabric-admin-sdk/internal/configtxgen/genesisconfig"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/channel"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/discovery"
+	"github.com/hyperledger/fabric-admin-sdk/pkg/genesisconfig"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/network"
 	"github.com/hyperledger/fabric-gateway/pkg/client"

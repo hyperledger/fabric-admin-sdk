@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/hyperledger/fabric-admin-sdk/internal/configtxgen/encoder"
-	"github.com/hyperledger/fabric-admin-sdk/internal/configtxgen/genesisconfig"
 	"github.com/hyperledger/fabric-admin-sdk/internal/protoutil"
 	"github.com/hyperledger/fabric-admin-sdk/internal/util"
+	"github.com/hyperledger/fabric-admin-sdk/pkg/genesisconfig"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
 	. "github.com/onsi/ginkgo/v2"
