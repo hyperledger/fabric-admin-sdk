@@ -3,11 +3,12 @@ Copyright IBM Corp. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package chaincode
+package chaincode_test
 
 import (
 	"context"
 
+	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
 	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
 	. "github.com/onsi/ginkgo/v2"
@@ -21,11 +22,11 @@ import (
 
 var _ = Describe("CheckCommitReadiness", func() {
 	var channelName string
-	var chaincodeDefinition *Definition
+	var chaincodeDefinition *chaincode.Definition
 
 	BeforeEach(func() {
 		channelName = "mockchannel"
-		chaincodeDefinition = &Definition{
+		chaincodeDefinition = &chaincode.Definition{
 			Name:        "CHAINCODE",
 			Version:     "1.0",
 			Sequence:    1,
@@ -48,11 +49,12 @@ var _ = Describe("CheckCommitReadiness", func() {
 			})
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
+		gateway := chaincode.NewGateway(mockConnection, mockSigner)
 
 		ctx, cancel := context.WithCancel(specCtx)
 		cancel()
 
-		_, _ = CheckCommitReadiness(ctx, mockConnection, mockSigner, chaincodeDefinition)
+		_, _ = gateway.CheckCommitReadiness(ctx, chaincodeDefinition)
 
 		Expect(evaluateCtxErr).To(BeIdenticalTo(context.Canceled))
 	})
@@ -69,8 +71,9 @@ var _ = Describe("CheckCommitReadiness", func() {
 			Return(expectedErr)
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
+		gateway := chaincode.NewGateway(mockConnection, mockSigner)
 
-		_, err := CheckCommitReadiness(specCtx, mockConnection, mockSigner, chaincodeDefinition)
+		_, err := gateway.CheckCommitReadiness(specCtx, chaincodeDefinition)
 
 		Expect(err).To(MatchError(expectedErr))
 		AssertEqualStatus(expectedErr, err)
@@ -96,8 +99,9 @@ var _ = Describe("CheckCommitReadiness", func() {
 			}).
 			Times(1)
 		mockSigner := NewMockSigner(controller, "", nil, nil)
+		gateway := chaincode.NewGateway(mockConnection, mockSigner)
 
-		_, err := CheckCommitReadiness(specCtx, mockConnection, mockSigner, chaincodeDefinition)
+		_, err := gateway.CheckCommitReadiness(specCtx, chaincodeDefinition)
 		Expect(err).NotTo(HaveOccurred())
 
 		invocationSpec := AssertUnmarshalInvocationSpec(evaluateRequest.GetProposedTransaction())

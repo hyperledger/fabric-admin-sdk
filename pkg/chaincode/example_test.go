@@ -20,8 +20,7 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-const peerName = "peer.example.org"
-const peerEndpoint = peerName + ":7051"
+const peerEndpoint = "peer.example.org:7051"
 const mspID = "Org1"
 const chaincodePackageFile = "basic.tar.gz"
 
@@ -34,6 +33,9 @@ func Example() {
 	id, err := identity.NewPrivateKeySigningIdentity(mspID, readCertificate(), readPrivateKey())
 	panicOnError(err)
 
+	peer := chaincode.NewPeer(connection, id)
+	gateway := chaincode.NewGateway(connection, id)
+
 	// Context used to manage Fabric invocations.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
@@ -43,7 +45,7 @@ func Example() {
 	panicOnError(err)
 
 	// Install chaincode package. This must be performed for each peer on which the chaincode is to be installed.
-	_, err = chaincode.Install(ctx, connection, id, chaincodePackage)
+	_, err = peer.Install(ctx, chaincodePackage)
 	panicOnError(err)
 
 	// Definition of the chaincode as it should appear on the channel.
@@ -56,12 +58,12 @@ func Example() {
 
 	// Approve chaincode definition. This must be performed using client identities from sufficient organizations to
 	// satisfy the approval policy.
-	err = chaincode.Approve(ctx, connection, id, chaincodeDefinition)
+	err = gateway.Approve(ctx, chaincodeDefinition)
 	panicOnError(err)
 
 	// Commit approved chaincode definition. This can be carried out by any organization once enough approvals have
 	// been recorded.
-	err = chaincode.Commit(ctx, connection, id, chaincodeDefinition)
+	err = gateway.Commit(ctx, chaincodeDefinition)
 	panicOnError(err)
 }
 
