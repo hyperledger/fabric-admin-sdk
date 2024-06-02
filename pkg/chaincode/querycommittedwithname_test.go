@@ -3,11 +3,12 @@ Copyright IBM Corp. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package chaincode
+package chaincode_test
 
 import (
 	"context"
 
+	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
 	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
 	. "github.com/onsi/ginkgo/v2"
@@ -43,11 +44,12 @@ var _ = Describe("QueryCommittedWithName", func() {
 			})
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
+		gateway := chaincode.NewGateway(mockConnection, mockSigner)
 
 		ctx, cancel := context.WithCancel(specCtx)
 		cancel()
 
-		_, _ = QueryCommittedWithName(ctx, mockConnection, mockSigner, channelName, chaincodeName)
+		_, _ = gateway.QueryCommittedWithName(ctx, channelName, chaincodeName)
 
 		Expect(evaluateCtxErr).To(BeIdenticalTo(context.Canceled))
 	})
@@ -64,8 +66,9 @@ var _ = Describe("QueryCommittedWithName", func() {
 			Return(expectedErr)
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
+		gateway := chaincode.NewGateway(mockConnection, mockSigner)
 
-		_, err := QueryCommittedWithName(specCtx, mockConnection, mockSigner, channelName, chaincodeName)
+		_, err := gateway.QueryCommittedWithName(specCtx, channelName, chaincodeName)
 
 		Expect(err).To(MatchError(expectedErr))
 		AssertEqualStatus(expectedErr, err)
@@ -89,8 +92,9 @@ var _ = Describe("QueryCommittedWithName", func() {
 			}).
 			Times(1)
 		mockSigner := NewMockSigner(controller, "", nil, nil)
+		gateway := chaincode.NewGateway(mockConnection, mockSigner)
 
-		_, err := QueryCommittedWithName(specCtx, mockConnection, mockSigner, channelName, chaincodeName)
+		_, err := gateway.QueryCommittedWithName(specCtx, channelName, chaincodeName)
 		Expect(err).NotTo(HaveOccurred())
 
 		invocationSpec := AssertUnmarshalInvocationSpec(evaluateRequest.GetProposedTransaction())

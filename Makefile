@@ -11,7 +11,7 @@ unit-test: unit-test-go unit-test-node
 .PHONY: unit-test-go
 unit-test-go:
 	cd '$(base_dir)' && \
-		go test -coverprofile='$(base_dir)/coverage.out' '$(go_dir)/...'
+		go test -race -coverprofile='$(base_dir)/coverage.out' '$(go_dir)/...'
 
 .PHONY: unit-test-node
 unit-test-node:
