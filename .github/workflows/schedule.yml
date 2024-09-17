@@ -2,11 +2,12 @@ name: Scheduled build
 
 on:
   schedule:
-    - cron: "10 01 * * *"
+    - cron: "10 01 * * 0"
+  workflow_dispatch:
 
 jobs:
   go:
     uses: ./.github/workflows/golang.yml
-  
+
   node:
     uses: ./.github/workflows/node.yml

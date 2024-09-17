@@ -163,12 +163,7 @@ func computeGroupUpdate(original, updated *common.ConfigGroup) (readSet, writeSe
 	if !(policiesMembersUpdated || valuesMembersUpdated || groupsMembersUpdated || original.ModPolicy != updated.ModPolicy) {
 
 		// If there were no modified entries in any of the policies/values/groups maps
-		if len(readSetPolicies) == 0 &&
-			len(writeSetPolicies) == 0 &&
-			len(readSetValues) == 0 &&
-			len(writeSetValues) == 0 &&
-			len(readSetGroups) == 0 &&
-			len(writeSetGroups) == 0 {
+		if len(readSetPolicies)+len(writeSetPolicies)+len(readSetValues)+len(writeSetValues)+len(readSetGroups)+len(writeSetGroups) == 0 {
 			return &common.ConfigGroup{
 					Version: original.Version,
 				}, &common.ConfigGroup{
@@ -189,20 +184,9 @@ func computeGroupUpdate(original, updated *common.ConfigGroup) (readSet, writeSe
 			}, true
 	}
 
-	for k, samePolicy := range sameSetPolicies {
-		readSetPolicies[k] = samePolicy
-		writeSetPolicies[k] = samePolicy
-	}
-
-	for k, sameValue := range sameSetValues {
-		readSetValues[k] = sameValue
-		writeSetValues[k] = sameValue
-	}
-
-	for k, sameGroup := range sameSetGroups {
-		readSetGroups[k] = sameGroup
-		writeSetGroups[k] = sameGroup
-	}
+	copyMap(sameSetPolicies, readSetPolicies, writeSetPolicies)
+	copyMap(sameSetValues, readSetValues, writeSetValues)
+	copyMap(sameSetGroups, readSetGroups, writeSetGroups)
 
 	return &common.ConfigGroup{
 			Version:  original.Version,
@@ -216,6 +200,14 @@ func computeGroupUpdate(original, updated *common.ConfigGroup) (readSet, writeSe
 			Groups:    writeSetGroups,
 			ModPolicy: updated.ModPolicy,
 		}, true
+}
+
+func copyMap[K comparable, V any](source map[K]V, targets ...map[K]V) {
+	for key, value := range source {
+		for _, target := range targets {
+			target[key] = value
+		}
+	}
 }
 
 func Compute(original, updated *common.Config) (*common.ConfigUpdate, error) {

@@ -217,16 +217,13 @@ func (client *GRPCClient) parseSecureOptions(opts SecureOptions) error {
 	client.tlsConfig = &tls.Config{
 		VerifyPeerCertificate: opts.VerifyCertificate,
 		MinVersion:            tls.VersionTLS12} // TLS 1.2 only
-	if len(opts.ServerRootCAs) > 0 {
-		client.tlsConfig.RootCAs = x509.NewCertPool()
-		for _, certBytes := range opts.ServerRootCAs {
-			err := AddPemToCertPool(certBytes, client.tlsConfig.RootCAs)
-			if err != nil {
-				//commLogger.Debugf("error adding root certificate: %v", err)
-				return fmt.Errorf("error adding root certificate: %w", err)
-			}
-		}
+
+	if serverRootCAs, err := newRootCACertPool(opts); err == nil {
+		client.tlsConfig.RootCAs = serverRootCAs
+	} else {
+		return err
 	}
+
 	if opts.RequireClientCert {
 		// make sure we have both Key and Certificate
 		if opts.Key != nil &&
@@ -250,6 +247,23 @@ func (client *GRPCClient) parseSecureOptions(opts SecureOptions) error {
 	}
 
 	return nil
+}
+
+func newRootCACertPool(opts SecureOptions) (*x509.CertPool, error) {
+	if len(opts.ServerRootCAs) == 0 {
+		return nil, nil // Use the host's root CA set
+	}
+
+	result := x509.NewCertPool()
+
+	for _, certBytes := range opts.ServerRootCAs {
+		err := AddPemToCertPool(certBytes, result)
+		if err != nil {
+			return nil, fmt.Errorf("error adding root certificate: %w", err)
+		}
+	}
+
+	return result, nil
 }
 
 // AddPemToCertPool adds PEM-encoded certs to a cert pool

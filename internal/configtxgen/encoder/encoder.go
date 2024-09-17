@@ -133,6 +133,8 @@ func NewConfigGroup() *cb.ConfigGroup {
 // NewOrdererGroup, NewConsortiumsGroup, and NewApplicationGroup depending on whether these sub-elements are set in the
 // configuration.  All mod_policy values are set to "Admins" for this group, with the exception of the OrdererAddresses
 // value which is set to "/Channel/Orderer/Admins".
+//
+//nolint:gocyclo
 func NewChannelGroup(conf *genesisconfig.Profile) (*cb.ConfigGroup, error) {
 	channelGroup := NewConfigGroup()
 	if err := AddPolicies(channelGroup, conf.Policies, icc.AdminsPolicyKey); err != nil {
@@ -182,6 +184,8 @@ func NewChannelGroup(conf *genesisconfig.Profile) (*cb.ConfigGroup, error) {
 // NewOrdererGroup returns the orderer component of the channel configuration.  It defines parameters of the ordering service
 // about how large blocks should be, how frequently they should be emitted, etc. as well as the organizations of the ordering network.
 // It sets the mod_policy of all elements to "Admins".  This group is always present in any channel configuration.
+//
+//nolint:gocyclo
 func NewOrdererGroup(conf *genesisconfig.Orderer) (*cb.ConfigGroup, error) {
 	ordererGroup := NewConfigGroup()
 	if err := AddOrdererPolicies(ordererGroup, conf.Policies, icc.AdminsPolicyKey); err != nil {
@@ -341,7 +345,7 @@ func NewApplicationOrgGroup(conf *genesisconfig.Organization) (*cb.ConfigGroup, 
 	for _, anchorPeer := range conf.AnchorPeers {
 		anchorProtos = append(anchorProtos, &pb.AnchorPeer{
 			Host: anchorPeer.Host,
-			Port: int32(anchorPeer.Port),
+			Port: anchorPeer.Port,
 		})
 	}
 
@@ -555,6 +559,7 @@ func (bs *Bootstrapper) GenesisBlockForChannel(channelID string) *cb.Block {
 	return genesis.NewFactoryImpl(bs.channelGroup).Block(channelID)
 }
 
+//nolint:gocognit
 func consenterProtosFromConfig(consenterMapping []*genesisconfig.Consenter) ([]*cb.Consenter, error) {
 	var consenterProtos []*cb.Consenter
 	for _, consenter := range consenterMapping {

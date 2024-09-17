@@ -85,6 +85,7 @@ func or(args ...interface{}) (interface{}, error) {
 	return outof(args...)
 }
 
+//nolint:gocognit,gocyclo
 func FromString(policy string) (*cb.SignaturePolicyEnvelope, error) {
 	// first we translate the and/or business into outof gates
 	intermediate, err := govaluate.NewEvaluableExpressionWithFunctions(
@@ -217,7 +218,7 @@ func firstPass(args ...interface{}) (interface{}, error) {
 }
 
 type context struct {
-	IDNum      int
+	IDNum      int32
 	principals []*mb.MSPPrincipal
 }
 
@@ -225,6 +226,7 @@ func newContext() *context {
 	return &context{IDNum: 0, principals: make([]*mb.MSPPrincipal, 0)}
 }
 
+//nolint:gocognit,gocyclo
 func secondPass(args ...interface{}) (interface{}, error) {
 	/* general sanity check, we expect at least 3 args */
 	if len(args) < 3 {
@@ -242,10 +244,10 @@ func secondPass(args ...interface{}) (interface{}, error) {
 
 	/* get the second argument, we expect an integer telling us
 	   how many of the remaining we expect to have*/
-	var t int
+	var t int32
 	switch arg := args[1].(type) {
 	case float64:
-		t = int(arg)
+		t = int32(arg)
 	default:
 		return nil, fmt.Errorf("unrecognized type, expected a number, got %s", reflect.TypeOf(args[1]))
 	}
@@ -254,7 +256,7 @@ func secondPass(args ...interface{}) (interface{}, error) {
 	n := len(args) - 2
 
 	/* sanity check - t should be positive, permit equal to n+1, but disallow over n+1 */
-	if t < 0 || t > n+1 {
+	if t < 0 || int(t) > n+1 {
 		return nil, fmt.Errorf("invalid t-out-of-n predicate, t %d, n %d", t, n)
 	}
 
@@ -305,7 +307,7 @@ func secondPass(args ...interface{}) (interface{}, error) {
 
 			/* create a SignaturePolicy that requires a signature from
 			   the principal we've just built*/
-			dapolicy := SignedBy(int32(ctx.IDNum))
+			dapolicy := SignedBy(ctx.IDNum)
 			policies = append(policies, dapolicy)
 
 			/* increment the identity counter. Note that this is
@@ -324,7 +326,7 @@ func secondPass(args ...interface{}) (interface{}, error) {
 		}
 	}
 
-	return NOutOf(int32(t), policies), nil
+	return NOutOf(t, policies), nil
 }
 
 // SignedBy creates a SignaturePolicy requiring a given signer's signature

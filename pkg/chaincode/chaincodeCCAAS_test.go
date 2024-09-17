@@ -39,6 +39,8 @@ var _ = Describe("Package", func() {
 // It returns an error if the tar contains any files which would escape to a
 // parent of dst, or if the archive contains any files whose type is not
 // a regular file or directory.
+//
+//nolint:gocognit,gocyclo
 func Untar(buffer io.Reader, dst string) error {
 	gzr, err := gzip.NewReader(buffer)
 	if err != nil {
@@ -74,7 +76,7 @@ func Untar(buffer io.Reader, dst string) error {
 				return fmt.Errorf("could not create directory '%s' %w", filepath.Dir(header.Name), err)
 			}
 
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode)) //#nosec:G115
 			if err != nil {
 				return fmt.Errorf("could not create file '%s' %w", header.Name, err)
 			}
