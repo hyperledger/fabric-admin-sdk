@@ -146,7 +146,7 @@ type Organization struct {
 // AnchorPeer encodes the necessary fields to identify an anchor peer.
 type AnchorPeer struct {
 	Host string `yaml:"Host"`
-	Port int    `yaml:"Port"`
+	Port int32  `yaml:"Port"`
 }
 
 // Orderer contains configuration associated to a channel.
@@ -260,7 +260,7 @@ func Load(profile string, configPaths ...string) (*Profile, error) {
 
 	result, ok := uconf.Profiles[profile]
 	if !ok {
-		panic(fmt.Errorf("Could not find profile: " + profile))
+		panic(fmt.Errorf("could not find profile: %s", profile))
 	}
 
 	result.completeInitialization(filepath.Dir(config.ConfigFileUsed()))
@@ -316,6 +316,7 @@ func (org *Organization) completeInitialization(configDir string) {
 	translatePaths(configDir, org)
 }
 
+//nolint:gocognit,gocyclo
 func (ord *Orderer) completeInitialization(configDir string) {
 loop:
 	for {

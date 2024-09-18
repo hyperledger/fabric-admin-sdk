@@ -42,6 +42,8 @@ type ChaincodePackageMetadata struct {
 
 // ParseChaincodePackage parses a set of bytes as a chaincode package
 // and returns the parsed package as a metadata struct and a code package
+//
+//nolint:gocognit,gocyclo
 func ParseChaincodePackage(source []byte) (*ChaincodePackageMetadata, []byte, error) {
 	gzReader, err := gzip.NewReader(bytes.NewBuffer(source))
 	if err != nil {

@@ -20,8 +20,8 @@ func CreateSignedTx(
 	signer identity.Signer,
 	resps ...*peer.ProposalResponse,
 ) (*common.Envelope, error) {
-	if len(resps) == 0 {
-		return nil, errors.New("at least one proposal response is required")
+	if err := ensureValidResponses(resps); err != nil {
+		return nil, err
 	}
 
 	// the original header
@@ -36,28 +36,7 @@ func CreateSignedTx(
 		return nil, err
 	}
 
-	// ensure that all actions are bitwise equal and that they are successful
-	var a1 []byte
-	for n, r := range resps {
-		if r.Response.Status < 200 || r.Response.Status >= 400 {
-			return nil, fmt.Errorf("proposal response was not successful, error code %d, msg %s", r.Response.Status, r.Response.Message)
-		}
-
-		if n == 0 {
-			a1 = r.Payload
-			continue
-		}
-
-		if !bytes.Equal(a1, r.Payload) {
-			return nil, errors.New("ProposalResponsePayloads do not match")
-		}
-	}
-
-	// fill endorsements
-	endorsements := make([]*peer.Endorsement, len(resps))
-	for n, r := range resps {
-		endorsements[n] = r.Endorsement
-	}
+	endorsements := fillEndorsements(resps)
 
 	// create ChaincodeEndorsedAction
 	cea := &peer.ChaincodeEndorsedAction{ProposalResponsePayload: resps[0].Payload, Endorsements: endorsements}
@@ -102,4 +81,34 @@ func CreateSignedTx(
 
 	// here's the envelope
 	return &common.Envelope{Payload: paylBytes, Signature: sig}, nil
+}
+
+// ensureValidResponses checks that all actions are bitwise equal and that they are successful.
+func ensureValidResponses(responses []*peer.ProposalResponse) error {
+	if len(responses) == 0 {
+		return errors.New("at least one proposal response is required")
+	}
+
+	var firstResponse []byte
+	for n, r := range responses {
+		if r.Response.Status < 200 || r.Response.Status >= 400 {
+			return fmt.Errorf("proposal response was not successful, error code %d, msg %s", r.Response.Status, r.Response.Message)
+		}
+
+		if n == 0 {
+			firstResponse = r.Payload
+		} else if !bytes.Equal(firstResponse, r.Payload) {
+			return errors.New("ProposalResponsePayloads do not match")
+		}
+	}
+
+	return nil
+}
+
+func fillEndorsements(responses []*peer.ProposalResponse) []*peer.Endorsement {
+	endorsements := make([]*peer.Endorsement, len(responses))
+	for n, r := range responses {
+		endorsements[n] = r.Endorsement
+	}
+	return endorsements
 }

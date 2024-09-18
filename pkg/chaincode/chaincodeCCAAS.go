@@ -31,54 +31,53 @@ ${CONTAINER_CLI} run --rm -d --name peer0org1_${CC_NAME}_ccaas  \
 ${CC_NAME}_ccaas_image:latest
 */
 func PackageCCAAS(connection Connection, metadata Metadata, tmpPath, filename string) error {
-	err := os.MkdirAll(tmpPath+"/src/", 0766)
-	if err != nil {
+	if err := os.MkdirAll(tmpPath+"/src/", 0766); err != nil {
 		return err
 	}
-	err = os.MkdirAll(tmpPath+"/pkg/", 0766)
-	if err != nil {
-		return err
-	}
-	// connection.json
-	connjson, err := json.Marshal(connection)
-	if err != nil {
-		return err
-	}
-	connfile, err := os.Create(tmpPath + "/src/connection.json")
-	if err != nil {
-		return err
-	}
-	defer connfile.Close()
 
-	_, err = connfile.Write(connjson)
-	if err != nil {
+	if err := os.MkdirAll(tmpPath+"/pkg/", 0766); err != nil {
 		return err
 	}
+
+	if err := writeJSONFile(connection, tmpPath+"/src/connection.json"); err != nil {
+		return err
+	}
+
 	// code.tar.gz
-	err = creategzTar(tmpPath+"/pkg/"+"code.tar.gz", []string{tmpPath + "/src/connection.json"})
-	if err != nil {
+	if err := creategzTar(tmpPath+"/pkg/"+"code.tar.gz", []string{tmpPath + "/src/connection.json"}); err != nil {
 		return err
 	}
-	// metadata.json
-	metajsonStr, err := json.Marshal(metadata)
-	if err != nil {
-		return err
-	}
-	metadatafile, err := os.Create(tmpPath + "/pkg/metadata.json")
-	if err != nil {
-		return err
-	}
-	defer metadatafile.Close()
 
-	_, err = metadatafile.Write(metajsonStr)
-	if err != nil {
+	// metadata.json
+	if err := writeJSONFile(metadata, tmpPath+"/pkg/metadata.json"); err != nil {
 		return err
 	}
+
 	//filename
-	err = creategzTar(tmpPath+"/"+filename, []string{tmpPath + "/pkg/metadata.json", tmpPath + "/pkg/code.tar.gz"})
+	if err := creategzTar(tmpPath+"/"+filename, []string{tmpPath + "/pkg/metadata.json", tmpPath + "/pkg/code.tar.gz"}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func writeJSONFile(jsonObject any, filePath string) error {
+	json, err := json.Marshal(jsonObject)
 	if err != nil {
 		return err
 	}
+
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.Write(json)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

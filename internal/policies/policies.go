@@ -119,7 +119,7 @@ func EncodeBFTBlockVerificationPolicy(consenterProtos []*cb.Consenter, ordererGr
 	for i, consenter := range consenterProtos {
 		pols = append(pols, &cb.SignaturePolicy{
 			Type: &cb.SignaturePolicy_SignedBy{
-				SignedBy: int32(i),
+				SignedBy: int32(i), //#nosec:G115
 			},
 		})
 		identities = append(identities, &msp.MSPPrincipal{
@@ -143,6 +143,6 @@ func EncodeBFTBlockVerificationPolicy(consenterProtos []*cb.Consenter, ordererGr
 	}
 }
 
-func ComputeBFTQuorum(totalNodes, faultyNodes int) int {
-	return int(math.Ceil(float64(totalNodes+faultyNodes+1) / 2))
+func ComputeBFTQuorum(totalNodes, faultyNodes int) int32 {
+	return int32(math.Ceil(float64(totalNodes+faultyNodes+1) / 2))
 }

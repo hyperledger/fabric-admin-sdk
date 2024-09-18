@@ -146,6 +146,7 @@ func (c *ConfigParser) getFromEnv(key string) string {
 // Prototype declaration for getFromEnv function.
 type envGetter func(key string) string
 
+//nolint:gocognit,gocyclo
 func getKeysRecursively(base string, getenv envGetter, nodeKeys map[string]interface{}, oType reflect.Type) map[string]interface{} {
 	subTypes := map[string]reflect.Type{}
 
@@ -296,6 +297,7 @@ func stringFromFileDecodeHook(f reflect.Kind, t reflect.Kind, data interface{}) 
 	return data, nil
 }
 
+//nolint:gocognit,gocyclo
 func pemBlocksFromFileDecodeHook(f reflect.Kind, t reflect.Kind, data interface{}) (interface{}, error) {
 	// "to" type should be string
 	if t != reflect.Slice {
