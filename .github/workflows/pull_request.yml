@@ -12,7 +12,7 @@ concurrency:
 jobs:
   go:
     uses: ./.github/workflows/golang.yml
-  
+
   node:
     uses: ./.github/workflows/node.yml
 
@@ -23,4 +23,4 @@ jobs:
     name: Pull request success
     runs-on: ubuntu-latest
     steps:
-      - run: true
+      - run: "true"
