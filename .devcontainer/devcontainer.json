@@ -1,0 +1,15 @@
+{
+    "name": "Ubuntu",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+        "ghcr.io/devcontainers/features/go:1": {},
+        "ghcr.io/devcontainers/features/node:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": ["esbenp.prettier-vscode", "github.vscode-github-actions", "ms-vscode.makefile-tools"]
+        }
+    },
+    "postStartCommand": ["make", "generate"]
+}
