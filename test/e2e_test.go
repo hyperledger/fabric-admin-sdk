@@ -25,7 +25,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 )
 
@@ -36,11 +35,6 @@ const (
 	org1MspID       = "Org1MSP"
 	org2MspID       = "Org2MSP"
 )
-
-type ConnectionDetails struct {
-	id         identity.SigningIdentity
-	connection grpc.ClientConnInterface
-}
 
 func runParallel[T any](args []T, f func(T)) {
 	var wg sync.WaitGroup
@@ -265,22 +259,20 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred(), "get chaincode package ID")
 			fmt.Println(packageID)
 
-			peerConnections := []*ConnectionDetails{
-				{
-					connection: peer1Connection,
-					id:         org1MSP,
-				},
-				{
-					connection: peer2Connection,
-					id:         org2MSP,
-				},
+			networkPeers := []*chaincode.Peer{
+				chaincode.NewPeer(peer1Connection, org1MSP),
+				chaincode.NewPeer(peer2Connection, org2MSP),
 			}
 
+			org1Gateway := chaincode.NewGateway(peer1Connection, org1MSP)
+			org2Gateway := chaincode.NewGateway(peer2Connection, org2MSP)
+			allOrgGateways := []*chaincode.Gateway{org1Gateway, org2Gateway}
+
 			// Install chaincode on each peer
-			runParallel(peerConnections, func(target *ConnectionDetails) {
+			runParallel(networkPeers, func(peer *chaincode.Peer) {
 				ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
 				defer cancel()
-				result, err := chaincode.Install(ctx, target.connection, target.id, bytes.NewReader(chaincodePackage))
+				result, err := peer.Install(ctx, bytes.NewReader(chaincodePackage))
 				printGrpcError(err)
 				Expect(err).NotTo(HaveOccurred(), "chaincode install")
 				Expect(result.GetPackageId()).To(Equal(packageID), "install chaincode package ID")
@@ -288,10 +280,10 @@ var _ = Describe("e2e", func() {
 			})
 
 			// Query installed chaincode on each peer
-			runParallel(peerConnections, func(target *ConnectionDetails) {
+			runParallel(networkPeers, func(peer *chaincode.Peer) {
 				ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
 				defer cancel()
-				result, err := chaincode.QueryInstalled(ctx, target.connection, target.id)
+				result, err := peer.QueryInstalled(ctx)
 				printGrpcError(err)
 				Expect(err).NotTo(HaveOccurred(), "query installed chaincode")
 				installedChaincodes := result.GetInstalledChaincodes()
@@ -301,10 +293,10 @@ var _ = Describe("e2e", func() {
 			})
 
 			// Get installed chaincode package from each peer
-			runParallel(peerConnections, func(target *ConnectionDetails) {
+			runParallel(networkPeers, func(peer *chaincode.Peer) {
 				ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
 				defer cancel()
-				result, err := chaincode.GetInstalled(ctx, target.connection, target.id, packageID)
+				result, err := peer.GetInstalled(ctx, packageID)
 				printGrpcError(err)
 				Expect(err).NotTo(HaveOccurred(), "get installed chaincode package")
 				Expect(result).NotTo(BeEmpty())
@@ -328,28 +320,28 @@ var _ = Describe("e2e", func() {
 			}
 			Expect(err).NotTo(HaveOccurred())
 			// Approve chaincode for each org
-			runParallel(peerConnections, func(target *ConnectionDetails) {
+			runParallel(allOrgGateways, func(gateway *chaincode.Gateway) {
 				ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
 				defer cancel()
-				err := chaincode.Approve(ctx, target.connection, target.id, chaincodeDef)
+				err := gateway.Approve(ctx, chaincodeDef)
 				printGrpcError(err)
-				Expect(err).NotTo(HaveOccurred(), "approve chaincode for org %s", target.id.MspID())
+				Expect(err).NotTo(HaveOccurred(), "approve chaincode for org %s", gateway.ClientIdentity().MspID())
 			})
 
 			// Query approved chaincode for each org
-			runParallel(peerConnections, func(target *ConnectionDetails) {
+			runParallel(allOrgGateways, func(gateway *chaincode.Gateway) {
 				ctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
 				defer cancel()
-				result, err := chaincode.QueryApproved(ctx, target.connection, target.id, channelName, chaincodeDef.Name, chaincodeDef.Sequence)
+				result, err := gateway.QueryApproved(ctx, channelName, chaincodeDef.Name, chaincodeDef.Sequence)
 				printGrpcError(err)
-				Expect(err).NotTo(HaveOccurred(), "query approved chaincode for org %s", target.id.MspID())
+				Expect(err).NotTo(HaveOccurred(), "query approved chaincode for org %s", gateway.ClientIdentity().MspID())
 				Expect(result.GetVersion()).To(Equal(chaincodeDef.Version))
 			})
 
 			// Check chaincode commit readiness
 			readinessCtx, readinessCancel := context.WithTimeout(specCtx, 30*time.Second)
 			defer readinessCancel()
-			readinessResult, err := chaincode.CheckCommitReadiness(readinessCtx, peer1Connection, org1MSP, chaincodeDef)
+			readinessResult, err := org1Gateway.CheckCommitReadiness(readinessCtx, chaincodeDef)
 			printGrpcError(err)
 			Expect(err).NotTo(HaveOccurred(), "check commit readiness")
 			Expect(readinessResult.GetApprovals()[org1MspID]).To(BeTrue())
@@ -360,14 +352,14 @@ var _ = Describe("e2e", func() {
 			// Commit chaincode
 			commitCtx, commitCancel := context.WithTimeout(specCtx, 30*time.Second)
 			defer commitCancel()
-			err = chaincode.Commit(commitCtx, peer1Connection, org1MSP, chaincodeDef)
+			err = org1Gateway.Commit(commitCtx, chaincodeDef)
 			printGrpcError(err)
 			Expect(err).NotTo(HaveOccurred(), "commit chaincode")
 
 			// Query all committed chaincode
 			committedCtx, committedCancel := context.WithTimeout(specCtx, 30*time.Second)
 			defer committedCancel()
-			committedResult, err := chaincode.QueryCommitted(committedCtx, peer1Connection, org1MSP, channelName)
+			committedResult, err := org1Gateway.QueryCommitted(committedCtx, channelName)
 			printGrpcError(err)
 			Expect(err).NotTo(HaveOccurred(), "query all committed chaincodes")
 			committedChaincodes := committedResult.GetChaincodeDefinitions()
@@ -378,7 +370,7 @@ var _ = Describe("e2e", func() {
 			// Query named committed chaincode
 			committedWithNameCtx, committedWithNameCancel := context.WithTimeout(specCtx, 30*time.Second)
 			defer committedWithNameCancel()
-			committedWithNameResult, err := chaincode.QueryCommittedWithName(committedWithNameCtx, peer1Connection, org1MSP, channelName, chaincodeDef.Name)
+			committedWithNameResult, err := org1Gateway.QueryCommittedWithName(committedWithNameCtx, channelName, chaincodeDef.Name)
 			printGrpcError(err)
 			Expect(err).NotTo(HaveOccurred(), "query committed chaincode with name")
 			Expect(readinessResult.GetApprovals()[org1MspID]).To(BeTrue())
@@ -390,11 +382,13 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// check discovery as query peer membership
-			queryPeerMembershipctx, cancel := context.WithTimeout(specCtx, 30*time.Second)
+			discoveryPeer := discovery.NewPeer(peer1Connection, org1MSP)
+			peerMembershipCtx, cancel := context.WithTimeout(specCtx, 30*time.Second)
 			defer cancel()
-			peerMembershipResult, err := discovery.PeerMembershipQuery(queryPeerMembershipctx, peer1Connection, org1MSP, channelName, nil)
+			peerMembershipResult, err := discoveryPeer.PeerMembershipQuery(peerMembershipCtx, channelName, nil)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(peerMembershipResult).ShouldNot(BeNil())
+			Expect(peerMembershipResult.GetPeersByOrg()[org1MspID].GetPeers()).To(HaveLen(1))
+			Expect(peerMembershipResult.GetPeersByOrg()[org2MspID].GetPeers()).To(HaveLen(1))
 		})
 	})
 })

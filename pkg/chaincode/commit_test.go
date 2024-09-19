@@ -3,11 +3,12 @@ Copyright IBM Corp. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package chaincode
+package chaincode_test
 
 import (
 	"context"
 
+	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
 	"github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer/lifecycle"
@@ -22,11 +23,11 @@ import (
 
 var _ = Describe("Commit", func() {
 	var channelName string
-	var chaincodeDefinition *Definition
+	var chaincodeDefinition *chaincode.Definition
 
 	BeforeEach(func() {
 		channelName = "CHANNEL"
-		chaincodeDefinition = &Definition{
+		chaincodeDefinition = &chaincode.Definition{
 			Name:        "CHAINCODE",
 			Version:     "1.0",
 			Sequence:    1,
@@ -62,11 +63,12 @@ var _ = Describe("Commit", func() {
 			})
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
+		gateway := chaincode.NewGateway(mockConnection, mockSigner)
 
 		ctx, cancel := context.WithCancel(specCtx)
 		cancel()
 
-		err := Commit(ctx, mockConnection, mockSigner, chaincodeDefinition)
+		err := gateway.Commit(ctx, chaincodeDefinition)
 
 		Expect(endorseCtxErr).To(BeIdenticalTo(context.Canceled), "endorse context error")
 		Expect(submitCtxErr).To(BeIdenticalTo(context.Canceled), "submit context error")
@@ -85,8 +87,9 @@ var _ = Describe("Commit", func() {
 			Return(expectedErr)
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
+		gateway := chaincode.NewGateway(mockConnection, mockSigner)
 
-		err := Commit(specCtx, mockConnection, mockSigner, chaincodeDefinition)
+		err := gateway.Commit(specCtx, chaincodeDefinition)
 
 		Expect(err).To(MatchError(expectedErr))
 		AssertEqualStatus(expectedErr, err)
@@ -114,8 +117,9 @@ var _ = Describe("Commit", func() {
 			Return(expectedErr)
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
+		gateway := chaincode.NewGateway(mockConnection, mockSigner)
 
-		err := Commit(specCtx, mockConnection, mockSigner, chaincodeDefinition)
+		err := gateway.Commit(specCtx, chaincodeDefinition)
 
 		Expect(err).To(MatchError(expectedErr))
 		AssertEqualStatus(expectedErr, err)
@@ -138,8 +142,9 @@ var _ = Describe("Commit", func() {
 			Return(expectedErr)
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
+		gateway := chaincode.NewGateway(mockConnection, mockSigner)
 
-		err := Commit(specCtx, mockConnection, mockSigner, chaincodeDefinition)
+		err := gateway.Commit(specCtx, chaincodeDefinition)
 
 		Expect(err).To(MatchError(expectedErr))
 		AssertEqualStatus(expectedErr, err)
@@ -176,8 +181,9 @@ var _ = Describe("Commit", func() {
 			})
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
+		gateway := chaincode.NewGateway(mockConnection, mockSigner)
 
-		err := Commit(specCtx, mockConnection, mockSigner, chaincodeDefinition)
+		err := gateway.Commit(specCtx, chaincodeDefinition)
 		Expect(err).NotTo(HaveOccurred())
 
 		invocationSpec := AssertUnmarshalInvocationSpec(endorseRequest.GetProposedTransaction())

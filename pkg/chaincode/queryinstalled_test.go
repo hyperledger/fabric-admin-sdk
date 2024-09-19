@@ -3,12 +3,13 @@ Copyright IBM Corp. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.0
 */
 
-package chaincode
+package chaincode_test
 
 import (
 	"context"
 	"errors"
 
+	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
@@ -45,11 +46,12 @@ var _ = Describe("QueryInstalled", func() {
 			})
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
+		peer := chaincode.NewPeer(mockConnection, mockSigner)
 
 		ctx, cancel := context.WithCancel(specCtx)
 		cancel()
 
-		_, err := QueryInstalled(ctx, mockConnection, mockSigner)
+		_, err := peer.QueryInstalled(ctx)
 
 		Expect(err).To(MatchError(context.Canceled))
 	})
@@ -66,8 +68,9 @@ var _ = Describe("QueryInstalled", func() {
 			Return(expectedErr)
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
+		peer := chaincode.NewPeer(mockConnection, mockSigner)
 
-		_, err := QueryInstalled(specCtx, mockConnection, mockSigner)
+		_, err := peer.QueryInstalled(specCtx)
 
 		Expect(err).To(MatchError(expectedErr))
 	})
@@ -87,8 +90,9 @@ var _ = Describe("QueryInstalled", func() {
 			})
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
+		peer := chaincode.NewPeer(mockConnection, mockSigner)
 
-		_, err := QueryInstalled(specCtx, mockConnection, mockSigner)
+		_, err := peer.QueryInstalled(specCtx)
 
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(And(
@@ -115,8 +119,9 @@ var _ = Describe("QueryInstalled", func() {
 			Times(1)
 
 		mockSigner := NewMockSigner(controller, "", nil, expected)
+		peer := chaincode.NewPeer(mockConnection, mockSigner)
 
-		_, err := QueryInstalled(specCtx, mockConnection, mockSigner)
+		_, err := peer.QueryInstalled(specCtx)
 		Expect(err).NotTo(HaveOccurred())
 
 		actual := signedProposal.GetSignature()
@@ -143,8 +148,9 @@ var _ = Describe("QueryInstalled", func() {
 			Times(1)
 
 		mockSigner := NewMockSigner(controller, expected.Mspid, expected.IdBytes, nil)
+		peer := chaincode.NewPeer(mockConnection, mockSigner)
 
-		_, err := QueryInstalled(specCtx, mockConnection, mockSigner)
+		_, err := peer.QueryInstalled(specCtx)
 		Expect(err).NotTo(HaveOccurred())
 
 		signatureHeader := AssertUnmarshalSignatureHeader(signedProposal)
@@ -178,8 +184,9 @@ var _ = Describe("QueryInstalled", func() {
 			})
 
 		mockSigner := NewMockSigner(controller, "", nil, nil)
+		peer := chaincode.NewPeer(mockConnection, mockSigner)
 
-		actual, err := QueryInstalled(specCtx, mockConnection, mockSigner)
+		actual, err := peer.QueryInstalled(specCtx)
 		Expect(err).NotTo(HaveOccurred())
 
 		AssertProtoEqual(expected, actual)
