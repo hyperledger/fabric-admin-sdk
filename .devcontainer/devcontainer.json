@@ -8,7 +8,12 @@
     },
     "customizations": {
         "vscode": {
-            "extensions": ["esbenp.prettier-vscode", "github.vscode-github-actions", "ms-vscode.makefile-tools"]
+            "extensions": [
+                "esbenp.prettier-vscode",
+                "github.vscode-github-actions",
+                "ms-vscode.makefile-tools",
+                "streetsidesoftware.code-spell-checker"
+            ]
         }
     },
     "postStartCommand": ["make", "generate"]

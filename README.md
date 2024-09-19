@@ -6,7 +6,7 @@ For information on using the fabric-admin-sdk, please visit the [Go API document
 
 ## Overview
 
-The current API for client application to transact with Fabric networks (the [Fabric Gateway client API](https://hyperledger.github.io/fabric-gateway/)) does not provide the administrative capabilities of the legcacy client application SDKs. The fabric-admin-sdk aims to provide this programmatic administrative capability for use-cases where the [Fabric CLI commands](https://hyperledger-fabric.readthedocs.io/en/latest/command_ref.html) are not the best fit. A specific objective is to support the development of Kubernetes operators.
+The current API for client applications to transact with Fabric networks (the [Fabric Gateway client API](https://hyperledger.github.io/fabric-gateway/)) does not provide the administrative capabilities of the legacy client application SDKs. The fabric-admin-sdk aims to provide this programmatic administrative capability for use-cases where the [Fabric CLI commands](https://hyperledger-fabric.readthedocs.io/en/latest/command_ref.html) are not the best fit. A specific objective is to support the development of Kubernetes operators.
 
 More detailed information on the motivation and objectives of the fabric-admin-sdk can be found in the associated [Fabric Admin SDK RFC](https://hyperledger.github.io/fabric-rfcs/text/0000-admin_sdk.html).
 
@@ -51,7 +51,7 @@ The initial submission and implementation of fabric-admin-sdk was driven by memb
 
 ## Contribute
 
-Here is steps in short for any contribution.
+Here are steps in short for any contribution.
 
 1. check license and code of conduct
 1. fork this project
@@ -61,6 +61,4 @@ Here is steps in short for any contribution.
 
 ## Code of Conduct guidelines
 
-Please review the Hyperledger [Code of
-Conduct](https://wiki.hyperledger.org/community/hyperledger-project-code-of-conduct)
-before participating. It is important that we keep things civil.
+Please review the Hyperledger [Code of Conduct](https://wiki.hyperledger.org/community/hyperledger-project-code-of-conduct) before participating. It is important that we keep things civil.
