@@ -7,9 +7,7 @@ package chaincode_test
 
 import (
 	"context"
-	"crypto"
 	"crypto/x509"
-	"encoding/pem"
 	"os"
 	"time"
 
@@ -29,8 +27,13 @@ func Example() {
 	connection := newGrpcConnection()
 	defer connection.Close()
 
+	certificate, err := identity.ReadCertificate("client-certificate.pem")
+	panicOnError(err)
+	privateKey, err := identity.ReadPrivateKey("client-private-key.pem")
+	panicOnError(err)
+
 	// Client identity used to carry out deployment tasks.
-	id, err := identity.NewPrivateKeySigningIdentity(mspID, readCertificate(), readPrivateKey())
+	id, err := identity.NewPrivateKeySigningIdentity(mspID, certificate, privateKey)
 	panicOnError(err)
 
 	peer := chaincode.NewPeer(connection, id)
@@ -44,7 +47,8 @@ func Example() {
 	chaincodePackage, err := os.Open(chaincodePackageFile)
 	panicOnError(err)
 
-	// Install chaincode package. This must be performed for each peer on which the chaincode is to be installed.
+	// Install chaincode package. This must be performed for each peer on which
+	// the chaincode is to be installed.
 	_, err = peer.Install(ctx, chaincodePackage)
 	panicOnError(err)
 
@@ -56,19 +60,21 @@ func Example() {
 		Sequence:    1,
 	}
 
-	// Approve chaincode definition. This must be performed using client identities from sufficient organizations to
-	// satisfy the approval policy.
+	// Approve chaincode definition. This must be performed using client
+	// identities from sufficient organizations to satisfy the approval policy.
 	err = gateway.Approve(ctx, chaincodeDefinition)
 	panicOnError(err)
 
-	// Commit approved chaincode definition. This can be carried out by any organization once enough approvals have
-	// been recorded.
+	// Commit approved chaincode definition. This can be carried out by any
+	// organization once enough approvals have been recorded.
 	err = gateway.Commit(ctx, chaincodeDefinition)
 	panicOnError(err)
 }
 
 func newGrpcConnection() *grpc.ClientConn {
-	caCertificate := readCertificate()
+	caCertificate, err := identity.ReadCertificate("ca-certificate.pem")
+	panicOnError(err)
+
 	certPool := x509.NewCertPool()
 	certPool.AddCert(caCertificate)
 	transportCredentials := credentials.NewClientTLSFromCert(certPool, "")
@@ -77,39 +83,6 @@ func newGrpcConnection() *grpc.ClientConn {
 	panicOnError(err)
 
 	return connection
-}
-
-func readCertificate() *x509.Certificate {
-	certificatePEM, err := os.ReadFile("certificate.pem")
-	panicOnError(err)
-
-	block, _ := pem.Decode([]byte(certificatePEM))
-	if block == nil {
-		panic("failed to parse certificate PEM")
-	}
-	certificate, err := x509.ParseCertificate(block.Bytes)
-	if err != nil {
-		panic("failed to parse certificate: " + err.Error())
-	}
-
-	return certificate
-}
-
-func readPrivateKey() crypto.PrivateKey {
-	privateKeyPEM, err := os.ReadFile("privateKey.pem")
-	panicOnError(err)
-
-	block, _ := pem.Decode(privateKeyPEM)
-	if block == nil {
-		panic("failed to parse private key PEM")
-	}
-
-	privateKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
-	if err != nil {
-		panic("failed to parse PKCS8 encoded private key: " + err.Error())
-	}
-
-	return privateKey
 }
 
 func panicOnError(err error) {
