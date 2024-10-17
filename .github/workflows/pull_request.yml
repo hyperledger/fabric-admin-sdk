@@ -16,6 +16,9 @@ jobs:
   node:
     uses: ./.github/workflows/node.yml
 
+  scan:
+    uses: ./.github/workflows/scan.yml
+
   pull-request:
     needs:
       - go

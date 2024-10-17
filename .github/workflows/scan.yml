@@ -1,0 +1,41 @@
+name: Security vulnerability scan
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Branch, tag or SHA to scan.
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          check-latest: true
+      - name: Scan
+        run: make scan-go
+
+  node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Scan
+        run: make scan-node
