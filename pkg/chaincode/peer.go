@@ -66,7 +66,7 @@ func (p *Peer) GetInstalled(ctx context.Context, packageID string) ([]byte, erro
 		return nil, err
 	}
 
-	signedProposal, err := p.newSignedProposal(lifecycleChaincodeName, queryInstalledTransactionName, proposal.WithArguments(getInstalledArgsBytes))
+	signedProposal, err := p.newSignedProposal(lifecycleChaincodeName, getInstalledTransactionName, proposal.WithArguments(getInstalledArgsBytes))
 	if err != nil {
 		return nil, err
 	}
