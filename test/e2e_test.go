@@ -34,6 +34,10 @@ const (
 	channelName     = "mychannel"
 	org1MspID       = "Org1MSP"
 	org2MspID       = "Org2MSP"
+	osnURL          = "https://localhost:7053"
+	caFile          = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
+	clientCert      = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt"
+	clientKey       = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key"
 )
 
 func runParallel[T any](args []T, f func(T)) {
@@ -102,7 +106,8 @@ var _ = Describe("e2e", func() {
 			TLSCACert := "../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
 			PrivKeyPath := "../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
 			SignCert := "../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
-
+			tlsClientCert, err := tls.LoadX509KeyPair(clientCert, clientKey)
+			Expect(err).NotTo(HaveOccurred())
 			peer1 := network.Node{
 				Addr:      org1PeerAddress,
 				TLSCACert: TLSCACert,
@@ -166,16 +171,9 @@ var _ = Describe("e2e", func() {
 				Expect(block).ToNot(BeNil())
 
 				//create channel
-				var caFile, clientCert, clientKey, osnURL string
-				osnURL = "https://localhost:7053"
-				caFile = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
-				clientCert = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt"
-				clientKey = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.key"
 				caCertPool := x509.NewCertPool()
 				caFilePEM, err := os.ReadFile(caFile)
 				caCertPool.AppendCertsFromPEM(caFilePEM)
-				Expect(err).NotTo(HaveOccurred())
-				tlsClientCert, err := tls.LoadX509KeyPair(clientCert, clientKey)
 				Expect(err).NotTo(HaveOccurred())
 				resp, err := channel.CreateChannel(osnURL, block, caCertPool, tlsClientCert)
 				Expect(err).NotTo(HaveOccurred())
@@ -302,7 +300,20 @@ var _ = Describe("e2e", func() {
 				Expect(result).NotTo(BeEmpty())
 			})
 
-			time.Sleep(time.Duration(20) * time.Second)
+			order := network.Node{
+				Addr:      "localhost:7050",
+				TLSCACert: clientCert,
+			}
+			err = order.LoadConfig()
+			Expect(err).NotTo(HaveOccurred())
+			ordererConnection, err := network.DialConnection(order)
+			Expect(err).NotTo(HaveOccurred())
+			ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
+			defer cancel()
+			ordererBlock, err := channel.GetConfigBlockFromOrderer(ctx, ordererConnection, org1MSP, channelName, tlsClientCert)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(ordererBlock).NotTo(BeNil())
+
 			PolicyStr := "AND ('Org1MSP.peer','Org2MSP.peer')"
 			applicationPolicy, err := chaincode.NewApplicationPolicy(PolicyStr, "")
 			Expect(err).NotTo(HaveOccurred())
