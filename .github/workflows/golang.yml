@@ -38,22 +38,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - FABRIC_VERSION: "2.5.3"
+          - FABRIC_VERSION: "2.5.11"
             CREATE_CHANNEL: "create_channel"
             CONSENSUS: RAFT
-          - FABRIC_VERSION: "2.5.3"
+          - FABRIC_VERSION: "2.5.11"
             CREATE_CHANNEL: "existing_channel"
             CONSENSUS: RAFT
-          - FABRIC_VERSION: "3.0.0-preview"
+          - FABRIC_VERSION: "3.0.0"
             CREATE_CHANNEL: "create_channel"
             CONSENSUS: RAFT
-          - FABRIC_VERSION: "3.0.0-preview"
+          - FABRIC_VERSION: "3.0.0"
             CREATE_CHANNEL: "existing_channel"
             CONSENSUS: RAFT
-          - FABRIC_VERSION: "3.0.0-preview"
+          - FABRIC_VERSION: "3.0.0"
             CREATE_CHANNEL: "create_channel"
             CONSENSUS: BFT
-          - FABRIC_VERSION: "3.0.0-preview"
+          - FABRIC_VERSION: "3.0.0"
             CREATE_CHANNEL: "existing_channel"
             CONSENSUS: BFT
     steps:
