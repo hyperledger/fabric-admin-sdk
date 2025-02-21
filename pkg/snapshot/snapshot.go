@@ -40,8 +40,10 @@ func (p *Peer) SubmitRequest(ctx context.Context, channelID string, blockNum uin
 }
 
 // CancelRequest snapshot from a specific peer
-func (p *Peer) CancelRequest(ctx context.Context, channelID string) error {
-	signedRequest, err := p.newSignedSnapshotRequest(channelID, 0)
+//
+// A snapshot for given blockNum must exist or an error will be returned
+func (p *Peer) CancelRequest(ctx context.Context, channelID string, blockNum uint64) error {
+	signedRequest, err := p.newSignedSnapshotRequest(channelID, blockNum)
 	if err != nil {
 		return fmt.Errorf("failed to create signed snapshot request: %w", err)
 	}

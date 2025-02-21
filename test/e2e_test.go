@@ -20,6 +20,7 @@ import (
 	"github.com/hyperledger/fabric-admin-sdk/pkg/discovery"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/network"
+	"github.com/hyperledger/fabric-admin-sdk/pkg/snapshot"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
 	gatewaypb "github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 
@@ -34,6 +35,8 @@ const (
 	channelName     = "mychannel"
 	org1MspID       = "Org1MSP"
 	org2MspID       = "Org2MSP"
+
+	snapshotBlockNumber uint64 = 4
 )
 
 func runParallel[T any](args []T, f func(T)) {
@@ -389,6 +392,34 @@ var _ = Describe("e2e", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(peerMembershipResult.GetPeersByOrg()[org1MspID].GetPeers()).To(HaveLen(1))
 			Expect(peerMembershipResult.GetPeersByOrg()[org2MspID].GetPeers()).To(HaveLen(1))
+
+			// check snapshot
+			snapshotPeer := snapshot.NewPeer(peer1Connection, org1MSP)
+			snapshotCtx, snapshotCancel := context.WithTimeout(specCtx, 30*time.Second)
+			defer snapshotCancel()
+
+			// query snapshot when no snapshot request has been submitted
+			queryPendingRes, err := snapshotPeer.QueryPending(snapshotCtx, channelName)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(queryPendingRes.GetBlockNumbers()).To(BeEmpty(), "no pending snapshot requests before submission")
+
+			// submit snapshot request
+			err = snapshotPeer.SubmitRequest(snapshotCtx, channelName, snapshotBlockNumber)
+			Expect(err).NotTo(HaveOccurred(), "submit snapshot request")
+
+			// query pending snapshot request after submission
+			queryPendingRes, err = snapshotPeer.QueryPending(snapshotCtx, channelName)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(queryPendingRes.GetBlockNumbers()).To(ContainElement(snapshotBlockNumber), "pending snapshot request after submission")
+
+			// cancel snapshot request
+			err = snapshotPeer.CancelRequest(snapshotCtx, channelName, snapshotBlockNumber)
+			Expect(err).NotTo(HaveOccurred(), "cancel snapshot request after submission")
+
+			// query pending snapshot request after cancellation
+			queryPendingRes, err = snapshotPeer.QueryPending(snapshotCtx, channelName)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(queryPendingRes.GetBlockNumbers()).To(BeEmpty(), "no pending snapshot requests after cancellation")
 		})
 	})
 })
