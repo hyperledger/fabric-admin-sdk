@@ -9,7 +9,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/hyperledger/fabric-admin-sdk/internal/osnadmin"
+	"github.com/hyperledger/fabric-admin-sdk/pkg/osnadmin"
+
 	"github.com/hyperledger/fabric-admin-sdk/internal/protoutil"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/proposal"
