@@ -36,7 +36,7 @@ const (
 	org1MspID       = "Org1MSP"
 	org2MspID       = "Org2MSP"
 
-	snapshotBlockNumber uint64 = 4
+	snapshotBlockNumber uint64 = 10
 )
 
 func runParallel[T any](args []T, f func(T)) {

@@ -6,8 +6,6 @@ import (
 
 	"github.com/hyperledger/fabric-admin-sdk/internal/protoutil"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
-	"github.com/hyperledger/fabric-protos-go-apiv2/common"
-	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
@@ -74,26 +72,15 @@ func (p *Peer) QueryPending(ctx context.Context, channelID string) (*peer.QueryP
 // newSignedSnapshotRequest returns a signed snapshot request for
 // given channel
 func (p *Peer) newSignedSnapshotRequest(channelID string, blockNum uint64) (*peer.SignedSnapshotRequest, error) {
-	nonce, err := protoutil.CreateNonce()
+	sigHdr, err := protoutil.NewSignatureHeader(p.id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create nonce: %w", err)
-	}
-
-	creator, err := proto.Marshal(&msp.SerializedIdentity{
-		Mspid:   p.id.MspID(),
-		IdBytes: p.id.Credentials(),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal creator: %w", err)
+		return nil, fmt.Errorf("failed to create signature header: %w", err)
 	}
 
 	request, err := proto.Marshal(&peer.SnapshotRequest{
-		SignatureHeader: &common.SignatureHeader{
-			Creator: creator,
-			Nonce:   nonce,
-		},
-		ChannelId:   channelID,
-		BlockNumber: blockNum,
+		SignatureHeader: sigHdr,
+		ChannelId:       channelID,
+		BlockNumber:     blockNum,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal snapshot request: %w", err)
