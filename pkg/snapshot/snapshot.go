@@ -7,6 +7,7 @@ import (
 	"github.com/hyperledger/fabric-admin-sdk/internal/protoutil"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
@@ -78,9 +79,17 @@ func (p *Peer) newSignedSnapshotRequest(channelID string, blockNum uint64) (*pee
 		return nil, fmt.Errorf("failed to create nonce: %w", err)
 	}
 
+	creator, err := proto.Marshal(&msp.SerializedIdentity{
+		Mspid:   p.id.MspID(),
+		IdBytes: p.id.Credentials(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal creator: %w", err)
+	}
+
 	request, err := proto.Marshal(&peer.SnapshotRequest{
 		SignatureHeader: &common.SignatureHeader{
-			Creator: p.id.Credentials(),
+			Creator: creator,
 			Nonce:   nonce,
 		},
 		ChannelId:   channelID,
