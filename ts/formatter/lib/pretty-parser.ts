@@ -17,11 +17,12 @@ export class BlockDecoder {
     }
 
     header() {
-        const {header} = this.block.toObject();
-        const {number, previousHash, dataHash} = header;
+        const header = this.block.getHeader();
+        const previousHash = header.getPreviousHash_asU8();
+        const dataHash = header.getDataHash_asU8();
 
         return {
-            number,
+            number: header.getNumber(),
             previousHash: Buffer.from(previousHash).toString('hex'),
             dataHash: Buffer.from(dataHash).toString('hex')
         };
