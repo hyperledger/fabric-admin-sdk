@@ -16,6 +16,6 @@ export function identity(bytes: Uint8Array) {
     const _ = SerializedIdentity.deserializeBinary(bytes)
     return {
         mspid: _.getMspid(),
-        idBytes: Buffer.from(_.getIdBytes()).toString()
+        idBytes: Buffer.from(_.getIdBytes_asU8()).toString()
     }
 }

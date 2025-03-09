@@ -24,17 +24,17 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@hyperledger/fabric-protos": "latest",
-    "google-protobuf": "latest",
-    "@types/google-protobuf": "latest"
+    "@hyperledger/fabric-protos": "~0.3.7",
+    "@types/google-protobuf": "latest",
+    "google-protobuf": "latest"
   },
   "devDependencies": {
-    "typescript": "latest",
-    "jest": "latest",
-    "ts-jest": "latest",
     "@types/jest": "latest",
     "@types/node": "latest",
-    "jest-ts-webcompat-resolver": "latest"
+    "jest": "latest",
+    "jest-ts-webcompat-resolver": "latest",
+    "ts-jest": "latest",
+    "typescript": "~5.8.2"
   },
   "type": "module"
 }
