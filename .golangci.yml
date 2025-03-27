@@ -1,26 +1,39 @@
-# See https://golangci-lint.run/usage/configuration/
-
-run:
-  timeout: 5m
-
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
+    - cyclop
     - errcheck
+    - errname
+    - errorlint
+    - ginkgolinter
     - gocognit
-    - gocyclo
-    - gofmt
-    - goimports
     - gosec
-    - gosimple
     - govet
     - ineffassign
     - misspell
-    - typecheck
+    - nolintlint
+    - staticcheck
     - unused
-
-linters-settings:
-  gocognit:
-    min-complexity: 15
-  gocyclo:
-    min-complexity: 10
+    - usetesting
+  settings:
+    cyclop:
+      max-complexity: 10
+    gocognit:
+      min-complexity: 15
+    staticcheck:
+      checks:
+        - all
+        - -ST1000
+  exclusions:
+    generated: strict
+    warn-unused: true
+    presets:
+      - common-false-positives
+      - std-error-handling
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: strict

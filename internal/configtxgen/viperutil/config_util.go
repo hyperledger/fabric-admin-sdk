@@ -146,7 +146,7 @@ func (c *ConfigParser) getFromEnv(key string) string {
 // Prototype declaration for getFromEnv function.
 type envGetter func(key string) string
 
-//nolint:gocognit,gocyclo
+//nolint:cyclop,gocognit
 func getKeysRecursively(base string, getenv envGetter, nodeKeys map[string]interface{}, oType reflect.Type) map[string]interface{} {
 	subTypes := map[string]reflect.Type{}
 
@@ -297,7 +297,7 @@ func stringFromFileDecodeHook(f reflect.Kind, t reflect.Kind, data interface{}) 
 	return data, nil
 }
 
-//nolint:gocognit,gocyclo
+//nolint:cyclop,gocognit
 func pemBlocksFromFileDecodeHook(f reflect.Kind, t reflect.Kind, data interface{}) (interface{}, error) {
 	// "to" type should be string
 	if t != reflect.Slice {
@@ -380,7 +380,7 @@ func kafkaVersionDecodeHook(f reflect.Type, t reflect.Type, data interface{}) (i
 
 	v, err := version.NewVersion(data.(string))
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse Kafka version: %s", err)
+		return nil, fmt.Errorf("unable to parse Kafka version: %w", err)
 	}
 
 	for kafkaVersion, constraints := range kafkaVersionConstraints {

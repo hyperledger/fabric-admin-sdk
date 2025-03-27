@@ -19,16 +19,11 @@ unit-test-node:
 		npm install
 
 .PHONY: lint
-lint: staticcheck golangci-lint
-
-.PHONY: staticcheck
-staticcheck:
-	go install honnef.co/go/tools/cmd/staticcheck@latest
-	staticcheck -f stylish '$(base_dir)/...'
+lint: golangci-lint
 
 .PHONY: install-golangci-lint
 install-golangci-lint:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go_bin_dir)
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go_bin_dir)
 
 $(go_bin_dir)/golangci-lint:
 	$(MAKE) install-golangci-lint

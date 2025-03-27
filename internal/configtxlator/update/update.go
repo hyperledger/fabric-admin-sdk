@@ -160,7 +160,7 @@ func computeGroupUpdate(original, updated *common.ConfigGroup) (readSet, writeSe
 	readSetGroups, writeSetGroups, sameSetGroups, groupsMembersUpdated := computeGroupsMapUpdate(original.Groups, updated.Groups)
 
 	// If the updated group is 'Equal' to the updated group (none of the members nor the mod policy changed)
-	if !(policiesMembersUpdated || valuesMembersUpdated || groupsMembersUpdated || original.ModPolicy != updated.ModPolicy) {
+	if !policiesMembersUpdated && !valuesMembersUpdated && !groupsMembersUpdated && original.ModPolicy == updated.ModPolicy {
 
 		// If there were no modified entries in any of the policies/values/groups maps
 		if len(readSetPolicies)+len(writeSetPolicies)+len(readSetValues)+len(writeSetValues)+len(readSetGroups)+len(writeSetGroups) == 0 {

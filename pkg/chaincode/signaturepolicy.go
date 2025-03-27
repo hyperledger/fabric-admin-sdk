@@ -136,7 +136,7 @@ func nOutOf(n int32, policies []*cb.SignaturePolicy) *cb.SignaturePolicy {
 	}
 }
 
-//nolint:gocognit,gocyclo
+//nolint:cyclop,gocognit
 func secondPass(args ...interface{}) (interface{}, error) {
 	/* general sanity check, we expect at least 3 args */
 	if len(args) < 3 {
@@ -206,7 +206,7 @@ func secondPass(args ...interface{}) (interface{}, error) {
 			/* build the principal we've been told */
 			mspRole, err := proto.Marshal(&mb.MSPRole{MspIdentifier: subm[0][1], Role: r})
 			if err != nil {
-				return nil, fmt.Errorf("error marshalling msp role: %s", err)
+				return nil, fmt.Errorf("error marshalling msp role: %w", err)
 			}
 
 			p := &mb.MSPPrincipal{
@@ -287,7 +287,7 @@ func NewApplicationPolicy(signaturePolicy, channelConfigPolicy string) (*peer.Ap
 //   - ROLE takes the value of any of the RoleXXX constants representing
 //     the required role
 //
-//nolint:gocognit,gocyclo
+//nolint:cyclop,gocognit
 func signaturePolicyEnvelopeFromString(policy string) (*cb.SignaturePolicyEnvelope, error) {
 	// first we translate the and/or business into outof gates
 	intermediate, err := govaluate.NewEvaluableExpressionWithFunctions(

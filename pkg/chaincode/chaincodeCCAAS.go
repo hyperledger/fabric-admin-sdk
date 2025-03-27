@@ -31,11 +31,11 @@ ${CONTAINER_CLI} run --rm -d --name peer0org1_${CC_NAME}_ccaas  \
 ${CC_NAME}_ccaas_image:latest
 */
 func PackageCCAAS(connection Connection, metadata Metadata, tmpPath, filename string) error {
-	if err := os.MkdirAll(tmpPath+"/src/", 0766); err != nil {
+	if err := os.MkdirAll(tmpPath+"/src/", 0750); err != nil {
 		return err
 	}
 
-	if err := os.MkdirAll(tmpPath+"/pkg/", 0766); err != nil {
+	if err := os.MkdirAll(tmpPath+"/pkg/", 0750); err != nil {
 		return err
 	}
 
@@ -103,14 +103,14 @@ func creategzTar(filename string, fileList []string) error {
 
 		err = tw.WriteHeader(header)
 		if err != nil {
-			f.Close()
+			_ = f.Close()
 			return err
 		}
 		_, err = io.Copy(tw, f)
 		if err != nil {
 			return err
 		}
-		f.Close()
+		_ = f.Close()
 	}
 
 	return nil

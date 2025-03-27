@@ -32,7 +32,7 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	os.RemoveAll(tmpDir)
+	_ = os.RemoveAll(tmpDir)
 })
 
 // ConfigTxGen based on Profile return block

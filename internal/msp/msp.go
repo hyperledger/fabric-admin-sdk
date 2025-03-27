@@ -61,7 +61,7 @@ func ProviderTypeToString(id ProviderType) string {
 	return ""
 }
 
-//nolint:gocognit,gocyclo
+//nolint:cyclop,gocognit
 func getMspConfig(dir string, ID string, sigid *msp.SigningIdentityInfo) (*msp.MSPConfig, error) {
 	cacertDir := filepath.Join(dir, cacerts)
 	admincertDir := filepath.Join(dir, admincerts)

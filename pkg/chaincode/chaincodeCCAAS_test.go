@@ -3,6 +3,7 @@ package chaincode_test
 import (
 	"archive/tar"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -41,7 +42,7 @@ var _ = Describe("Package", func() {
 // parent of dst, or if the archive contains any files whose type is not
 // a regular file or directory.
 //
-//nolint:gocognit,gocyclo
+//nolint:cyclop,gocognit
 func Untar(buffer io.Reader, dst string) error {
 	gzr, err := gzip.NewReader(buffer)
 	if err != nil {
@@ -54,7 +55,7 @@ func Untar(buffer io.Reader, dst string) error {
 	for {
 		header, err := tr.Next()
 
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return nil
 		}
 
@@ -88,7 +89,7 @@ func Untar(buffer io.Reader, dst string) error {
 				return err
 			}
 
-			f.Close()
+			_ = f.Close()
 		default:
 			return fmt.Errorf("invalid file type '%v' contained in archive for file '%s'", header.Typeflag, header.Name)
 		}
