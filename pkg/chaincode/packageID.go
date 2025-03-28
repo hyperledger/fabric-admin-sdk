@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"regexp"
@@ -43,7 +44,7 @@ type ChaincodePackageMetadata struct {
 // ParseChaincodePackage parses a set of bytes as a chaincode package
 // and returns the parsed package as a metadata struct and a code package
 //
-//nolint:gocognit,gocyclo
+//nolint:cyclop,gocognit
 func ParseChaincodePackage(source []byte) (*ChaincodePackageMetadata, []byte, error) {
 	gzReader, err := gzip.NewReader(bytes.NewBuffer(source))
 	if err != nil {
@@ -56,7 +57,7 @@ func ParseChaincodePackage(source []byte) (*ChaincodePackageMetadata, []byte, er
 	var ccPackageMetadata *ChaincodePackageMetadata
 	for {
 		header, err := tarReader.Next()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 

@@ -67,9 +67,9 @@ func addPolicy(cg *cb.ConfigGroup, policy ipc.ConfigPolicy, modPolicy string) {
 func AddOrdererPolicies(cg *cb.ConfigGroup, policyMap map[string]*genesisconfig.Policy, modPolicy string) error {
 	switch {
 	case policyMap == nil:
-		return fmt.Errorf("no policies defined")
+		return errors.New("no policies defined")
 	case policyMap[BlockValidationPolicyKey] == nil:
-		return fmt.Errorf("no BlockValidation policy defined")
+		return errors.New("no BlockValidation policy defined")
 	}
 
 	return AddPolicies(cg, policyMap, modPolicy)
@@ -78,46 +78,57 @@ func AddOrdererPolicies(cg *cb.ConfigGroup, policyMap map[string]*genesisconfig.
 func AddPolicies(cg *cb.ConfigGroup, policyMap map[string]*genesisconfig.Policy, modPolicy string) error {
 	switch {
 	case policyMap == nil:
-		return fmt.Errorf("no policies defined")
+		return errors.New("no policies defined")
 	case policyMap[icc.AdminsPolicyKey] == nil:
-		return fmt.Errorf("no Admins policy defined")
+		return errors.New("no Admins policy defined")
 	case policyMap[icc.ReadersPolicyKey] == nil:
-		return fmt.Errorf("no Readers policy defined")
+		return errors.New("no Readers policy defined")
 	case policyMap[icc.WritersPolicyKey] == nil:
-		return fmt.Errorf("no Writers policy defined")
+		return errors.New("no Writers policy defined")
 	}
 
 	for policyName, policy := range policyMap {
-		switch policy.Type {
-		case ImplicitMetaPolicyType:
-			imp, err := ipc.ImplicitMetaFromString(policy.Rule)
-			if err != nil {
-				return fmt.Errorf("invalid implicit meta policy rule '%s' %w", policy.Rule, err)
-			}
-			cg.Policies[policyName] = &cb.ConfigPolicy{
-				ModPolicy: modPolicy,
-				Policy: &cb.Policy{
-					Type:  int32(cb.Policy_IMPLICIT_META),
-					Value: protoutil.MarshalOrPanic(imp),
-				},
-			}
-		case SignaturePolicyType:
-			sp, err := ipd.FromString(policy.Rule)
-			if err != nil {
-				return fmt.Errorf("invalid signature policy rule '%s' %w", policy.Rule, err)
-			}
-			cg.Policies[policyName] = &cb.ConfigPolicy{
-				ModPolicy: modPolicy,
-				Policy: &cb.Policy{
-					Type:  int32(cb.Policy_SIGNATURE),
-					Value: protoutil.MarshalOrPanic(sp),
-				},
-			}
-		default:
-			return fmt.Errorf("unknown policy type: %s", policy.Type)
+		configPolicy, err := newConfigPolicy(policy, modPolicy)
+		if err != nil {
+			return err
 		}
+
+		cg.Policies[policyName] = configPolicy
 	}
 	return nil
+}
+
+func newConfigPolicy(policy *genesisconfig.Policy, modPolicy string) (*cb.ConfigPolicy, error) {
+	switch policy.Type {
+	case ImplicitMetaPolicyType:
+		imp, err := ipc.ImplicitMetaFromString(policy.Rule)
+		if err != nil {
+			return nil, fmt.Errorf("invalid implicit meta policy rule '%s' %w", policy.Rule, err)
+		}
+		result := &cb.ConfigPolicy{
+			ModPolicy: modPolicy,
+			Policy: &cb.Policy{
+				Type:  int32(cb.Policy_IMPLICIT_META),
+				Value: protoutil.MarshalOrPanic(imp),
+			},
+		}
+		return result, nil
+	case SignaturePolicyType:
+		sp, err := ipd.FromString(policy.Rule)
+		if err != nil {
+			return nil, fmt.Errorf("invalid signature policy rule '%s' %w", policy.Rule, err)
+		}
+		result := &cb.ConfigPolicy{
+			ModPolicy: modPolicy,
+			Policy: &cb.Policy{
+				Type:  int32(cb.Policy_SIGNATURE),
+				Value: protoutil.MarshalOrPanic(sp),
+			},
+		}
+		return result, nil
+	default:
+		return nil, fmt.Errorf("unknown policy type: %s", policy.Type)
+	}
 }
 
 func NewConfigGroup() *cb.ConfigGroup {
@@ -134,7 +145,7 @@ func NewConfigGroup() *cb.ConfigGroup {
 // configuration.  All mod_policy values are set to "Admins" for this group, with the exception of the OrdererAddresses
 // value which is set to "/Channel/Orderer/Admins".
 //
-//nolint:gocyclo
+//nolint:cyclop
 func NewChannelGroup(conf *genesisconfig.Profile) (*cb.ConfigGroup, error) {
 	channelGroup := NewConfigGroup()
 	if err := AddPolicies(channelGroup, conf.Policies, icc.AdminsPolicyKey); err != nil {
@@ -185,7 +196,7 @@ func NewChannelGroup(conf *genesisconfig.Profile) (*cb.ConfigGroup, error) {
 // about how large blocks should be, how frequently they should be emitted, etc. as well as the organizations of the ordering network.
 // It sets the mod_policy of all elements to "Admins".  This group is always present in any channel configuration.
 //
-//nolint:gocyclo
+//nolint:cyclop
 func NewOrdererGroup(conf *genesisconfig.Orderer) (*cb.ConfigGroup, error) {
 	ordererGroup := NewConfigGroup()
 	if err := AddOrdererPolicies(ordererGroup, conf.Policies, icc.AdminsPolicyKey); err != nil {
@@ -210,16 +221,16 @@ func NewOrdererGroup(conf *genesisconfig.Orderer) (*cb.ConfigGroup, error) {
 	case ConsensusTypeSolo:
 	case ConsensusTypeEtcdRaft:
 		if consensusMetadata, err = icc.MarshalEtcdRaftMetadata(conf.EtcdRaft); err != nil {
-			return nil, fmt.Errorf("cannot marshal metadata for orderer type %s: %s", ConsensusTypeEtcdRaft, err)
+			return nil, fmt.Errorf("cannot marshal metadata for orderer type %s: %w", ConsensusTypeEtcdRaft, err)
 		}
 	case ConsensusTypeBFT:
 		consenterProtos, err := consenterProtosFromConfig(conf.ConsenterMapping)
 		if err != nil {
-			return nil, fmt.Errorf("cannot load consenter config for orderer type %s: %s", ConsensusTypeBFT, err)
+			return nil, fmt.Errorf("cannot load consenter config for orderer type %s: %w", ConsensusTypeBFT, err)
 		}
 		addValue(ordererGroup, icc.OrderersValue(consenterProtos), icc.AdminsPolicyKey)
 		if consensusMetadata, err = icc.MarshalBFTOptions(conf.SmartBFT); err != nil {
-			return nil, fmt.Errorf("consenter options read failed with error %s for orderer type %s", err, ConsensusTypeBFT)
+			return nil, fmt.Errorf("consenter options read failed with error %w for orderer type %s", err, ConsensusTypeBFT)
 		}
 		// Overwrite policy manually by computing it from the consenters
 		ipc.EncodeBFTBlockVerificationPolicy(consenterProtos, ordererGroup)
@@ -313,7 +324,7 @@ func NewApplicationGroup(conf *genesisconfig.Application) (*cb.ConfigGroup, erro
 		var err error
 		applicationGroup.Groups[org.Name], err = NewApplicationOrgGroup(org)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create application org %w ", err)
+			return nil, fmt.Errorf("failed to create application org %w", err)
 		}
 	}
 
@@ -455,7 +466,7 @@ func DefaultConfigTemplate(conf *genesisconfig.Profile) (*cb.ConfigGroup, error)
 func ConfigTemplateFromGroup(conf *genesisconfig.Profile, cg *cb.ConfigGroup) (*cb.ConfigGroup, error) {
 	template := proto.Clone(cg).(*cb.ConfigGroup)
 	if template.Groups == nil {
-		return nil, fmt.Errorf("supplied system channel group has no sub-groups")
+		return nil, errors.New("supplied system channel group has no sub-groups")
 	}
 
 	template.Groups[icc.ApplicationGroupKey] = &cb.ConfigGroup{
@@ -467,11 +478,11 @@ func ConfigTemplateFromGroup(conf *genesisconfig.Profile, cg *cb.ConfigGroup) (*
 
 	consortiums, ok := template.Groups[icc.ConsortiumsGroupKey]
 	if !ok {
-		return nil, fmt.Errorf("supplied system channel group does not appear to be system channel (missing consortiums group)")
+		return nil, errors.New("supplied system channel group does not appear to be system channel (missing consortiums group)")
 	}
 
 	if consortiums.Groups == nil {
-		return nil, fmt.Errorf("system channel consortiums group appears to have no consortiums defined")
+		return nil, errors.New("system channel consortiums group appears to have no consortiums defined")
 	}
 
 	consortium, ok := consortiums.Groups[conf.Consortium]
@@ -480,7 +491,7 @@ func ConfigTemplateFromGroup(conf *genesisconfig.Profile, cg *cb.ConfigGroup) (*
 	}
 
 	if conf.Application == nil {
-		return nil, fmt.Errorf("supplied channel creation profile does not contain an application section")
+		return nil, errors.New("supplied channel creation profile does not contain an application section")
 	}
 
 	for _, organization := range conf.Application.Organizations {
@@ -574,7 +585,7 @@ func consenterProtosFromConfig(consenterMapping []*genesisconfig.Consenter) ([]*
 		if consenter.ClientTLSCert != "" {
 			clientCert, err := os.ReadFile(consenter.ClientTLSCert)
 			if err != nil {
-				return nil, fmt.Errorf("cannot load client cert for consenter %s:%d: %s", c.GetHost(), c.GetPort(), err)
+				return nil, fmt.Errorf("cannot load client cert for consenter %s:%d: %w", c.GetHost(), c.GetPort(), err)
 			}
 			c.ClientTlsCert = clientCert
 		}
@@ -582,7 +593,7 @@ func consenterProtosFromConfig(consenterMapping []*genesisconfig.Consenter) ([]*
 		if consenter.ServerTLSCert != "" {
 			serverCert, err := os.ReadFile(consenter.ServerTLSCert)
 			if err != nil {
-				return nil, fmt.Errorf("cannot load server cert for consenter %s:%d: %s", c.GetHost(), c.GetPort(), err)
+				return nil, fmt.Errorf("cannot load server cert for consenter %s:%d: %w", c.GetHost(), c.GetPort(), err)
 			}
 			c.ServerTlsCert = serverCert
 		}
@@ -590,7 +601,7 @@ func consenterProtosFromConfig(consenterMapping []*genesisconfig.Consenter) ([]*
 		if consenter.Identity != "" {
 			identity, err := os.ReadFile(consenter.Identity)
 			if err != nil {
-				return nil, fmt.Errorf("cannot load identity for consenter %s:%d: %s", c.GetHost(), c.GetPort(), err)
+				return nil, fmt.Errorf("cannot load identity for consenter %s:%d: %w", c.GetHost(), c.GetPort(), err)
 			}
 			c.Identity = identity
 		}

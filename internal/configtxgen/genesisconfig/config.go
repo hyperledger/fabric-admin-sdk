@@ -316,7 +316,7 @@ func (org *Organization) completeInitialization(configDir string) {
 	translatePaths(configDir, org)
 }
 
-//nolint:gocognit,gocyclo
+//nolint:cyclop,gocognit
 func (ord *Orderer) completeInitialization(configDir string) {
 loop:
 	for {
@@ -499,7 +499,7 @@ func (c *configCache) load(config *viperutil.ConfigParser, configPath string) (*
 	if !ok {
 		err := config.EnhancedExactUnmarshal(conf)
 		if err != nil {
-			return nil, fmt.Errorf("error unmarshalling config into struct: %s", err)
+			return nil, fmt.Errorf("error unmarshalling config into struct: %w", err)
 		}
 
 		serializedConf, err = json.Marshal(conf)
