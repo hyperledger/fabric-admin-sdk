@@ -136,7 +136,7 @@ var _ = Describe("GetInstalled", func() {
 			}).
 			Times(1)
 
-		mockSigner := NewMockSigner(controller, expected.Mspid, expected.IdBytes, nil)
+		mockSigner := NewMockSigner(controller, expected.GetMspid(), expected.GetIdBytes(), nil)
 		peer := chaincode.NewPeer(mockConnection, mockSigner)
 
 		_, err := peer.GetInstalled(specCtx, "PACKAGE_ID")

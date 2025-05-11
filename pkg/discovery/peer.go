@@ -93,7 +93,7 @@ func (p *Peer) PeerMembershipQuery(ctx context.Context, channel string, filter *
 		return nil, err
 	}
 
-	for _, qrs := range rs.Results {
+	for _, qrs := range rs.GetResults() {
 		return qrs.GetMembers(), nil
 	}
 	return nil, nil

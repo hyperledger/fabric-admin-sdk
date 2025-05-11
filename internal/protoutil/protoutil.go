@@ -25,13 +25,13 @@ func CreateSignedTx(
 	}
 
 	// the original header
-	hdr, err := UnmarshalHeader(proposal.Header)
+	hdr, err := UnmarshalHeader(proposal.GetHeader())
 	if err != nil {
 		return nil, err
 	}
 
 	// the original payload
-	pPayl, err := UnmarshalChaincodeProposalPayload(proposal.Payload)
+	pPayl, err := UnmarshalChaincodeProposalPayload(proposal.GetPayload())
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func CreateSignedTx(
 	endorsements := fillEndorsements(resps)
 
 	// create ChaincodeEndorsedAction
-	cea := &peer.ChaincodeEndorsedAction{ProposalResponsePayload: resps[0].Payload, Endorsements: endorsements}
+	cea := &peer.ChaincodeEndorsedAction{ProposalResponsePayload: resps[0].GetPayload(), Endorsements: endorsements}
 
 	// obtain the bytes of the proposal payload that will go to the transaction
 	propPayloadBytes, err := GetBytesProposalPayloadForTx(pPayl)
@@ -55,7 +55,7 @@ func CreateSignedTx(
 	}
 
 	// create a transaction
-	taa := &peer.TransactionAction{Header: hdr.SignatureHeader, Payload: capBytes}
+	taa := &peer.TransactionAction{Header: hdr.GetSignatureHeader(), Payload: capBytes}
 	taas := make([]*peer.TransactionAction, 1)
 	taas[0] = taa
 	tx := &peer.Transaction{Actions: taas}
@@ -91,13 +91,13 @@ func ensureValidResponses(responses []*peer.ProposalResponse) error {
 
 	var firstResponse []byte
 	for n, r := range responses {
-		if r.Response.Status < 200 || r.Response.Status >= 400 {
-			return fmt.Errorf("proposal response was not successful, error code %d, msg %s", r.Response.Status, r.Response.Message)
+		if r.GetResponse().GetStatus() < 200 || r.GetResponse().GetStatus() >= 400 {
+			return fmt.Errorf("proposal response was not successful, error code %d, msg %s", r.GetResponse().GetStatus(), r.GetResponse().GetMessage())
 		}
 
 		if n == 0 {
-			firstResponse = r.Payload
-		} else if !bytes.Equal(firstResponse, r.Payload) {
+			firstResponse = r.GetPayload()
+		} else if !bytes.Equal(firstResponse, r.GetPayload()) {
 			return errors.New("ProposalResponsePayloads do not match")
 		}
 	}
@@ -108,7 +108,7 @@ func ensureValidResponses(responses []*peer.ProposalResponse) error {
 func fillEndorsements(responses []*peer.ProposalResponse) []*peer.Endorsement {
 	endorsements := make([]*peer.Endorsement, len(responses))
 	for n, r := range responses {
-		endorsements[n] = r.Endorsement
+		endorsements[n] = r.GetEndorsement()
 	}
 	return endorsements
 }

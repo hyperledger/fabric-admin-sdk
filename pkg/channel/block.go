@@ -21,7 +21,7 @@ func GetConfigBlock(ctx context.Context, connection grpc.ClientConnInterface, id
 	}
 
 	block := &cb.Block{}
-	if err := proto.Unmarshal(proposalResp.Response.Payload, block); err != nil {
+	if err := proto.Unmarshal(proposalResp.GetResponse().GetPayload(), block); err != nil {
 		return nil, fmt.Errorf("block unmarshal %w", err)
 	}
 	return block, nil
@@ -35,7 +35,7 @@ func GetBlockChainInfo(ctx context.Context, connection grpc.ClientConnInterface,
 	}
 
 	blockChainInfo := &cb.BlockchainInfo{}
-	err = proto.Unmarshal(proposalResp.Response.Payload, blockChainInfo)
+	err = proto.Unmarshal(proposalResp.GetResponse().GetPayload(), blockChainInfo)
 	if err != nil {
 		return nil, fmt.Errorf("block unmarshal %w", err)
 	}

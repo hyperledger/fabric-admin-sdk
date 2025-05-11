@@ -13,6 +13,8 @@ linters:
     - ineffassign
     - misspell
     - nolintlint
+    - perfsprint
+    - protogetter
     - staticcheck
     - unused
     - usetesting

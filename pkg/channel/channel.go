@@ -104,9 +104,9 @@ func ListChannelOnPeer(ctx context.Context, connection grpc.ClientConnInterface,
 	}
 
 	var channelQueryResponse peer.ChannelQueryResponse
-	err = proto.Unmarshal(proposalResp.Response.Payload, &channelQueryResponse)
+	err = proto.Unmarshal(proposalResp.GetResponse().GetPayload(), &channelQueryResponse)
 	if err != nil {
 		return nil, err
 	}
-	return channelQueryResponse.Channels, nil
+	return channelQueryResponse.GetChannels(), nil
 }

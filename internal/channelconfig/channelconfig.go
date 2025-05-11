@@ -255,7 +255,7 @@ func ChannelCreationPolicyValue(policy *common.Policy) *StandardConfigValue {
 // MarshalEtcdRaftMetadata serializes etcd RAFT metadata.
 func MarshalEtcdRaftMetadata(md *etcdraft.ConfigMetadata) ([]byte, error) {
 	copyMd := proto.Clone(md).(*etcdraft.ConfigMetadata)
-	for _, c := range copyMd.Consenters {
+	for _, c := range copyMd.GetConsenters() {
 		// Expect the user to set the config value for client/server certs to the
 		// path where they are persisted locally, then load these files to memory.
 		clientCert, err := os.ReadFile(string(c.GetClientTlsCert()))

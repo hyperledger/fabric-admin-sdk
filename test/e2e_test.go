@@ -89,7 +89,7 @@ func printGrpcError(err error) {
 		for _, detail := range details {
 			switch detail := detail.(type) {
 			case *gatewaypb.ErrorDetail:
-				fmt.Printf("- address: %s, mspId: %s, message: %s\n", detail.Address, detail.MspId, detail.Message)
+				fmt.Printf("- address: %s, mspId: %s, message: %s\n", detail.GetAddress(), detail.GetMspId(), detail.GetMessage())
 			}
 		}
 	}
@@ -237,7 +237,7 @@ var _ = Describe("e2e", func() {
 			// check peer join channel
 			peerChannelInfo, err := channel.ListChannelOnPeer(specCtx, peer1Connection, org1MSP)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(peerChannelInfo[0].ChannelId).To(Equal(channelName))
+			Expect(peerChannelInfo[0].GetChannelId()).To(Equal(channelName))
 			// package chaincode as CCAAS
 			dummyConnection := chaincode.Connection{
 				Address:     "{{.peername}}_basic:9999",
