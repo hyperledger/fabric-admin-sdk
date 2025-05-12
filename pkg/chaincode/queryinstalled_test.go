@@ -147,7 +147,7 @@ var _ = Describe("QueryInstalled", func() {
 			}).
 			Times(1)
 
-		mockSigner := NewMockSigner(controller, expected.Mspid, expected.IdBytes, nil)
+		mockSigner := NewMockSigner(controller, expected.GetMspid(), expected.GetIdBytes(), nil)
 		peer := chaincode.NewPeer(mockConnection, mockSigner)
 
 		_, err := peer.QueryInstalled(specCtx)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/tls"
+	"errors"
 	"fmt"
 
 	"github.com/hyperledger/fabric-admin-sdk/internal/protoutil"
@@ -70,7 +71,7 @@ func readBlock(Service ab.AtomicBroadcast_DeliverClient) (*cb.Block, error) {
 	if err != nil {
 		return nil, err
 	}
-	switch t := msg.Type.(type) {
+	switch t := msg.GetType().(type) {
 	case *ab.DeliverResponse_Status:
 		//logger.Infof("Expect block, but got status: %v", t)
 		return nil, fmt.Errorf("can't read the block: %v", t)
@@ -130,40 +131,40 @@ func getLastConfigIndexFromBlock(block *cb.Block) (uint64, error) {
 		return 0, fmt.Errorf("failed to retrieve metadata %w", err)
 	}
 	// TODO FAB-15864 Remove this fallback when we can stop supporting upgrade from pre-1.4.1 orderer
-	if len(m.Value) == 0 {
+	if len(m.GetValue()) == 0 {
 		// TODO cb.BlockMetadataIndex_LAST_CONFIG
 		m, err := getMetadataFromBlock(block, 1)
 		if err != nil {
 			return 0, fmt.Errorf("failed to retrieve metadata %w", err)
 		}
 		lc := &cb.LastConfig{}
-		err = proto.Unmarshal(m.Value, lc)
+		err = proto.Unmarshal(m.GetValue(), lc)
 		if err != nil {
 			return 0, fmt.Errorf("error unmarshalling LastConfig %w", err)
 		}
-		return lc.Index, nil
+		return lc.GetIndex(), nil
 	}
 
 	obm := &cb.OrdererBlockMetadata{}
-	err = proto.Unmarshal(m.Value, obm)
+	err = proto.Unmarshal(m.GetValue(), obm)
 	if err != nil {
 		return 0, fmt.Errorf("failed to unmarshal orderer block metadata %w", err)
 	}
-	return obm.LastConfig.Index, nil
+	return obm.GetLastConfig().GetIndex(), nil
 }
 
 // GetMetadataFromBlock retrieves metadata at the specified index.
 func getMetadataFromBlock(block *cb.Block, index cb.BlockMetadataIndex) (*cb.Metadata, error) {
-	if block.Metadata == nil {
-		return nil, fmt.Errorf("no metadata in block")
+	if block.GetMetadata() == nil {
+		return nil, errors.New("no metadata in block")
 	}
 
-	if len(block.Metadata.Metadata) <= int(index) {
+	if len(block.GetMetadata().GetMetadata()) <= int(index) {
 		return nil, fmt.Errorf("no metadata at index [%s]", index)
 	}
 
 	md := &cb.Metadata{}
-	err := proto.Unmarshal(block.Metadata.Metadata[index], md)
+	err := proto.Unmarshal(block.GetMetadata().GetMetadata()[index], md)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling metadata at index [%s] %w", index, err)
 	}

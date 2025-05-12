@@ -91,7 +91,7 @@ func ParseChaincodePackage(source []byte) (*ChaincodePackageMetadata, []byte, er
 	}
 
 	if codePackage == nil {
-		return ccPackageMetadata, nil, fmt.Errorf("did not find a code package inside the package")
+		return ccPackageMetadata, nil, errors.New("did not find a code package inside the package")
 	}
 
 	if ccPackageMetadata == nil {

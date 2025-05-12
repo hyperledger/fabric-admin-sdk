@@ -45,7 +45,7 @@ func (f *factory) Block(channelID string) *cb.Block {
 
 	block := protoutil.NewBlock(0, nil)
 	block.Data = &cb.BlockData{Data: [][]byte{protoutil.MarshalOrPanic(envelope)}}
-	block.Header.DataHash = protoutil.BlockDataHash(block.Data)
+	block.Header.DataHash = protoutil.BlockDataHash(block.GetData())
 	block.Metadata.Metadata[1] = protoutil.MarshalOrPanic(&cb.Metadata{
 		Value: protoutil.MarshalOrPanic(&cb.LastConfig{Index: 0}),
 	})

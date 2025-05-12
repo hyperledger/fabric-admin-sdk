@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 package chaincode
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"google.golang.org/protobuf/proto"
@@ -73,16 +73,16 @@ type Definition struct {
 
 func (d *Definition) validate() error {
 	if d.ChannelName == "" {
-		return fmt.Errorf("channel name is required for channel approve/commit")
+		return errors.New("channel name is required for channel approve/commit")
 	}
 	if d.Name == "" {
-		return fmt.Errorf("chaincode name is required for channel approve/commit")
+		return errors.New("chaincode name is required for channel approve/commit")
 	}
 	if d.Version == "" {
-		return fmt.Errorf("chaincode version is required for channel approve/commit")
+		return errors.New("chaincode version is required for channel approve/commit")
 	}
 	if d.Sequence <= 0 {
-		return fmt.Errorf("chaincode sequence must be greater than 0 for channel approve/commit")
+		return errors.New("chaincode sequence must be greater than 0 for channel approve/commit")
 	}
 	return nil
 }

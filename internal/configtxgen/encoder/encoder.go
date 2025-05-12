@@ -453,7 +453,7 @@ func DefaultConfigTemplate(conf *genesisconfig.Profile) (*cb.ConfigGroup, error)
 		return nil, fmt.Errorf("error parsing configuration %w", err)
 	}
 
-	if _, ok := channelGroup.Groups[icc.ApplicationGroupKey]; !ok {
+	if _, ok := channelGroup.GetGroups()[icc.ApplicationGroupKey]; !ok {
 		return nil, errors.New("channel template configs must contain an application section")
 	}
 
@@ -476,7 +476,7 @@ func ConfigTemplateFromGroup(conf *genesisconfig.Profile, cg *cb.ConfigGroup) (*
 		},
 	}
 
-	consortiums, ok := template.Groups[icc.ConsortiumsGroupKey]
+	consortiums, ok := template.GetGroups()[icc.ConsortiumsGroupKey]
 	if !ok {
 		return nil, errors.New("supplied system channel group does not appear to be system channel (missing consortiums group)")
 	}
@@ -485,7 +485,7 @@ func ConfigTemplateFromGroup(conf *genesisconfig.Profile, cg *cb.ConfigGroup) (*
 		return nil, errors.New("system channel consortiums group appears to have no consortiums defined")
 	}
 
-	consortium, ok := consortiums.Groups[conf.Consortium]
+	consortium, ok := consortiums.GetGroups()[conf.Consortium]
 	if !ok {
 		return nil, fmt.Errorf("supplied system channel group is missing '%s' consortium", conf.Consortium)
 	}
@@ -496,12 +496,12 @@ func ConfigTemplateFromGroup(conf *genesisconfig.Profile, cg *cb.ConfigGroup) (*
 
 	for _, organization := range conf.Application.Organizations {
 		var ok bool
-		template.Groups[icc.ApplicationGroupKey].Groups[organization.Name], ok = consortium.Groups[organization.Name]
+		template.Groups[icc.ApplicationGroupKey].Groups[organization.Name], ok = consortium.GetGroups()[organization.Name]
 		if !ok {
 			return nil, fmt.Errorf("consortium %s does not contain member org %s", conf.Consortium, organization.Name)
 		}
 	}
-	delete(template.Groups, icc.ConsortiumsGroupKey)
+	delete(template.GetGroups(), icc.ConsortiumsGroupKey)
 
 	addValue(template, icc.ConsortiumValue(conf.Consortium), icc.AdminsPolicyKey)
 

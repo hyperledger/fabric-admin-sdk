@@ -46,29 +46,29 @@ func ConfigTxGen(config *genesisconfig.Profile, channelID string) (*cb.Block, er
 }
 
 func SignConfigTx(channelID string, envConfigUpdate *cb.Envelope, signer identity.SigningIdentity) (*cb.Envelope, error) {
-	payload, err := protoutil.UnmarshalPayload(envConfigUpdate.Payload)
+	payload, err := protoutil.UnmarshalPayload(envConfigUpdate.GetPayload())
 	if err != nil {
 		return nil, errors.New("bad payload")
 	}
 
-	if payload.Header == nil || payload.Header.ChannelHeader == nil {
+	if payload.GetHeader() == nil || payload.Header.ChannelHeader == nil {
 		return nil, errors.New("bad header")
 	}
 
-	ch, err := protoutil.UnmarshalChannelHeader(payload.Header.ChannelHeader)
+	ch, err := protoutil.UnmarshalChannelHeader(payload.GetHeader().GetChannelHeader())
 	if err != nil {
 		return nil, errors.New("could not unmarshall channel header")
 	}
 
-	if ch.Type != int32(cb.HeaderType_CONFIG_UPDATE) {
+	if ch.GetType() != int32(cb.HeaderType_CONFIG_UPDATE) {
 		return nil, errors.New("bad type")
 	}
 
-	if ch.ChannelId == "" {
+	if ch.GetChannelId() == "" {
 		return nil, errors.New("empty channel id")
 	}
 
-	configUpdateEnv, err := protoutil.UnmarshalConfigUpdateEnvelope(payload.Data)
+	configUpdateEnv, err := protoutil.UnmarshalConfigUpdateEnvelope(payload.GetData())
 	if err != nil {
 		return nil, errors.New("bad config update env")
 	}
@@ -82,7 +82,7 @@ func SignConfigTx(channelID string, envConfigUpdate *cb.Envelope, signer identit
 		SignatureHeader: protoutil.MarshalOrPanic(sigHeader),
 	}
 
-	configSig.Signature, err = signer.Sign(util.Concatenate(configSig.SignatureHeader, configUpdateEnv.ConfigUpdate))
+	configSig.Signature, err = signer.Sign(util.Concatenate(configSig.GetSignatureHeader(), configUpdateEnv.GetConfigUpdate()))
 	if err != nil {
 		return nil, err
 	}

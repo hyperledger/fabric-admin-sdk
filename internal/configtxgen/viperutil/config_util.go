@@ -8,6 +8,7 @@ package viperutil
 
 import (
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -291,7 +292,7 @@ func stringFromFileDecodeHook(f reflect.Kind, t reflect.Kind, data interface{}) 
 			return string(bytes), nil
 		case ok:
 			// fileName was nil
-			return nil, fmt.Errorf("value of File: was nil")
+			return nil, errors.New("value of File: was nil")
 		}
 	}
 	return data, nil
@@ -350,7 +351,7 @@ func pemBlocksFromFileDecodeHook(f reflect.Kind, t reflect.Kind, data interface{
 			return result, nil
 		case ok:
 			// fileName was nil
-			return nil, fmt.Errorf("value of File: was nil")
+			return nil, errors.New("value of File: was nil")
 		}
 	}
 	return data, nil
@@ -454,11 +455,11 @@ func bccspHook(f reflect.Type, t reflect.Type, data interface{}) (interface{}, e
 func (c *ConfigParser) EnhancedExactUnmarshal(output interface{}) error {
 	oType := reflect.TypeOf(output)
 	if oType.Kind() != reflect.Ptr {
-		return fmt.Errorf("supplied output argument must be a pointer to a struct but is not pointer")
+		return errors.New("supplied output argument must be a pointer to a struct but is not pointer")
 	}
 	eType := oType.Elem()
 	if eType.Kind() != reflect.Struct {
-		return fmt.Errorf("supplied output argument must be a pointer to a struct, but it is pointer to something else")
+		return errors.New("supplied output argument must be a pointer to a struct, but it is pointer to something else")
 	}
 
 	baseKeys := c.config

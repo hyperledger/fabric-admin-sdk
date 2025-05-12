@@ -150,7 +150,7 @@ func NewSignatureHeader(id identity.Identity) (*common.SignatureHeader, error) {
 }
 
 func BlockDataHash(b *common.BlockData) []byte {
-	sum := sha256.Sum256(bytes.Join(b.Data, nil))
+	sum := sha256.Sum256(bytes.Join(b.GetData(), nil))
 	return sum[:]
 }
 
@@ -184,8 +184,8 @@ func MakeSignatureHeader(serializedCreatorCertChain []byte, nonce []byte) *commo
 // and sets the TxId field in the channel header
 func SetTxID(channelHeader *common.ChannelHeader, signatureHeader *common.SignatureHeader) {
 	channelHeader.TxId = ComputeTxID(
-		signatureHeader.Nonce,
-		signatureHeader.Creator,
+		signatureHeader.GetNonce(),
+		signatureHeader.GetCreator(),
 	)
 }
 
@@ -245,7 +245,7 @@ func GetBytesProposalPayloadForTx(
 	}
 
 	// strip the transient bytes off the payload
-	cppNoTransient := &peer.ChaincodeProposalPayload{Input: payload.Input, TransientMap: nil}
+	cppNoTransient := &peer.ChaincodeProposalPayload{Input: payload.GetInput(), TransientMap: nil}
 	cppBytes, err := GetBytesChaincodeProposalPayload(cppNoTransient)
 	if err != nil {
 		return nil, err

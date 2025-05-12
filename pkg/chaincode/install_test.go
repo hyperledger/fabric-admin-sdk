@@ -64,7 +64,7 @@ func AssertUnmarshal(b []byte, m proto.Message) {
 
 func AssertUnmarshalProposal(signedProposal *peer.SignedProposal) *peer.Proposal {
 	proposal := &peer.Proposal{}
-	AssertUnmarshal(signedProposal.ProposalBytes, proposal)
+	AssertUnmarshal(signedProposal.GetProposalBytes(), proposal)
 
 	return proposal
 }
@@ -73,10 +73,10 @@ func AssertUnmarshalSignatureHeader(signedProposal *peer.SignedProposal) *common
 	proposal := AssertUnmarshalProposal(signedProposal)
 
 	header := &common.Header{}
-	AssertUnmarshal(proposal.Header, header)
+	AssertUnmarshal(proposal.GetHeader(), header)
 
 	signatureHeader := &common.SignatureHeader{}
-	AssertUnmarshal(header.SignatureHeader, signatureHeader)
+	AssertUnmarshal(header.GetSignatureHeader(), signatureHeader)
 
 	return signatureHeader
 }
@@ -86,7 +86,7 @@ func AssertUnmarshalProposalPayload(signedProposal *peer.SignedProposal) *peer.C
 	proposal := AssertUnmarshalProposal(signedProposal)
 
 	payload := &peer.ChaincodeProposalPayload{}
-	AssertUnmarshal(proposal.Payload, payload)
+	AssertUnmarshal(proposal.GetPayload(), payload)
 
 	return payload
 }
@@ -94,13 +94,13 @@ func AssertUnmarshalProposalPayload(signedProposal *peer.SignedProposal) *peer.C
 // AssertUnmarshalInvocationSpec ensures that a ChaincodeInvocationSpec protobuf is umarshalled without error
 func AssertUnmarshalInvocationSpec(signedProposal *peer.SignedProposal) *peer.ChaincodeInvocationSpec {
 	proposal := &peer.Proposal{}
-	AssertUnmarshal(signedProposal.ProposalBytes, proposal)
+	AssertUnmarshal(signedProposal.GetProposalBytes(), proposal)
 
 	payload := &peer.ChaincodeProposalPayload{}
-	AssertUnmarshal(proposal.Payload, payload)
+	AssertUnmarshal(proposal.GetPayload(), payload)
 
 	input := &peer.ChaincodeInvocationSpec{}
-	AssertUnmarshal(payload.Input, input)
+	AssertUnmarshal(payload.GetInput(), input)
 
 	return input
 }
@@ -260,7 +260,7 @@ var _ = Describe("Install", func() {
 			}).
 			Times(1)
 
-		mockSigner := NewMockSigner(controller, expected.Mspid, expected.IdBytes, nil)
+		mockSigner := NewMockSigner(controller, expected.GetMspid(), expected.GetIdBytes(), nil)
 		peer := chaincode.NewPeer(mockConnection, mockSigner)
 
 		_, err := peer.Install(specCtx, packageReader)

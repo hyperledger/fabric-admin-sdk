@@ -124,7 +124,7 @@ func EncodeBFTBlockVerificationPolicy(consenterProtos []*cb.Consenter, ordererGr
 		})
 		identities = append(identities, &msp.MSPPrincipal{
 			PrincipalClassification: msp.MSPPrincipal_IDENTITY,
-			Principal:               protoutil.MarshalOrPanic(&msp.SerializedIdentity{Mspid: consenter.MspId, IdBytes: consenter.Identity}),
+			Principal:               protoutil.MarshalOrPanic(&msp.SerializedIdentity{Mspid: consenter.GetMspId(), IdBytes: consenter.GetIdentity()}),
 		})
 	}
 
@@ -135,7 +135,7 @@ func EncodeBFTBlockVerificationPolicy(consenterProtos []*cb.Consenter, ordererGr
 	}
 	ordererGroup.Policies[BlockValidationPolicyKey] = &cb.ConfigPolicy{
 		// Inherit modification policy
-		ModPolicy: ordererGroup.Policies[BlockValidationPolicyKey].ModPolicy,
+		ModPolicy: ordererGroup.GetPolicies()[BlockValidationPolicyKey].GetModPolicy(),
 		Policy: &cb.Policy{
 			Type:  int32(cb.Policy_SIGNATURE),
 			Value: protoutil.MarshalOrPanic(sp),
