@@ -58,5 +58,5 @@ escapes_detect:
 
 .PHONY: generate
 generate:
-	go install go.uber.org/mock/mockgen@latest
+	go install go.uber.org/mock/mockgen@v0.6.0
 	go generate ./pkg/...

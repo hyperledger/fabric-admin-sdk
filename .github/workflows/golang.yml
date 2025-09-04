@@ -8,9 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version: "1.21"
+          go-version: "1.24"
       - name: Generate test mocks
         run: make generate
       - name: Unit test
@@ -20,9 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version: stable
+          go-version: "1.24"
       - name: Generate test mocks
         run: make generate
       - name: golangci-lint
@@ -36,29 +36,29 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - FABRIC_VERSION: "2.5.11"
+          - FABRIC_VERSION: "2.5.13"
             CREATE_CHANNEL: "create_channel"
             CONSENSUS: RAFT
-          - FABRIC_VERSION: "2.5.11"
+          - FABRIC_VERSION: "2.5.13"
             CREATE_CHANNEL: "existing_channel"
             CONSENSUS: RAFT
-          - FABRIC_VERSION: "3.0.0"
+          - FABRIC_VERSION: "3.1.1"
             CREATE_CHANNEL: "create_channel"
             CONSENSUS: RAFT
-          - FABRIC_VERSION: "3.0.0"
+          - FABRIC_VERSION: "3.1.1"
             CREATE_CHANNEL: "existing_channel"
             CONSENSUS: RAFT
-          - FABRIC_VERSION: "3.0.0"
+          - FABRIC_VERSION: "3.1.1"
             CREATE_CHANNEL: "create_channel"
             CONSENSUS: BFT
-          - FABRIC_VERSION: "3.0.0"
+          - FABRIC_VERSION: "3.1.1"
             CREATE_CHANNEL: "existing_channel"
             CONSENSUS: BFT
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version: "1.21"
+          go-version: "1.24"
       - name: run end to end test
         env:
           FABRIC_VERSION: ${{matrix.FABRIC_VERSION}}
