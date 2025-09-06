@@ -9,10 +9,14 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/hyperledger/fabric-admin-sdk/internal/configtxgen/encoder"
+	"github.com/hyperledger/fabric-admin-sdk/internal/configtxgen/genesisconfig"
 	"github.com/hyperledger/fabric-admin-sdk/internal/osnadmin"
 	"github.com/hyperledger/fabric-admin-sdk/internal/protoutil"
+	"github.com/hyperledger/fabric-admin-sdk/internal/util"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/proposal"
+	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
 	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 
 	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
@@ -109,4 +113,55 @@ func ListChannelOnPeer(ctx context.Context, connection grpc.ClientConnInterface,
 		return nil, err
 	}
 	return channelQueryResponse.GetChannels(), nil
+}
+
+func UpdateChannelConfig(ctx context.Context, channelID string, updateEnvelope []byte, ordererConnection grpc.ClientConnInterface, signers []identity.SigningIdentity) (*orderer.BroadcastResponse, error) {
+
+	envConfigUpdate, err := protoutil.UnmarshalEnvelope(updateEnvelope)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, signer := range signers {
+		envConfigUpdate, err = util.SignConfigTx(channelID, envConfigUpdate, signer)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	ordererClient, err := orderer.NewAtomicBroadcastClient(ordererConnection).Broadcast(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(ordererClient orderer.AtomicBroadcast_BroadcastClient) {
+		_ = ordererClient.CloseSend()
+	}(ordererClient)
+
+	err = ordererClient.Send(envConfigUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := ordererClient.Recv()
+	return response, err
+
+}
+
+func CreateGenesisBlock(profileType string, profilePath string, channelID string) (*cb.Block, error) {
+
+	var profile *genesisconfig.Profile
+	var err error
+	profile, err = genesisconfig.Load(profileType, profilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	pgen, err := encoder.NewBootstrapper(profile)
+	if err != nil {
+		return nil, err
+	}
+	genesisBlock := pgen.GenesisBlockForChannel(channelID)
+	return genesisBlock, nil
+
 }
