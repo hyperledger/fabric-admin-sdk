@@ -23,7 +23,7 @@ import (
 	"github.com/IBM/sarama"
 	version "github.com/hashicorp/go-version"
 	"github.com/mitchellh/mapstructure"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // ConfigPaths returns the paths from environment and
@@ -501,6 +501,6 @@ func YamlStringToStructHook(m interface{}) func(rf reflect.Kind, rt reflect.Kind
 			return m, nil
 		}
 
-		return m, yaml.UnmarshalStrict([]byte(raw), &m)
+		return m, yaml.Unmarshal([]byte(raw), &m)
 	}
 }

@@ -16,7 +16,7 @@ More detailed information on the motivation and objectives of the fabric-admin-s
 
 This repository contains APIs written in Go and JavaScript. In order to build these components, the following need to be installed and available in the PATH:
 
-- [Go 1.21+](https://go.dev/)
+- [Go 1.24+](https://go.dev/)
 - [Node 18+](https://nodejs.org/)
 - [Make](https://www.gnu.org/software/make/)
 
