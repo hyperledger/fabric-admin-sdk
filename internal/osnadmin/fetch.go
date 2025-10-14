@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
+	"net/http"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/common"
 	"google.golang.org/protobuf/proto"
@@ -17,10 +18,12 @@ func Fetch(osnURL, channelID string, blockID string, caCertPool *x509.CertPool, 
 	if err != nil {
 		return nil, fmt.Errorf("process request: %w", err)
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
+
 	defer resp.Body.Close()
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read response body: %w", err)
