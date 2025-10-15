@@ -1,6 +1,7 @@
 package osnadmin
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -11,10 +12,14 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func Fetch(osnURL, channelID string, blockID string, caCertPool *x509.CertPool, tlsClientCert tls.Certificate) (*common.Block, error) {
+func Fetch(ctx context.Context, osnURL, channelID string, blockID string, caCertPool *x509.CertPool, tlsClientCert tls.Certificate) (*common.Block, error) {
 	url := fmt.Sprintf("%s/participation/v1/channels/%s/blocks/%s", osnURL, channelID, blockID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create request: %w", err)
+	}
 
-	resp, err := httpGet(url, caCertPool, tlsClientCert)
+	resp, err := httpDo(req, caCertPool, tlsClientCert)
 	if err != nil {
 		return nil, fmt.Errorf("process request: %w", err)
 	}
