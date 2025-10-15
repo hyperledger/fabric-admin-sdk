@@ -2,6 +2,7 @@ package osnadmin
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -10,10 +11,10 @@ import (
 )
 
 // Update channel configuration using presented config envelope.
-func Update(osnURL, channelID string, caCertPool *x509.CertPool, tlsClientCert tls.Certificate, configEnvelope []byte) (*http.Response, error) {
+func Update(ctx context.Context, osnURL, channelID string, caCertPool *x509.CertPool, tlsClientCert tls.Certificate, configEnvelope []byte) (*http.Response, error) {
 	url := fmt.Sprintf("%s/participation/v1/channels/%s", osnURL, channelID)
 
-	req, err := createUpdateRequest(url, configEnvelope)
+	req, err := createUpdateRequest(ctx, url, configEnvelope)
 	if err != nil {
 		return nil, fmt.Errorf("create update request: %w", err)
 	}
@@ -21,7 +22,7 @@ func Update(osnURL, channelID string, caCertPool *x509.CertPool, tlsClientCert t
 	return httpDo(req, caCertPool, tlsClientCert)
 }
 
-func createUpdateRequest(url string, configEnvelope []byte) (*http.Request, error) {
+func createUpdateRequest(ctx context.Context, url string, configEnvelope []byte) (*http.Request, error) {
 	joinBody := new(bytes.Buffer)
 	writer := multipart.NewWriter(joinBody)
 	part, err := writer.CreateFormFile("config-update-envelope", "config_update.pb")
@@ -37,7 +38,7 @@ func createUpdateRequest(url string, configEnvelope []byte) (*http.Request, erro
 		return nil, err
 	}
 
-	req, err := http.NewRequest(http.MethodPut, url, joinBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, joinBody)
 	if err != nil {
 		return nil, err
 	}
