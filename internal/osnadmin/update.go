@@ -12,7 +12,7 @@ import (
 
 // Update channel configuration using presented config envelope.
 func Update(ctx context.Context, osnURL, channelID string, caCertPool *x509.CertPool, tlsClientCert tls.Certificate, configEnvelope []byte) (*http.Response, error) {
-	url := fmt.Sprintf("%s/participation/v1/channels/%s", osnURL, channelID)
+	url := fmt.Sprintf("%s/participation/v1/channels", osnURL)
 
 	req, err := createUpdateRequest(ctx, url, configEnvelope)
 	if err != nil {
