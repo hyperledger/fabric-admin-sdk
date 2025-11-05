@@ -39,40 +39,44 @@ var regexErr = regexp.MustCompile("^No parameter '([^']+)' found[.]$")
 // a stub function - it returns the same string as it's passed.
 // This will be evaluated by second/third passes to convert to a proto policy
 func outof(args ...interface{}) (interface{}, error) {
-	toret := "outof("
-
 	if len(args) < 2 {
 		return nil, fmt.Errorf("expected at least two arguments to NOutOf. Given %d", len(args))
 	}
 
+	var result strings.Builder
+
+	result.WriteString("outof(")
+
 	arg0 := args[0]
 	// govaluate treats all numbers as float64 only. But and/or may pass int/string. Allowing int/string for flexibility of caller
 	if n, ok := arg0.(float64); ok {
-		toret += strconv.Itoa(int(n))
+		result.WriteString(strconv.Itoa(int(n)))
 	} else if n, ok := arg0.(int); ok {
-		toret += strconv.Itoa(n)
+		result.WriteString(strconv.Itoa(n))
 	} else if n, ok := arg0.(string); ok {
-		toret += n
+		result.WriteString(n)
 	} else {
 		return nil, fmt.Errorf("unexpected type %s", reflect.TypeOf(arg0))
 	}
 
 	for _, arg := range args[1:] {
-		toret += ", "
+		result.WriteString(", ")
 
 		switch t := arg.(type) {
 		case string:
 			if regex.MatchString(t) {
-				toret += "'" + t + "'"
+				result.WriteString("'" + t + "'")
 			} else {
-				toret += t
+				result.WriteString(t)
 			}
 		default:
 			return nil, fmt.Errorf("unexpected type %s", reflect.TypeOf(arg))
 		}
 	}
 
-	return toret + ")", nil
+	result.WriteString(")")
+
+	return result.String(), nil
 }
 
 func and(args ...interface{}) (interface{}, error) {
@@ -195,26 +199,31 @@ func FromString(policy string) (*cb.SignaturePolicyEnvelope, error) {
 }
 
 func firstPass(args ...interface{}) (interface{}, error) {
-	toret := "outof(ID"
+	var result strings.Builder
+
+	result.WriteString("outof(ID")
+
 	for _, arg := range args {
-		toret += ", "
+		result.WriteString(", ")
 
 		switch t := arg.(type) {
 		case string:
 			if regex.MatchString(t) {
-				toret += "'" + t + "'"
+				result.WriteString("'" + t + "'")
 			} else {
-				toret += t
+				result.WriteString(t)
 			}
 		case float32:
 		case float64:
-			toret += strconv.Itoa(int(t))
+			result.WriteString(strconv.Itoa(int(t)))
 		default:
 			return nil, fmt.Errorf("unexpected type %s", reflect.TypeOf(arg))
 		}
 	}
 
-	return toret + ")", nil
+	result.WriteString(")")
+
+	return result.String(), nil
 }
 
 type context struct {
