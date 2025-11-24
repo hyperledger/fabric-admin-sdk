@@ -8,9 +8,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/hyperledger/fabric-admin-sdk/internal/protoutil"
-	"github.com/hyperledger/fabric-protos-go-apiv2/orderer"
-
 	"github.com/hyperledger/fabric-admin-sdk/pkg/channel"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/network"
@@ -163,16 +160,6 @@ var _ = Describe("channel", func() {
 			// get update config file, see https://hyperledger-fabric.readthedocs.io/en/release-2.4/channel_update_tutorial.html#add-the-org3-crypto-material
 			updateEnvelope, err := os.ReadFile("./org3_update_in_envelope.pb")
 			Expect(err).NotTo(HaveOccurred())
-			envelope, err := protoutil.UnmarshalEnvelope(updateEnvelope)
-			Expect(err).NotTo(HaveOccurred())
-
-			// Peer1 sign
-			envelope, err = SignConfigTx(channelID, envelope, signer)
-			Expect(err).NotTo(HaveOccurred())
-
-			// Peer2 sign
-			envelope, err = SignConfigTx(channelID, envelope, signer2)
-			Expect(err).NotTo(HaveOccurred())
 
 			ordererNode := network.Node{
 				Addr:      OrdererAddr,
@@ -182,14 +169,7 @@ var _ = Describe("channel", func() {
 			Expect(err).NotTo(HaveOccurred())
 			ordererConnection, err := network.DialConnection(ordererNode)
 			Expect(err).NotTo(HaveOccurred())
-			ordererClient, err := orderer.NewAtomicBroadcastClient(ordererConnection).Broadcast(context.Background())
-			Expect(err).NotTo(HaveOccurred())
-			defer func(ordererClient orderer.AtomicBroadcast_BroadcastClient) {
-				_ = ordererClient.CloseSend()
-			}(ordererClient)
-			err = ordererClient.Send(envelope)
-			Expect(err).NotTo(HaveOccurred())
-			response, err := ordererClient.Recv()
+			response, err := channel.UpdateChannelConfig(context.Background(), channelID, updateEnvelope, ordererConnection, []identity.SigningIdentity{signer, signer2})
 			Expect(err).NotTo(HaveOccurred())
 			log.Println("response: ", response.String())
 		})
