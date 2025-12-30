@@ -191,10 +191,19 @@ func (g *Gateway) Commit(ctx context.Context, chaincodeDef *Definition) error {
 }
 
 // QueryApproved chaincode definition for the user's own organization.
+//
+// In Fabric v3, this function supports additional query modes:
+//   - Omit the sequence number (pass 0) to query the latest approved chaincode definition.
+//   - Omit the chaincode name (pass empty string) to query all approved chaincode definitions on the channel.
 func (g *Gateway) QueryApproved(ctx context.Context, channelName string, chaincodeName string, sequence int64) (*lifecycle.QueryApprovedChaincodeDefinitionResult, error) {
 	queryArgs := &lifecycle.QueryApprovedChaincodeDefinitionArgs{
-		Name:     chaincodeName,
-		Sequence: sequence,
+        	if chaincodeName != "" {
+		queryArgs.Name = chaincodeName
+	}
+	if sequence != 0 {
+		queryArgs.Sequence = sequence
+	}
+		
 	}
 	queryArgsBytes, err := proto.Marshal(queryArgs)
 	if err != nil {
