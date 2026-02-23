@@ -26,7 +26,7 @@ func httpClient(caCertPool *x509.CertPool, tlsClientCert tls.Certificate) *http.
 
 func httpDo(req *http.Request, caCertPool *x509.CertPool, tlsClientCert tls.Certificate) (*http.Response, error) {
 	client := httpClient(caCertPool, tlsClientCert)
-	return client.Do(req)
+	return client.Do(req) //#nosec G704 -- responsibility of client to supply valid URL root.
 }
 
 func httpGet(url string, caCertPool *x509.CertPool, tlsClientCert tls.Certificate) (*http.Response, error) {
