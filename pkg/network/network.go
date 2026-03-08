@@ -178,25 +178,51 @@ func NewGRPCClient(config ClientConfig) (*GRPCClient, error) {
 // GRPCServer or GRPCClient instance
 type SecureOptions struct {
 	// VerifyCertificate, if not nil, is called after normal
-	// certificate verification by either a TLS client or server.
-	// If it returns a non-nil error, the handshake is aborted and that error results.
+	// certificate verification by either a TLS client or server. It
+	// receives the raw ASN.1 certificates provided by the peer and also
+	// any verified chains that normal processing found. If it returns a
+	// non-nil error, the handshake is aborted and that error results.
+	//
+	// This callback is not invoked on resumed connections. It is recommended
+	// to use [SecureOptions.VerifyConnection] instead.
 	VerifyCertificate func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error
+
+	// VerifyConnection, if not nil, is called after normal certificate
+	// verification and after VerifyPeerCertificate by either a TLS client
+	// or server. If it returns a non-nil error, the handshake is aborted
+	// and that error results.
+	//
+	// If normal verification fails then the handshake will abort before
+	// considering this callback. This callback will run for all connections,
+	// including resumptions, regardless of InsecureSkipVerify or ClientAuth
+	// settings.
+	//
+	// For a usage example, see: https://pkg.go.dev/crypto/tls#example-Config-VerifyConnection
+	VerifyConnection func(tls.ConnectionState) error
+
 	// PEM-encoded X509 public key to be used for TLS communication
 	Certificate []byte
+
 	// PEM-encoded private key to be used for TLS communication
 	Key []byte
+
 	// Set of PEM-encoded X509 certificate authorities used by clients to
 	// verify server certificates
 	ServerRootCAs [][]byte
+
 	// Set of PEM-encoded X509 certificate authorities used by servers to
 	// verify client certificates
 	ClientRootCAs [][]byte
+
 	// Whether or not to use TLS for communication
 	UseTLS bool
+
 	// Whether or not TLS client must present certificates for authentication
 	RequireClientCert bool
+
 	// CipherSuites is a list of supported cipher suites for TLS
 	CipherSuites []uint16
+
 	// TimeShift makes TLS handshakes time sampling shift to the past by a given duration
 	TimeShift time.Duration
 }
@@ -209,6 +235,7 @@ func (client *GRPCClient) parseSecureOptions(opts SecureOptions) error {
 
 	client.tlsConfig = &tls.Config{
 		VerifyPeerCertificate: opts.VerifyCertificate,
+		VerifyConnection:      opts.VerifyConnection,
 		MinVersion:            tls.VersionTLS12} // TLS 1.2 only
 
 	if serverRootCAs, err := newRootCACertPool(opts); err == nil {
