@@ -332,7 +332,6 @@ func DialConnection(node Node) (*grpc.ClientConn, error) {
 	var conn *grpc.ClientConn
 	for i := 1; i <= 3; i++ {
 		conn, connError = gRPCClient.NewConnection(node.Addr, func(tlsConfig *tls.Config) {
-			tlsConfig.InsecureSkipVerify = true
 			tlsConfig.ServerName = node.SslTargetNameOverride
 		})
 		if connError == nil {
