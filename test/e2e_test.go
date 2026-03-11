@@ -197,14 +197,7 @@ var _ = Describe("e2e", func() {
 					}
 					for i := 0; i < 3; i++ {
 						osnURL = osnURLs[i]
-						caFile = "../fabric-samples/test-network/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
-						clientCert = clientCerts[i]
-						clientKey = clientKeys[i]
-						caCertPool := x509.NewCertPool()
-						caFilePEM, err := os.ReadFile(caFile)
-						caCertPool.AppendCertsFromPEM(caFilePEM)
-						Expect(err).NotTo(HaveOccurred())
-						tlsClientCert, err := tls.LoadX509KeyPair(clientCert, clientKey)
+						tlsClientCert, err := tls.LoadX509KeyPair(clientCerts[i], clientKeys[i])
 						Expect(err).NotTo(HaveOccurred())
 						resp, err := channel.CreateChannel(osnURL, block, caCertPool, tlsClientCert)
 						Expect(err).NotTo(HaveOccurred())
@@ -214,7 +207,7 @@ var _ = Describe("e2e", func() {
 				//osnURL
 				order := network.Node{
 					Addr:      "localhost:7050",
-					TLSCACert: clientCert,
+					TLSCACert: caFile,
 				}
 				err = order.LoadConfig()
 				Expect(err).NotTo(HaveOccurred())
