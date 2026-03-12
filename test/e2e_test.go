@@ -22,10 +22,11 @@ import (
 	"github.com/hyperledger/fabric-admin-sdk/pkg/network"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/snapshot"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
-	gatewaypb "github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 )
 
@@ -39,16 +40,25 @@ const (
 	snapshotBlockNumber uint64 = 10
 )
 
+func newGrpcConnection(node *network.Node) (*grpc.ClientConn, error) {
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(node.TLSCACertByte) {
+		return nil, fmt.Errorf("failed to parse TLS CA certificate:\n%s", node.TLSCACertByte)
+	}
+
+	transportCredentials := credentials.NewClientTLSFromCert(certPool, node.SslTargetNameOverride)
+
+	return grpc.NewClient(node.Addr, grpc.WithTransportCredentials(transportCredentials))
+}
+
 func runParallel[T any](args []T, f func(T)) {
 	var wg sync.WaitGroup
-	for _, arg := range args {
-		wg.Add(1)
 
-		go func(target T) {
+	for _, arg := range args {
+		wg.Go(func() {
 			defer GinkgoRecover()
-			defer wg.Done()
-			f(target)
-		}(arg)
+			f(arg)
+		})
 	}
 
 	wg.Wait()
@@ -59,39 +69,16 @@ func printGrpcError(err error) {
 		return
 	}
 
-	fmt.Printf("Received error type %T: %s\n", err, err)
-
-	var endorseErr *client.EndorseError
-	var submitErr *client.SubmitError
 	var commitStatusErr *client.CommitStatusError
-	var commitErr *client.CommitError
 
-	if errors.As(err, &endorseErr) {
-		fmt.Printf("Endorse error for transaction %s with gRPC status %v: %s\n", endorseErr.TransactionID, status.Code(err), endorseErr)
-	} else if errors.As(err, &submitErr) {
-		fmt.Printf("Submit error for transaction %s with gRPC status %v: %s\n", submitErr.TransactionID, status.Code(err), submitErr)
-	} else if errors.As(err, &commitStatusErr) {
+	if errors.As(err, &commitStatusErr) {
 		if errors.Is(err, context.DeadlineExceeded) {
-			fmt.Printf("Timeout waiting for transaction %s commit status: %s", commitStatusErr.TransactionID, commitStatusErr)
+			fmt.Printf("Timeout waiting for transaction %s commit status: %s\n", commitStatusErr.TransactionID, commitStatusErr)
 		} else {
 			fmt.Printf("Error obtaining commit status for transaction %s with gRPC status %v: %s\n", commitStatusErr.TransactionID, status.Code(commitStatusErr), commitStatusErr)
 		}
-	} else if errors.As(err, &commitErr) {
-		fmt.Printf("Transaction %s failed to commit with status %d: %s\n", commitErr.TransactionID, int32(commitErr.Code), commitErr)
-	}
-
-	statusErr := status.Convert(err)
-
-	details := statusErr.Details()
-	if len(details) > 0 {
-		fmt.Println("Error Details:")
-
-		for _, detail := range details {
-			switch detail := detail.(type) {
-			case *gatewaypb.ErrorDetail:
-				fmt.Printf("- address: %s, mspId: %s, message: %s\n", detail.GetAddress(), detail.GetMspId(), detail.GetMessage())
-			}
-		}
+	} else {
+		fmt.Println(err)
 	}
 }
 
@@ -106,13 +93,13 @@ var _ = Describe("e2e", func() {
 			PrivKeyPath := "../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/priv_sk"
 			SignCert := "../fabric-samples/test-network/organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem"
 
-			peer1 := network.Node{
+			peer1 := &network.Node{
 				Addr:      org1PeerAddress,
 				TLSCACert: TLSCACert,
 			}
 			err = peer1.LoadConfig()
 			Expect(err).NotTo(HaveOccurred())
-			peer1Connection, err := network.DialConnection(peer1)
+			peer1Connection, err := newGrpcConnection(peer1)
 			Expect(err).NotTo(HaveOccurred())
 
 			cert, err := identity.ReadCertificate(SignCert)
@@ -128,13 +115,13 @@ var _ = Describe("e2e", func() {
 			PrivKeyPath = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/priv_sk"
 			SignCert = "../fabric-samples/test-network/organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem"
 
-			peer2 := network.Node{
+			peer2 := &network.Node{
 				Addr:      org2PeerAddress,
 				TLSCACert: TLSCACert,
 			}
 			err = peer2.LoadConfig()
 			Expect(err).NotTo(HaveOccurred())
-			peer2Connection, err := network.DialConnection(peer2)
+			peer2Connection, err := newGrpcConnection(peer2)
 			Expect(err).NotTo(HaveOccurred())
 
 			cert2, err := identity.ReadCertificate(SignCert)
@@ -205,13 +192,13 @@ var _ = Describe("e2e", func() {
 					}
 				}
 				//osnURL
-				order := network.Node{
+				order := &network.Node{
 					Addr:      "localhost:7050",
 					TLSCACert: caFile,
 				}
 				err = order.LoadConfig()
 				Expect(err).NotTo(HaveOccurred())
-				ordererConnection, err := network.DialConnection(order)
+				ordererConnection, err := newGrpcConnection(order)
 				Expect(err).NotTo(HaveOccurred())
 				ctx, cancel := context.WithTimeout(specCtx, 2*time.Minute)
 				defer cancel()
