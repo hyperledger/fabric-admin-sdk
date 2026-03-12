@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hyperledger/fabric-admin-sdk/internal/configtxgen/genesisconfig"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/chaincode"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/channel"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/discovery"
@@ -22,6 +21,7 @@ import (
 	"github.com/hyperledger/fabric-admin-sdk/pkg/network"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/snapshot"
 	"github.com/hyperledger/fabric-gateway/pkg/client"
+	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
 	gatewaypb "github.com/hyperledger/fabric-protos-go-apiv2/gateway"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -149,23 +149,15 @@ var _ = Describe("e2e", func() {
 			//genesis block
 			createChannel, ok := os.LookupEnv("CREATE_CHANNEL")
 			if createChannel == "create_channel" && ok {
-				var profile *genesisconfig.Profile
-				var err error
-				profile, err = genesisconfig.Load("ChannelUsingRaft", "./")
-				Expect(err).NotTo(HaveOccurred())
-				Expect(profile).ToNot(BeNil())
-				Expect(profile.Orderer.BatchSize.MaxMessageCount).To(Equal(uint32(10)))
-
 				IsBFT, check := os.LookupEnv("CONSENSUS")
+				var block *cb.Block
 				if IsBFT == "BFT" && check {
-					profile, err = genesisconfig.Load("ChannelUsingBFT", "./bft")
+					block, err = channel.CreateGenesisBlock("ChannelUsingBFT", "./bft", channelName)
 					Expect(err).NotTo(HaveOccurred())
-					Expect(profile).ToNot(BeNil())
-					Expect(profile.Orderer.BatchSize.MaxMessageCount).To(Equal(uint32(10)))
+				} else {
+					block, err = channel.CreateGenesisBlock("ChannelUsingRaft", "./", channelName)
+					Expect(err).NotTo(HaveOccurred())
 				}
-
-				block, err := ConfigTxGen(profile, channelName)
-				Expect(err).NotTo(HaveOccurred())
 				Expect(block).ToNot(BeNil())
 
 				//create channel
