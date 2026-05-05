@@ -454,7 +454,7 @@ func bccspHook(f reflect.Type, t reflect.Type, data interface{}) (interface{}, e
 // the time.Duration type
 func (c *ConfigParser) EnhancedExactUnmarshal(output interface{}) error {
 	oType := reflect.TypeOf(output)
-	if oType.Kind() != reflect.Ptr {
+	if oType.Kind() != reflect.Pointer {
 		return errors.New("supplied output argument must be a pointer to a struct but is not pointer")
 	}
 	eType := oType.Elem()
