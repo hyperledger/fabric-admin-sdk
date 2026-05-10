@@ -23,7 +23,7 @@ import (
 	"github.com/IBM/sarama"
 	version "github.com/hashicorp/go-version"
 	"github.com/mitchellh/mapstructure"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 // ConfigPaths returns the paths from environment and

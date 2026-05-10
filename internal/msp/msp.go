@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
+	"go.yaml.in/yaml/v3"
 	"google.golang.org/protobuf/proto"
-	"gopkg.in/yaml.v3"
 )
 
 // ProviderType indicates the type of an identity provider
