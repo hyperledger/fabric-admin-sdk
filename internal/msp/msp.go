@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/hyperledger/fabric-protos-go-apiv2/msp"
-	"go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 	"google.golang.org/protobuf/proto"
 )
 
