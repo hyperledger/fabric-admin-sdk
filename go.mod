@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/IBM/sarama v1.48.1
-	github.com/Knetic/govaluate v3.0.0+incompatible
+	github.com/expr-lang/expr v1.17.8
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/hashicorp/go-version v1.9.0
 	github.com/hyperledger/fabric-gateway v1.11.0
