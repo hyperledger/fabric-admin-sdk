@@ -165,23 +165,23 @@ func computeGroupUpdate(original, updated *common.ConfigGroup) (readSet, writeSe
 		// If there were no modified entries in any of the policies/values/groups maps
 		if len(readSetPolicies)+len(writeSetPolicies)+len(readSetValues)+len(writeSetValues)+len(readSetGroups)+len(writeSetGroups) == 0 {
 			return &common.ConfigGroup{
-					Version: original.GetVersion(),
-				}, &common.ConfigGroup{
-					Version: original.GetVersion(),
-				}, false
+				Version: original.GetVersion(),
+			}, &common.ConfigGroup{
+				Version: original.GetVersion(),
+			}, false
 		}
 
 		return &common.ConfigGroup{
-				Version:  original.GetVersion(),
-				Policies: readSetPolicies,
-				Values:   readSetValues,
-				Groups:   readSetGroups,
-			}, &common.ConfigGroup{
-				Version:  original.GetVersion(),
-				Policies: writeSetPolicies,
-				Values:   writeSetValues,
-				Groups:   writeSetGroups,
-			}, true
+			Version:  original.GetVersion(),
+			Policies: readSetPolicies,
+			Values:   readSetValues,
+			Groups:   readSetGroups,
+		}, &common.ConfigGroup{
+			Version:  original.GetVersion(),
+			Policies: writeSetPolicies,
+			Values:   writeSetValues,
+			Groups:   writeSetGroups,
+		}, true
 	}
 
 	copyMap(sameSetPolicies, readSetPolicies, writeSetPolicies)
@@ -189,17 +189,17 @@ func computeGroupUpdate(original, updated *common.ConfigGroup) (readSet, writeSe
 	copyMap(sameSetGroups, readSetGroups, writeSetGroups)
 
 	return &common.ConfigGroup{
-			Version:  original.GetVersion(),
-			Policies: readSetPolicies,
-			Values:   readSetValues,
-			Groups:   readSetGroups,
-		}, &common.ConfigGroup{
-			Version:   original.GetVersion() + 1,
-			Policies:  writeSetPolicies,
-			Values:    writeSetValues,
-			Groups:    writeSetGroups,
-			ModPolicy: updated.GetModPolicy(),
-		}, true
+		Version:  original.GetVersion(),
+		Policies: readSetPolicies,
+		Values:   readSetValues,
+		Groups:   readSetGroups,
+	}, &common.ConfigGroup{
+		Version:   original.GetVersion() + 1,
+		Policies:  writeSetPolicies,
+		Values:    writeSetValues,
+		Groups:    writeSetGroups,
+		ModPolicy: updated.GetModPolicy(),
+	}, true
 }
 
 func copyMap[K comparable, V any](source map[K]V, targets ...map[K]V) {

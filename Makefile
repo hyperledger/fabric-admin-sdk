@@ -60,3 +60,7 @@ escapes_detect:
 generate:
 	go install go.uber.org/mock/mockgen@v0.6.0
 	go generate ./pkg/...
+
+.PHONY: format-go
+format-go:
+	cd '$(base_dir)' && gofmt -l -s -w .
