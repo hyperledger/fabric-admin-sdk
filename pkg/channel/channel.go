@@ -13,9 +13,9 @@ import (
 	"github.com/hyperledger/fabric-admin-sdk/internal/protoutil"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/proposal"
-	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 
 	cb "github.com/hyperledger/fabric-protos-go-apiv2/common"
+	"github.com/hyperledger/fabric-protos-go-apiv2/peer"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
@@ -109,4 +109,9 @@ func ListChannelOnPeer(ctx context.Context, connection grpc.ClientConnInterface,
 		return nil, err
 	}
 	return channelQueryResponse.GetChannels(), nil
+}
+
+func UpdateChannel(ctx context.Context, osnURL string, caCertPool *x509.CertPool, tlsClientCert tls.Certificate, channelName string, env *cb.Envelope) (*http.Response, error) {
+	envelopeBytes := protoutil.MarshalOrPanic(env)
+	return osnadmin.Update(ctx, osnURL, channelName, caCertPool, tlsClientCert, envelopeBytes)
 }

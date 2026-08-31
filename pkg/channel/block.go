@@ -2,8 +2,11 @@ package channel
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 
+	"github.com/hyperledger/fabric-admin-sdk/internal/osnadmin"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/identity"
 	"github.com/hyperledger/fabric-admin-sdk/pkg/internal/proposal"
 
@@ -60,4 +63,8 @@ func getSignedProposal(ctx context.Context, connection grpc.ClientConnInterface,
 	}
 
 	return proposalResp, nil
+}
+
+func GetBlock(ctx context.Context, osnURL, channelID, blockID string, caCertPool *x509.CertPool, tlsClientCert tls.Certificate) (*cb.Block, error) {
+	return osnadmin.Fetch(ctx, osnURL, channelID, blockID, caCertPool, tlsClientCert)
 }
