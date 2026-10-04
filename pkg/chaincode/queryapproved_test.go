@@ -109,4 +109,38 @@ var _ = Describe("QueryApproved", func() {
 
 		AssertProtoEqual(expected, actual)
 	})
+
+	It("Zero sequence is passed through unset to query the latest approved definition", func(specCtx SpecContext) {
+		controller := gomock.NewController(GinkgoT())
+		defer controller.Finish()
+
+		var evaluateRequest *gateway.EvaluateRequest
+		mockConnection := NewMockClientConnInterface(controller)
+		mockConnection.EXPECT().
+			Invoke(gomock.Any(), gomock.Eq(gatewayEvaluateMethod), gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, method string, in *gateway.EvaluateRequest, out *gateway.EvaluateResponse, opts ...grpc.CallOption) {
+				evaluateRequest = in
+				proto.Merge(out, NewEvaluateResponse(""))
+			}).
+			Times(1)
+		mockSigner := NewMockSigner(controller, "", nil, nil)
+		gateway := chaincode.NewGateway(mockConnection, mockSigner)
+
+		// Fabric v3 treats an omitted sequence as a request for the latest
+		// approved chaincode definition, so a zero sequence must reach the
+		// peer unset rather than being defaulted or rejected.
+		_, err := gateway.QueryApproved(specCtx, channelName, chaincodeName, 0)
+		Expect(err).NotTo(HaveOccurred())
+
+		invocationSpec := AssertUnmarshalInvocationSpec(evaluateRequest.GetProposedTransaction())
+		args := invocationSpec.GetChaincodeSpec().GetInput().GetArgs()
+		Expect(args).To(HaveLen(2), "number of arguments")
+		Expect(string(args[0])).To(Equal("QueryApprovedChaincodeDefinition"), "transaction function name")
+
+		actual := &lifecycle.QueryApprovedChaincodeDefinitionArgs{}
+		AssertUnmarshal(args[1], actual)
+
+		Expect(actual.GetName()).To(Equal(chaincodeName))
+		Expect(actual.GetSequence()).To(BeZero())
+	})
 })
